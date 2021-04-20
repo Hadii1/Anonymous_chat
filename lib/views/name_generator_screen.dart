@@ -86,11 +86,11 @@ class NameGenerator extends StatelessWidget {
                                 await generatorNotifier.onProceedPressed();
 
                             if (success)
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => Home(),
-                                ),
-                              );
+                              Navigator.of(context).pushAndRemoveUntil(
+                                  MaterialPageRoute(
+                                    builder: (_) => Home(),
+                                  ),
+                                  (route) => false);
                           },
                           text: 'Proceed',
                         ),

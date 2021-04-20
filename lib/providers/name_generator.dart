@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+const _kloadingTime = Duration(seconds: 2);
 final nameGeneratorProvider = ChangeNotifierProvider.autoDispose(
   (ref) => NameGeneratorNotifier(
     ref.read(errorsProvider),
@@ -19,7 +20,7 @@ class NameGeneratorNotifier extends ChangeNotifier {
   final ErrorNotifier _errorNotifier;
 
   NameGeneratorNotifier(this._errorNotifier) {
-    Future.delayed(_loadingDuration).then((value) {
+    Future.delayed(_kloadingTime).then((value) {
       loading = false;
       notifyListeners();
     });
@@ -32,8 +33,6 @@ class NameGeneratorNotifier extends ChangeNotifier {
 
   bool loading = true;
 
-  final _loadingDuration = Duration(seconds: 2);
-
   void onRewindPressed() async {
     loading = true;
     notifyListeners();
@@ -42,7 +41,7 @@ class NameGeneratorNotifier extends ChangeNotifier {
     animal = _kanimals[Random().nextInt(_kcolors.length - 1)];
     number = Random().nextInt(999);
 
-    await Future.delayed(_loadingDuration);
+    await Future.delayed(_kloadingTime);
 
     loading = false;
     notifyListeners();
@@ -50,14 +49,10 @@ class NameGeneratorNotifier extends ChangeNotifier {
 
   Future<bool> onProceedPressed() async {
     try {
-      final storage = LocalStorage();
-      final user = storage.user!;
+      final LocalStorage storage = LocalStorage();
+      final User user = storage.user!;
 
-      User newUser = User(
-        id: user.id,
-        rooms: user.rooms,
-        email: user.email,
-        tags: [],
+      User newUser = user.copyWith(
         nickname: '$color$animal$number',
       );
 

@@ -61,8 +61,8 @@ class _AuthProcessNotifier extends ChangeNotifier {
       _loadingNotifer.isLoading = true;
 
       await AuthService().signOut();
-      // ignore: unnecessary_statements
-      LocalStorage().user == null;
+
+      LocalStorage().user = null;
 
       _loadingNotifer.isLoading = false;
 
@@ -127,6 +127,7 @@ class _AuthProcessNotifier extends ChangeNotifier {
 
       model.User user = model.User(
         id: credential.user!.uid,
+        activeTags: [],
         email: email.trim(),
         nickname: '',
       );

@@ -1,16 +1,32 @@
 import 'dart:io';
 
+import 'package:anonymous_chat/providers/connectivity_provider.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sentry/sentry.dart';
 
 final errorsProvider = StateNotifierProvider(
-  (ref) => ErrorNotifier(),
+  (ref) => ErrorNotifier(
+    connectivityStream: ref.read(connectivityProvider.stream),
+  ),
 );
 
 class ErrorNotifier extends StateNotifier<String> {
-  ErrorNotifier() : super('');
+  ErrorNotifier({required Stream<ConnectivityResult> connectivityStream})
+      : super('') {
+    connectivityStream.listen(
+      (event) {
+        print(event);
+        if (event == ConnectivityResult.none) {
+          setError(message: 'Connection Lost');
+        } else {
+          setError(message: 'Back On Track');
+        }
+      },
+    );
+  }
 
   void setError({
     Object? exception,
@@ -25,7 +41,7 @@ class ErrorNotifier extends StateNotifier<String> {
       print(exception.code);
       print(exception.details);
       print(exception.message);
-    } else  if (exception is FirebaseException) {
+    } else if (exception is FirebaseException) {
       print(exception.code);
       print(exception.plugin);
       print(exception.message);
@@ -93,5 +109,30 @@ class ErrorNotifier extends StateNotifier<String> {
     await Future.delayed(Duration(seconds: seconds));
 
     state = '';
+  }
+
+  void submitError({
+    required Object exception,
+    required StackTrace stackTrace,
+    String? hint,
+  }) {
+    print(exception);
+    print(stackTrace);
+
+    if (exception is PlatformException) {
+      print(exception.code);
+      print(exception.details);
+      print(exception.message);
+    } else if (exception is FirebaseException) {
+      print(exception.code);
+      print(exception.plugin);
+      print(exception.message);
+    }
+
+    Sentry.captureException(
+      exception,
+      stackTrace: stackTrace,
+      hint: hint,
+    );
   }
 }

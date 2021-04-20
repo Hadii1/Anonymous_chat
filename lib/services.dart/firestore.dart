@@ -1,5 +1,6 @@
 import 'package:anonymous_chat/interfaces/ifirestore_service.dart';
 import 'package:anonymous_chat/models/message.dart';
+import 'package:anonymous_chat/models/room.dart';
 import 'package:anonymous_chat/models/tag.dart';
 import 'package:anonymous_chat/models/user.dart';
 
@@ -21,34 +22,57 @@ class FirestoreService implements IFirestoreService {
         .collection('Rooms')
         .doc(roomId)
         .collection('Messages')
-        .add(message.toMap());
+        .doc(message.id)
+        .set(
+          message.toMap(),
+        );
+  }
+
+  Future<Map<String, dynamic>> getRoom(String id) async {
+    DocumentSnapshot a = await _db.collection('Rooms').doc(id).get();
+    return a.data()!;
   }
 
   @override
-  Future<void> saveUserData({required User user}) async {
+  Future<void> saveUserData({required User user, List<Tag>? tags}) async {
     await _db.runTransaction((transaction) async {
       transaction.set(
         _db.collection('Users').doc(user.id),
-        user.toFirestoreMap(),
+        user.toMap(),
       );
-
-      for (Tag tag in user.tags) {
-        transaction.set(
-          _db.collection('Users').doc(user.id).collection('Tags').doc(tag.id),
-          tag.toMap(),
-        );
+      if (tags != null) {
+        for (Tag tag in tags) {
+          transaction.set(
+            _db.collection('Users').doc(user.id).collection('Tags').doc(tag.id),
+            tag.toMap(),
+          );
+        }
       }
     });
   }
 
-  Future<List<Map<String, dynamic>?>> getUserChats(
-      {required String userId}) async {
-    QuerySnapshot data = await _db
+  @override
+  Stream<List<Map<String, dynamic>?>> userRooms({required String userId}) {
+    return _db
         .collection('Rooms')
-        .where('Participants', arrayContains: userId)
-        .get();
+        .where('participants', arrayContains: userId)
+        .snapshots()
+        .map(
+          (QuerySnapshot q) => q.docChanges
+              .where((element) => !element.doc.metadata.isFromCache)
+              .map((DocumentChange e) => e.doc.data()!)
+              .toList(),
+        );
+  }
 
-    return data.docs.map((QueryDocumentSnapshot e) => e.data()).toList();
+  @override
+  Future<List<Map<String, dynamic>>> getUserRooms(
+      {required String userId}) async {
+    var a = await _db
+        .collection('Rooms')
+        .where('participants', arrayContains: userId)
+        .get();
+    return a.docs.map((e) => e.data()!).toList();
   }
 
   @override
@@ -175,18 +199,63 @@ class FirestoreService implements IFirestoreService {
   }
 
   @override
-  String getReference(String collection) => _db.collection(collection).doc().id;
-
-  @override
-  Stream<List<Map<String, dynamic>>> roomMessages({required String roomId}) {
+  Stream<List<Map<String, dynamic>>> roomMessagesStream(
+      {required String roomId}) {
     return _db
         .collection('Rooms')
-        .doc('id')
+        .doc(roomId)
         .collection('Messages')
         .snapshots()
         .map(
-          (QuerySnapshot event) =>
-              event.docs.map((QueryDocumentSnapshot e) => e.data()!).toList(),
+          (QuerySnapshot event) => event.docChanges
+              .where((element) => !element.doc.metadata.isFromCache)
+              .map((DocumentChange e) => e.doc.data()!)
+              .toList(),
+        );
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getAllMessages(
+      {required String roomId}) async {
+    var a = await _db
+        .collection('Rooms')
+        .doc(roomId)
+        .collection('Messages')
+        .get(GetOptions(source: Source.server));
+
+    return a.docs.map((e) => e.data()!).toList();
+  }
+
+  @override
+  Future<void> saveNewRoom({required Room room}) async {
+    await _db.collection('Rooms').doc(room.id).set(
+          room.toFirestoreMap(),
+        );
+  }
+
+  @override
+  String getRoomReference() => _db.collection('Rooms').doc().id;
+
+  @override
+  String getMessageReference({
+    required String roomId,
+  }) =>
+      _db.collection('Rooms').doc(roomId).collection('Messages').doc().id;
+
+  @override
+  String getTagReference() => _db.collection('Tags').doc().id;
+
+  @override
+  Stream<Map<String, dynamic>> roomLatestMessage({required String roomId}) {
+    return _db
+        .collection('Rooms')
+        .doc(roomId)
+        .collection('Messages')
+        .orderBy('time')
+        .limit(1)
+        .snapshots()
+        .map(
+          (QuerySnapshot q) => q.docs.first.data()!,
         );
   }
 }

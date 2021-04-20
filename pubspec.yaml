@@ -31,6 +31,7 @@ dependencies:
   sentry: ^4.0.6
   shared_preferences: ^2.0.4
   tuple: ^2.0.0
+  connectivity_plus: ^1.0.0
 
   flutter_spinkit: ^5.0.0
   bubble: ^1.2.1

@@ -102,7 +102,7 @@ class ApplicationStyle {
       wordSpacing: 1.5,
     ),
     appBarTextStyle: TextStyle(
-      fontSize: 24,
+      fontSize: 21,
       color: Colors.white,
     ),
     title2Style: TextStyle(

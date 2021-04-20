@@ -1,15 +1,29 @@
+import 'package:anonymous_chat/models/room.dart';
 import 'package:anonymous_chat/models/tag.dart';
 import 'package:anonymous_chat/models/user.dart';
-import 'package:anonymous_chat/providers/user_provider.dart';
+import 'package:anonymous_chat/providers/tags_provider.dart';
+import 'package:anonymous_chat/providers/user_rooms_provider.dart';
 import 'package:anonymous_chat/services.dart/firestore.dart';
 import 'package:anonymous_chat/services.dart/local_storage.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tuple/tuple.dart';
 
-final suggestedContactsProvider = FutureProvider.autoDispose<List<User>>(
+final suggestedContactsProvider =
+    FutureProvider.autoDispose<List<Tuple2<User, List<Tag>>>>(
   (ref) async {
-    List<Tag> selectedTags = ref.watch(userTagsProvider.state);
-    List<User> users = [];
+    List<String> userContacts = [];
+    List<Room> currentRooms = ref.watch(userRoomsProvider).data!.value;
+
+    for (Room r in currentRooms) {
+      userContacts.addAll(r.participants);
+    }
+    List<Tuple2<User, List<Tag>>> suggestions = [];
+
+    List<Tag> selectedTags = ref
+        .watch(tagsProvider(LocalStorage().user!.id).state)
+        .where((t) => t.isActive)
+        .toList();
 
     if (selectedTags.isEmpty) return [];
 
@@ -18,12 +32,23 @@ final suggestedContactsProvider = FutureProvider.autoDispose<List<User>>(
     );
 
     for (Map<String, dynamic> map in data) {
-      User user = User.fromFirestoreMap(map);
-      users.add(user);
+      User user = User.fromMap(map);
+      suggestions.add(
+        Tuple2(
+          user,
+          selectedTags
+              .where((Tag t) => user.activeTags.contains(t.id))
+              .toList(),
+        ),
+      );
     }
 
-    users.removeWhere((element) => element.id == LocalStorage().user!.id);
+    suggestions.removeWhere(
+      (Tuple2<User, List<Tag>> t) =>
+          t.item1.id == LocalStorage().user!.id ||
+          userContacts.contains(t.item1.id),
+    );
 
-    return users;
+    return suggestions;
   },
 );

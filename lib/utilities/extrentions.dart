@@ -4,7 +4,8 @@ extension DateTimeFormatting on int {
     Duration difference = time.difference(DateTime.now());
     if (difference.inDays < 1) {
       bool am = time.hour < 12;
-      return '${time.hour}:${time.minute} ${am ? 'AM' : 'PM'}';
+      int hour = time.hour < 12 ? time.hour : time.hour - 12;
+      return '$hour:${time.minute.toString().length == 1 ? '0${time.minute}' : time.minute} ${am ? 'AM' : 'PM'}';
     } else if (difference.inDays == 1) {
       return 'Yesterday';
     } else if (difference.inDays > 7) {

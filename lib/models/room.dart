@@ -1,47 +1,71 @@
+import 'package:flutter/foundation.dart';
+
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/user.dart';
 
 class Room {
-  final List<Message> messages;
-  final List<User> participants;
+  final List<Message>? messages;
+  final List<String> participants;
+  final List<User>? users;
   final String id;
 
   Room({
-    required this.messages,
+    this.messages,
+    this.users,
     required this.participants,
     required this.id,
   });
 
-  Map<String, dynamic> toMap() {
+  // Room copyWith({
+  //   List<Message>? messages,
+  //   List<String>? participants,
+  //   String? id,
+  //   List<User>? users,
+  // }) {
+  //   return Room(
+  //     messages: messages ?? this.messages,
+  //     users: users ?? this.users,
+  //     participants: participants ?? this.participants,
+  //     id: id ?? this.id,
+  //   );
+  // }
+
+  Map<String, dynamic> toFirestoreMap() {
     return {
-      'messages': messages.map((x) => x.toMap()).toList(),
-      'participants': participants.map((User user) => user.toMap()).toList(),
+      'participants': participants,
       'id': id,
     };
   }
 
-  factory Room.startChat({
-    required String id,
-    required List<User> users,
-  }) =>
-      Room(
-        messages: [],
-        participants: users,
-        id: id,
-      );
-
-  factory Room.fromMap(Map<String, dynamic> map) {
+  factory Room.fromFirestoreMap(Map<String, dynamic> map) {
     return Room(
-      messages:
-          List<Message>.from(map['messages']?.map((x) => Message.fromMap(x))),
-      participants: (map['participants'] as List<Map<String, dynamic>>)
-          .map((Map<String, dynamic> map) => User.fromMap(map))
-          .toList(),
+      participants: List<String>.from(map['participants']),
       id: map['id'],
     );
   }
 
-  // String toJson() => json.encode(toMap());
 
-  // factory Room.fromJson(String source) => Room.fromMap(json.decode(source));
+  @override
+  String toString() {
+    return 'Room(messages: $messages, participants: $participants, users: $users, id: $id)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+  
+    return other is Room &&
+      listEquals(other.messages, messages) &&
+      listEquals(other.participants, participants) &&
+      listEquals(other.users, users) &&
+      other.id == id;
+  }
+
+  @override
+  int get hashCode {
+    return messages.hashCode ^
+      participants.hashCode ^
+      users.hashCode ^
+      id.hashCode;
+  }
 }
