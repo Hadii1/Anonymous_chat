@@ -7,6 +7,7 @@ class Message {
   final String id;
   // Milliseconds since epoch
   final int time;
+  bool isRead;
 
   Message({
     required this.sender,
@@ -14,6 +15,7 @@ class Message {
     required this.content,
     required this.time,
     required this.id,
+    this.isRead = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -23,6 +25,7 @@ class Message {
       'content': content,
       'time': time,
       'id': id,
+      'isRead': isRead,
     };
   }
 
@@ -33,6 +36,7 @@ class Message {
       recipient: map['recipient'],
       content: map['content'],
       time: map['time'],
+      isRead: map['isRead']?? false,
     );
   }
 

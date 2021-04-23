@@ -13,7 +13,7 @@ abstract class IFirestoreService {
   Future<void> writeMessage({required String roomId, required Message message});
 
   Future<List<Map<String, dynamic>>> getUserRooms({required String userId});
-  
+
   Future<List<Map<String, dynamic>>> getAllMessages({required String roomId});
 
   Stream<List<Map<String, dynamic>?>> userRooms({required String userId});
@@ -31,6 +31,9 @@ abstract class IFirestoreService {
   Stream<List<Map<String, dynamic>>> roomMessagesStream(
       {required String roomId});
 
+  Stream<List<Map<String, dynamic>>> roomMessagesReadStatus(
+      {required String roomId});
+
   Future<void> onUserDiactivatingTag(
       {required Tag tag, required String userId});
 
@@ -45,4 +48,6 @@ abstract class IFirestoreService {
   String getMessageReference({
     required String roomId,
   });
+
+  void markMessageAsRead({required String roomId, required String messageId});
 }

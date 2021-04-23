@@ -16,6 +16,7 @@ import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/utilities/extrentions.dart';
 import 'package:bubble/bubble.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ChatBubble extends StatelessWidget {
@@ -61,11 +62,9 @@ class ChatBubble extends StatelessWidget {
           nipHeight: 8,
           nipWidth: 6,
           elevation: 8,
-          borderColor: isSuccesful
-              ? isReceived
-                  ? style.borderColor
-                  : style.sentMessageBubbleColor
-              : style.borderColor,
+          borderColor: isReceived || !isSuccesful
+              ? style.borderColor
+              : style.accentColor,
           borderWidth: 0.3,
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -86,7 +85,28 @@ class ChatBubble extends StatelessWidget {
                     fontSize: 9,
                   ),
                 ),
-              )
+              ),
+              isReceived
+                  ? SizedBox.shrink()
+                  : Padding(
+                      padding: const EdgeInsets.only(left: 4.0, top: 4),
+                      child: AnimatedSwitcher(
+                        duration: Duration(milliseconds: 200),
+                        child: isSuccesful
+                            ? Icon(
+                                CupertinoIcons.check_mark,
+                                color: message.isRead
+                                    ? style.accentColor
+                                    : Colors.white,
+                                size: 12,
+                              )
+                            : Icon(
+                                CupertinoIcons.clock,
+                                color: Colors.white,
+                                size: 12,
+                              ),
+                      ),
+                    )
             ],
           ),
           color: style.backgroundColor,

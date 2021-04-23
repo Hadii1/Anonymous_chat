@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/user.dart';
 
@@ -44,7 +42,6 @@ class Room {
     );
   }
 
-
   @override
   String toString() {
     return 'Room(messages: $messages, participants: $participants, users: $users, id: $id)';
@@ -53,19 +50,15 @@ class Room {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-  
-    return other is Room &&
-      listEquals(other.messages, messages) &&
-      listEquals(other.participants, participants) &&
-      listEquals(other.users, users) &&
-      other.id == id;
+
+    return other is Room && other.id == id;
   }
 
   @override
   int get hashCode {
     return messages.hashCode ^
-      participants.hashCode ^
-      users.hashCode ^
-      id.hashCode;
+        participants.hashCode ^
+        users.hashCode ^
+        id.hashCode;
   }
 }

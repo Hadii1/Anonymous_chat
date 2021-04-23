@@ -8,35 +8,63 @@ import 'package:anonymous_chat/services.dart/local_storage.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final latestActiveChatProvider = StateNotifierProvider(
-  (ref) => LatestActiveChat(),
+final chatsSorterProvider = StateNotifierProvider(
+  (ref) => ChatsSorter(ref.watch(userRoomsProvider).data!.value),
 );
 
-class LatestActiveChat extends StateNotifier<Room?> {
-  LatestActiveChat() : super(null);
+class ChatsSorter extends StateNotifier<List<Room>> {
+  ChatsSorter(this.rooms) : super(rooms);
 
-  final StreamController<Room> _latestRoomCtrl = StreamController();
+  late List<Room> rooms;
 
-  set currentState(Room room) {
-    state = room;
-    _latestRoomCtrl.add(room);
+  final StreamController<int> _indexCtrl = StreamController.broadcast();
+
+  Stream<int> get changedIndex => _indexCtrl.stream;
+
+  set latestActiveChat(Room room) {
+    int index = rooms.indexOf(room);
+    if (index != -1) {
+      _indexCtrl.sink.add(index);
+      rooms.removeAt(index);
+      rooms.insert(0, room);
+
+      state = rooms;
+    }
   }
 
-  Stream<Room> get mostRecentRoom => _latestRoomCtrl.stream;
+  void dispose() {
+    super.dispose();
+    _indexCtrl.close();
+  }
 }
 
-final newMessageChannel = StreamProvider.family<Message, String>((ref, id) {
+// Notifies the sender when a message is received by the recipient
+// or when the recipient gets a message
+final newMessageChannel = StreamProvider.family<Message?, String>((ref, id) {
   final _firestore = FirestoreService();
 
   return _firestore
       .roomMessagesStream(roomId: id)
       .skip(1)
       .map((List<Map<String, dynamic>> data) {
-    if (data.length != 1) print(data.length);
     assert(data.length <= 1);
-
+    if (data.length == 0) return null;
     Message message = Message.fromMap(data.first);
 
+    return message;
+  });
+});
+
+// Notifies the sender when a message is read by the recipient
+final readMessagesChannel = StreamProvider.family<Message?, String>((ref, id) {
+  final _firestore = FirestoreService();
+  return _firestore
+      .roomMessagesReadStatus(roomId: id)
+      .skip(1)
+      .map((List<Map<String, dynamic>> event) {
+    assert(event.length <= 1);
+    if (event.length == 0) return null;
+    Message message = Message.fromMap(event.first);
     return message;
   });
 });
@@ -86,10 +114,11 @@ final userRoomsProvider = StreamProvider<List<Room>>(
           ),
         );
       }
-
-      rooms.sort(
-        (a, b) => -a.messages!.last.time.compareTo(b.messages!.last.time),
-      );
+      if (rooms.isNotEmpty) {
+        rooms.sort(
+          (a, b) => -a.messages!.last.time.compareTo(b.messages!.last.time),
+        );
+      }
 
       yield rooms;
     }

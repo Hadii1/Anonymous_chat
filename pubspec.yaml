@@ -25,6 +25,7 @@ dependencies:
   firebase_core: "^1.0.1"
   cloud_firestore: ^1.0.1
   firebase_auth: ^1.0.1
+  implicitly_animated_reorderable_list: ^0.4.0
 
   algolia: ^1.0.1
   flutter_riverpod: ^0.13.1

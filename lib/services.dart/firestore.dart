@@ -208,6 +208,7 @@ class FirestoreService implements IFirestoreService {
         .snapshots()
         .map(
           (QuerySnapshot event) => event.docChanges
+              .where((change) => change.type == DocumentChangeType.added)
               .where((element) => !element.doc.metadata.isFromCache)
               .map((DocumentChange e) => e.doc.data()!)
               .toList(),
@@ -256,6 +257,34 @@ class FirestoreService implements IFirestoreService {
         .snapshots()
         .map(
           (QuerySnapshot q) => q.docs.first.data()!,
+        );
+  }
+
+  @override
+  void markMessageAsRead({required String roomId, required String messageId}) {
+    _db
+        .collection('Rooms')
+        .doc(roomId)
+        .collection('Messages')
+        .doc(messageId)
+        .update(
+      {'isRead': true},
+    );
+  }
+
+  Stream<List<Map<String, dynamic>>> roomMessagesReadStatus(
+      {required String roomId}) {
+    return _db
+        .collection('Rooms')
+        .doc(roomId)
+        .collection('Messages')
+        .snapshots()
+        .map(
+          (event) => event.docChanges
+              .where((element) => element.type == DocumentChangeType.modified)
+              .where((element) => !element.doc.metadata.isFromCache)
+              .map((e) => e.doc.data()!)
+              .toList(),
         );
   }
 }
