@@ -56,6 +56,7 @@ class ChatNotifier extends ChangeNotifier {
             allMessages.add(msg);
             read(chatsSorterProvider).latestActiveChat = room;
             if (isChatPageOpened) {
+              msg.isRead = true;
               _firestore.markMessageAsRead(roomId: room.id, messageId: msg.id);
             }
           } else {
@@ -69,10 +70,11 @@ class ChatNotifier extends ChangeNotifier {
 
     read(readMessagesChannel(room.id).stream).listen((Message? msg) {
       if (msg != null && isSent(msg)) {
-        room.messages!.firstWhere((Message message) => message == msg).isRead =
-            msg.isRead;
-        notifyListeners();
+        Message current =
+            room.messages!.firstWhere((Message message) => message == msg);
+        current.isRead = msg.isRead;
 
+        notifyListeners();
       }
     });
   }
@@ -80,11 +82,12 @@ class ChatNotifier extends ChangeNotifier {
   // Mark all messages as read
   void onChatOpened() {
     if (!_newRoom) {
-      List<Message> unreadMessages =
-          room.messages!.where((m) => isReceived(m) && !m.isRead).toList();
-
-      unreadMessages.forEach((m) {
-        _firestore.markMessageAsRead(roomId: room.id, messageId: m.id);
+      room.messages!
+          .where((m) => isReceived(m) && !m.isRead)
+          .toList()
+          .forEach((e) {
+        e.isRead = true;
+        _firestore.markMessageAsRead(roomId: room.id, messageId: e.id);
       });
 
       notifyListeners();

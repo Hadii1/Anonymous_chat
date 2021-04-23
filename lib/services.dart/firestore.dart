@@ -205,7 +205,7 @@ class FirestoreService implements IFirestoreService {
         .collection('Rooms')
         .doc(roomId)
         .collection('Messages')
-        .snapshots()
+        .snapshots(includeMetadataChanges: true)
         .map(
           (QuerySnapshot event) => event.docChanges
               .where((change) => change.type == DocumentChangeType.added)
@@ -286,5 +286,9 @@ class FirestoreService implements IFirestoreService {
               .map((e) => e.doc.data()!)
               .toList(),
         );
+  }
+
+  Future<void> deleteAccount({required userId}) async {
+    await _db.collection('Users').doc(userId).delete();
   }
 }

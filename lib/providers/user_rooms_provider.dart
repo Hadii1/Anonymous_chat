@@ -47,6 +47,7 @@ final newMessageChannel = StreamProvider.family<Message?, String>((ref, id) {
       .roomMessagesStream(roomId: id)
       .skip(1)
       .map((List<Map<String, dynamic>> data) {
+        
     assert(data.length <= 1);
     if (data.length == 0) return null;
     Message message = Message.fromMap(data.first);

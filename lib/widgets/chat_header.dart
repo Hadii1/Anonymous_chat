@@ -22,6 +22,9 @@ class ChatHeader extends StatelessWidget {
     ApplicationStyle style = InheritedAppTheme.of(context).style;
 
     Message lastMessage = room.messages!.last;
+    Message lastReceivedMessage = room.messages!
+        .where((m) => m.recipient == LocalStorage().user!.id)
+        .last;
 
     return InkWell(
       splashColor: Colors.transparent,
@@ -47,10 +50,9 @@ class ChatHeader extends StatelessWidget {
             height: 50,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: !lastMessage.isRead &&
-                      lastMessage.sender != LocalStorage().user!.id
-                  ? style.accentColor.withOpacity(0.2)
-                  : Colors.transparent,
+              color: lastReceivedMessage.isRead
+                  ? Colors.transparent
+                  : style.accentColor.withOpacity(0.2),
               border: Border.all(
                 width: 0.2,
                 color: style.borderColor,

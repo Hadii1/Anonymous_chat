@@ -50,4 +50,6 @@ abstract class IFirestoreService {
   });
 
   void markMessageAsRead({required String roomId, required String messageId});
+
+  Future<void> deleteAccount({required userId});
 }
