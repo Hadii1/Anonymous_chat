@@ -1,16 +1,3 @@
 # anonymous_chat
 
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+A chat app that's based on anonymous users matching up by specific tags they choose. The chat is constrained to text messages (currently). It includes read recipients. Tags matching is combined with algolia search service for best results. All data is stored in firestore and uses it's apis for real time updates.
