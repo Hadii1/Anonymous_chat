@@ -28,10 +28,10 @@ abstract class IFirestoreService {
 
   Stream<List<Map<String, dynamic>?>> userTagsChanges({required String userId});
 
-  Stream<List<Map<String, dynamic>>> roomMessagesStream(
+  Stream<List<Map<String, dynamic>>> newMessagesStream(
       {required String roomId});
 
-  Stream<List<Map<String, dynamic>>> roomMessagesReadStatus(
+  Stream<List<Map<String, dynamic>>> readRecipientChangesStream(
       {required String roomId});
 
   Future<void> onUserDiactivatingTag(
@@ -39,7 +39,7 @@ abstract class IFirestoreService {
 
   Future<void> onUserActivatingTag({required Tag tag, required String userId});
 
-  Stream<Map<String, dynamic>> roomLatestMessage({required String roomId});
+  // Stream<Map<String, dynamic>> roomLatestMessage({required String roomId});
 
   String getRoomReference();
 

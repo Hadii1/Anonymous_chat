@@ -5,6 +5,7 @@ import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/providers/user_rooms_provider.dart';
 import 'package:anonymous_chat/services.dart/firestore.dart';
 import 'package:anonymous_chat/services.dart/local_storage.dart';
+import 'package:anonymous_chat/utilities/extrentions.dart';
 
 import 'package:flutter/foundation.dart';
 
@@ -35,26 +36,33 @@ class ChatNotifier extends ChangeNotifier {
 
   late List<Message> allMessages;
   late List<Message> successfullySent;
+  late Message lastMessage;
 
   late bool _newRoom;
 
   bool isChatPageOpened = false;
 
   void initializeRoom() {
-    allMessages = room.messages ?? [];
+    allMessages = room.messages;
 
     successfullySent = List.from(
-      room.messages?.where((element) => !isReceived(element)).toList() ?? [],
+      room.messages.where((m) => m.isSent()).toList(),
     );
+
+    if (allMessages.isNotEmpty) {
+      lastMessage = allMessages.last;
+    }
 
     _newRoom = allMessages.isEmpty;
 
     read(newMessageChannel(room.id).stream).listen(
       (Message? msg) {
         if (msg != null) {
-          if (isReceived(msg)) {
+          lastMessage = msg;
+          if (msg.isReceived()) {
             allMessages.add(msg);
             read(chatsSorterProvider).latestActiveChat = room;
+
             if (isChatPageOpened) {
               msg.isRead = true;
               _firestore.markMessageAsRead(roomId: room.id, messageId: msg.id);
@@ -69,9 +77,9 @@ class ChatNotifier extends ChangeNotifier {
     );
 
     read(readMessagesChannel(room.id).stream).listen((Message? msg) {
-      if (msg != null && isSent(msg)) {
+      if (msg != null && msg.isSent()) {
         Message current =
-            room.messages!.firstWhere((Message message) => message == msg);
+            room.messages.firstWhere((Message message) => message == msg);
         current.isRead = msg.isRead;
 
         notifyListeners();
@@ -82,8 +90,8 @@ class ChatNotifier extends ChangeNotifier {
   // Mark all messages as read
   void onChatOpened() {
     if (!_newRoom) {
-      room.messages!
-          .where((m) => isReceived(m) && !m.isRead)
+      room.messages
+          .where((m) => m.isReceived() && !m.isRead)
           .toList()
           .forEach((e) {
         e.isRead = true;
@@ -109,11 +117,8 @@ class ChatNotifier extends ChangeNotifier {
 
       if (!_newRoom) {
         read(chatsSorterProvider).latestActiveChat = room;
-      }
-
-      notifyListeners();
-
-      if (_newRoom) {
+        _firestore.writeMessage(roomId: room.id, message: message);
+      } else {
         _newRoom = false;
 
         await _firestore.writeMessage(roomId: room.id, message: message);
@@ -123,8 +128,6 @@ class ChatNotifier extends ChangeNotifier {
         );
 
         read(chatsSorterProvider).latestActiveChat = room;
-      } else {
-        await _firestore.writeMessage(roomId: room.id, message: message);
       }
 
       notifyListeners();
@@ -150,16 +153,13 @@ class ChatNotifier extends ChangeNotifier {
 
   bool isSuccessful(Message message) => successfullySent.contains(message);
 
-  bool isReceived(Message message) =>
-      message.recipient == LocalStorage().user!.id;
-
-  bool isSent(Message message) => !isReceived(message);
-
   bool isLatestMessage(Message message) =>
       allMessages
-          .where((Message m) => isReceived(message)
-              ? m.recipient == LocalStorage().user!.id
-              : m.recipient != LocalStorage().user!.id)
+          .where(
+            (Message m) => message.isReceived()
+                ? m.recipient == LocalStorage().user!.id
+                : m.recipient != LocalStorage().user!.id,
+          )
           .last
           .id ==
       message.id;

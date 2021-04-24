@@ -8,6 +8,7 @@ import 'package:anonymous_chat/widgets/animated_widgets.dart';
 import 'package:anonymous_chat/widgets/chat_bubble.dart';
 import 'package:anonymous_chat/widgets/chat_message_field.dart';
 import 'package:anonymous_chat/widgets/keyboard_hider.dart';
+import 'package:anonymous_chat/utilities/extrentions.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -132,8 +133,7 @@ class _ChatRoomState extends State<ChatRoom> {
                                       message: message,
                                       isLatestMessage:
                                           chatNotifier.isLatestMessage(message),
-                                      isReceived:
-                                          chatNotifier.isReceived(message),
+                                      isReceived: message.isReceived(),
                                       isSuccesful:
                                           chatNotifier.isSuccessful(message),
                                     ),

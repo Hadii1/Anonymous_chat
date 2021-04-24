@@ -15,6 +15,12 @@
             "request": "launch",
             "type": "dart",
             "deviceId": "7D628FA0-81AE-4B31-8F81-A16ABC2828F6"
+        },
+        {
+            "name": "Khaled",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "ff02d5fa306270205f3da97e1e6d50efdd0631bc"
         }
     ],
     "compounds": [

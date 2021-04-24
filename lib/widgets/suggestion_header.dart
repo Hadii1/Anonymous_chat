@@ -27,6 +27,7 @@ class SuggestedContact extends StatelessWidget {
     String id = FirestoreService().getRoomReference();
     Room defaultRoom = Room(
       id: id,
+      messages: [],
       participants: [
         LocalStorage().user!.id,
         suggestedUser.id,

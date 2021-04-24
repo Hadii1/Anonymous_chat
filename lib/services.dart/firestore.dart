@@ -28,10 +28,10 @@ class FirestoreService implements IFirestoreService {
         );
   }
 
-  Future<Map<String, dynamic>> getRoom(String id) async {
-    DocumentSnapshot a = await _db.collection('Rooms').doc(id).get();
-    return a.data()!;
-  }
+  // Future<Map<String, dynamic>> getRoom(String id) async {
+  //   DocumentSnapshot a = await _db.collection('Rooms').doc(id).get();
+  //   return a.data()!;
+  // }
 
   @override
   Future<void> saveUserData({required User user, List<Tag>? tags}) async {
@@ -199,7 +199,7 @@ class FirestoreService implements IFirestoreService {
   }
 
   @override
-  Stream<List<Map<String, dynamic>>> roomMessagesStream(
+  Stream<List<Map<String, dynamic>>> newMessagesStream(
       {required String roomId}) {
     return _db
         .collection('Rooms')
@@ -215,14 +215,27 @@ class FirestoreService implements IFirestoreService {
         );
   }
 
-  @override
-  Future<List<Map<String, dynamic>>> getAllMessages(
-      {required String roomId}) async {
-    var a = await _db
+  Stream<List<Map<String, dynamic>>> readRecipientChangesStream(
+      {required String roomId}) {
+    return _db
         .collection('Rooms')
         .doc(roomId)
         .collection('Messages')
-        .get(GetOptions(source: Source.server));
+        .snapshots()
+        .map(
+          (event) => event.docChanges
+              .where((element) => element.type == DocumentChangeType.modified)
+              .where((element) => !element.doc.metadata.isFromCache)
+              .map((e) => e.doc.data()!)
+              .toList(),
+        );
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getAllMessages(
+      {required String roomId}) async {
+    var a =
+        await _db.collection('Rooms').doc(roomId).collection('Messages').get();
 
     return a.docs.map((e) => e.data()!).toList();
   }
@@ -246,19 +259,19 @@ class FirestoreService implements IFirestoreService {
   @override
   String getTagReference() => _db.collection('Tags').doc().id;
 
-  @override
-  Stream<Map<String, dynamic>> roomLatestMessage({required String roomId}) {
-    return _db
-        .collection('Rooms')
-        .doc(roomId)
-        .collection('Messages')
-        .orderBy('time')
-        .limit(1)
-        .snapshots()
-        .map(
-          (QuerySnapshot q) => q.docs.first.data()!,
-        );
-  }
+  // @override
+  // Stream<Map<String, dynamic>> roomLatestMessage({required String roomId}) {
+  //   return _db
+  //       .collection('Rooms')
+  //       .doc(roomId)
+  //       .collection('Messages')
+  //       .orderBy('time')
+  //       .limit(1)
+  //       .snapshots()
+  //       .map(
+  //         (QuerySnapshot q) => q.docs.first.data()!,
+  //       );
+  // }
 
   @override
   void markMessageAsRead({required String roomId, required String messageId}) {
@@ -270,22 +283,6 @@ class FirestoreService implements IFirestoreService {
         .update(
       {'isRead': true},
     );
-  }
-
-  Stream<List<Map<String, dynamic>>> roomMessagesReadStatus(
-      {required String roomId}) {
-    return _db
-        .collection('Rooms')
-        .doc(roomId)
-        .collection('Messages')
-        .snapshots()
-        .map(
-          (event) => event.docChanges
-              .where((element) => element.type == DocumentChangeType.modified)
-              .where((element) => !element.doc.metadata.isFromCache)
-              .map((e) => e.doc.data()!)
-              .toList(),
-        );
   }
 
   Future<void> deleteAccount({required userId}) async {

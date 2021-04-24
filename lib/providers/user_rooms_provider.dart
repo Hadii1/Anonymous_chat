@@ -44,10 +44,9 @@ final newMessageChannel = StreamProvider.family<Message?, String>((ref, id) {
   final _firestore = FirestoreService();
 
   return _firestore
-      .roomMessagesStream(roomId: id)
+      .newMessagesStream(roomId: id)
       .skip(1)
       .map((List<Map<String, dynamic>> data) {
-        
     assert(data.length <= 1);
     if (data.length == 0) return null;
     Message message = Message.fromMap(data.first);
@@ -60,7 +59,7 @@ final newMessageChannel = StreamProvider.family<Message?, String>((ref, id) {
 final readMessagesChannel = StreamProvider.family<Message?, String>((ref, id) {
   final _firestore = FirestoreService();
   return _firestore
-      .roomMessagesReadStatus(roomId: id)
+      .readRecipientChangesStream(roomId: id)
       .skip(1)
       .map((List<Map<String, dynamic>> event) {
     assert(event.length <= 1);
@@ -117,7 +116,7 @@ final userRoomsProvider = StreamProvider<List<Room>>(
       }
       if (rooms.isNotEmpty) {
         rooms.sort(
-          (a, b) => -a.messages!.last.time.compareTo(b.messages!.last.time),
+          (a, b) => -a.messages.last.time.compareTo(b.messages.last.time),
         );
       }
 

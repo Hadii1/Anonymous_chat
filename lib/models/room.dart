@@ -2,14 +2,14 @@ import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/user.dart';
 
 class Room {
-  final List<Message>? messages;
+  final List<Message> messages;
   final List<String> participants;
   final List<User>? users;
   final String id;
 
   Room({
-    this.messages,
     this.users,
+    required this.messages,
     required this.participants,
     required this.id,
   });
@@ -38,6 +38,7 @@ class Room {
   factory Room.fromFirestoreMap(Map<String, dynamic> map) {
     return Room(
       participants: List<String>.from(map['participants']),
+      messages: [],
       id: map['id'],
     );
   }

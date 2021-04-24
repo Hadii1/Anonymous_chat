@@ -1,3 +1,11 @@
+import 'package:anonymous_chat/models/message.dart';
+import 'package:anonymous_chat/services.dart/local_storage.dart';
+
+extension MessageDirection on Message {
+  bool isReceived() => this.recipient == LocalStorage().user!.id;
+  bool isSent() => !this.isReceived();
+}
+
 extension DateTimeFormatting on int {
   String formatDate() {
     DateTime time = DateTime.fromMillisecondsSinceEpoch(this);
