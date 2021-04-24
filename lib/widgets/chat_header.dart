@@ -76,6 +76,7 @@ class ChatHeader extends StatelessWidget {
                   children: [
                     Hero(
                       tag: '${other.id}${other.nickname}',
+                      transitionOnUserGestures: true,
                       child: Material(
                         type: MaterialType.transparency,
                         child: Text(

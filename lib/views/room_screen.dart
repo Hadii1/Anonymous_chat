@@ -74,13 +74,20 @@ class _ChatRoomState extends State<ChatRoom> {
                           color: style.accentColor,
                         ),
                       ),
-                      Hero(
-                        tag: '${other.id}${other.nickname}',
-                        child: Material(
-                          type: MaterialType.transparency,
-                          child: Text(
-                            other.nickname,
-                            style: style.appBarTextStyle,
+                      Expanded(
+                        child: Hero(
+                          tag: '${other.id}${other.nickname}',
+                          transitionOnUserGestures: true,
+                          child: Material(
+                            type: MaterialType.transparency,
+                            child: Text(
+                              other.nickname,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 20,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
                         ),
                       ),
