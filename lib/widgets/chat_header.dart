@@ -49,7 +49,7 @@ class ChatHeader extends StatelessWidget {
               shape: BoxShape.circle,
               color: lastMessage.isSent() || lastMessage.isRead
                   ? Colors.transparent
-                  : style.accentColor.withOpacity(0.2),
+                  : style.accentColor.withOpacity(0.5),
               border: Border.all(
                 width: 0.2,
                 color: style.borderColor,

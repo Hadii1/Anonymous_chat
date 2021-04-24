@@ -19,11 +19,9 @@ import 'package:flutter/material.dart';
 
 class MessageBox extends StatefulWidget {
   final Function(String) onSendPressed;
-  final Function(bool) onFocusChanged;
 
   const MessageBox({
     required this.onSendPressed,
-    required this.onFocusChanged,
   });
 
   @override
@@ -32,24 +30,13 @@ class MessageBox extends StatefulWidget {
 
 class _MessageBoxState extends State<MessageBox> {
   final _controller = TextEditingController();
-  final _focusNode = FocusNode();
+
   @override
   void initState() {
-    _focusNode.addListener(() {
-      widget.onFocusChanged(_focusNode.hasPrimaryFocus);
-    });
-
     _controller.addListener(() {
       setState(() {});
     });
     super.initState();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    _focusNode.dispose();
-    super.dispose();
   }
 
   @override
@@ -69,7 +56,6 @@ class _MessageBoxState extends State<MessageBox> {
             Expanded(
               child: TextField(
                 autocorrect: false,
-                focusNode: _focusNode,
                 cursorColor: style.accentColor,
                 style: style.bodyText,
                 controller: _controller,

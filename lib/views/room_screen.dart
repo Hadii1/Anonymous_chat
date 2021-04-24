@@ -31,20 +31,9 @@ class _ChatRoomState extends State<ChatRoom> {
 
   final _scrollController = ScrollController();
 
-  void _animatedToBottomMessages() {
-    WidgetsBinding.instance!.addPostFrameCallback((_) {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: Duration(milliseconds: 250),
-        curve: Curves.easeOutCirc,
-      );
-    });
-  }
-
   @override
   void initState() {
     super.initState();
-    _animatedToBottomMessages();
 
     WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
       context.read(chattingProvider(widget.room)).onChatOpened();
@@ -110,6 +99,7 @@ class _ChatRoomState extends State<ChatRoom> {
               Expanded(
                 child: KeyboardHider(
                   child: SingleChildScrollView(
+                    reverse: true,
                     controller: _scrollController,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
@@ -127,15 +117,18 @@ class _ChatRoomState extends State<ChatRoom> {
                                       chatNotifier.allMessages[index];
 
                                   return CustomSlide(
-                                    duration: Duration(milliseconds: 150),
+                                    duration: Duration(milliseconds: 250),
                                     startOffset: Offset(0, 1),
-                                    child: ChatBubble(
-                                      message: message,
-                                      isLatestMessage:
-                                          chatNotifier.isLatestMessage(message),
-                                      isReceived: message.isReceived(),
-                                      isSuccesful:
-                                          chatNotifier.isSuccessful(message),
+                                    child: Fader(
+                                      duration: Duration(milliseconds: 170),
+                                      child: ChatBubble(
+                                        message: message,
+                                        isLatestMessage: chatNotifier
+                                            .isLatestMessage(message),
+                                        isReceived: message.isReceived(),
+                                        isSuccesful:
+                                            chatNotifier.isSuccessful(message),
+                                      ),
                                     ),
                                   );
                                 },
@@ -146,12 +139,8 @@ class _ChatRoomState extends State<ChatRoom> {
                 ),
               ),
               MessageBox(
-                onFocusChanged: (isFocused) {
-                  _animatedToBottomMessages();
-                },
                 onSendPressed: (String value) {
                   chatNotifier.onSendPressed(value);
-                  _animatedToBottomMessages();
                 },
               ),
             ],
