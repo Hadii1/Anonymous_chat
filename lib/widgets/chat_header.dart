@@ -29,7 +29,7 @@ class ChatHeader extends StatelessWidget {
       onTap: () {
         Navigator.of(context).push(
           CupertinoPageRoute(
-            fullscreenDialog: true,
+            // fullscreenDialog: true,
             builder: (c) {
               return ChatRoom(
                 room: room,
@@ -76,12 +76,15 @@ class ChatHeader extends StatelessWidget {
                   children: [
                     Hero(
                       tag: '${other.id}${other.nickname}',
-                      child: Text(
-                        other.nickname,
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                      child: Material(
+                        type: MaterialType.transparency,
+                        child: Text(
+                          other.nickname,
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),

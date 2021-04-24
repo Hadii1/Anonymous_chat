@@ -16,6 +16,9 @@ class AppNavigator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Navigator(
+      observers: [
+        HeroController(),
+      ],
       onGenerateRoute: (settings) {
         return CupertinoPageRoute(
           builder: (c) {
