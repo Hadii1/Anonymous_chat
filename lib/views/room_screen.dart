@@ -53,14 +53,88 @@ class _ChatRoomState extends State<ChatRoom> {
       backgroundColor: style.backgroundColor,
       body: SizedBox(
         height: MediaQuery.of(context).size.height,
-        child: Column(
+        child: Stack(
           children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 65),
+              child: Consumer(
+                builder: (context, watch, _) {
+                  final chatNotifier = watch(chattingProvider(widget.room));
+                  return Column(
+                    children: [
+                      Expanded(
+                        child: Fader(
+                          duration: Duration(milliseconds: 300),
+                          child: KeyboardHider(
+                            child: SingleChildScrollView(
+                              reverse: true,
+                              child: Padding(
+                                padding: const EdgeInsets.only(
+                                  top: 24,
+                                  left: 2,
+                                  right: 2,
+                                  bottom: 0,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: chatNotifier.allMessages.isEmpty
+                                      ? [
+                                          Container(),
+                                        ]
+                                      : List.generate(
+                                          chatNotifier.allMessages.length,
+                                          (index) {
+                                            Message message =
+                                                chatNotifier.allMessages[index];
+
+                                            return CustomSlide(
+                                              duration:
+                                                  Duration(milliseconds: 250),
+                                              startOffset: Offset(0, 1),
+                                              child: ChatBubble(
+                                                message: message,
+                                                isLatestMessage: chatNotifier
+                                                    .isLatestMessage(message),
+                                                isReceived:
+                                                    message.isReceived(),
+                                                isSuccesful: chatNotifier
+                                                    .isSuccessful(message),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      CustomSlide(
+                        duration: Duration(milliseconds: 500),
+                        delay: Duration(milliseconds: 200),
+                        startOffset: Offset(0, 1),
+                        child: MessageBox(
+                          onSendPressed: (String value) {
+                            chatNotifier.onSendPressed(value);
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
             ShadedContainer(
-              stops: [0, 0.7],
+              stops: [0.65, 0.95],
               child: SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.only(
-                      left: 24, right: 24, top: 12, bottom: 8),
+                    left: 24,
+                    right: 24,
+                    top: 12,
+                    bottom: 36,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -74,19 +148,16 @@ class _ChatRoomState extends State<ChatRoom> {
                           color: style.accentColor,
                         ),
                       ),
-                      Expanded(
-                        child: Hero(
-                          tag: '${other.id}${other.nickname}',
-                          transitionOnUserGestures: true,
-                          child: Material(
-                            type: MaterialType.transparency,
-                            child: Text(
-                              other.nickname,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 20,
-                                color: Colors.white,
-                              ),
+                      Hero(
+                        tag: '${other.id}${other.nickname}',
+                        child: Material(
+                          type: MaterialType.transparency,
+                          child: Text(
+                            other.nickname,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 20,
+                              color: Colors.white,
                             ),
                           ),
                         ),
@@ -99,69 +170,6 @@ class _ChatRoomState extends State<ChatRoom> {
                     ],
                   ),
                 ),
-              ),
-            ),
-            Expanded(
-              child: Consumer(
-                builder: (context, watch, _) {
-                  final chatNotifier = watch(chattingProvider(widget.room));
-                  return Column(
-                    children: [
-                      Expanded(
-                        child: KeyboardHider(
-                          child: SingleChildScrollView(
-                            reverse: true,
-                            child: Padding(
-                              padding: const EdgeInsets.only(
-                                left: 2,
-                                right: 2,
-                                bottom: 4,
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: chatNotifier.allMessages.isEmpty
-                                    ? [
-                                        Container(),
-                                      ]
-                                    : List.generate(
-                                        chatNotifier.allMessages.length,
-                                        (index) {
-                                          Message message =
-                                              chatNotifier.allMessages[index];
-
-                                          return CustomSlide(
-                                            duration:
-                                                Duration(milliseconds: 250),
-                                            startOffset: Offset(0, 1),
-                                            child: Fader(
-                                              duration:
-                                                  Duration(milliseconds: 170),
-                                              child: ChatBubble(
-                                                message: message,
-                                                isLatestMessage: chatNotifier
-                                                    .isLatestMessage(message),
-                                                isReceived:
-                                                    message.isReceived(),
-                                                isSuccesful: chatNotifier
-                                                    .isSuccessful(message),
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                      ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      MessageBox(
-                        onSendPressed: (String value) {
-                          chatNotifier.onSendPressed(value);
-                        },
-                      ),
-                    ],
-                  );
-                },
               ),
             ),
           ],

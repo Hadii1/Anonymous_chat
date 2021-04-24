@@ -5,6 +5,7 @@ import 'package:anonymous_chat/services.dart/local_storage.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/views/room_screen.dart';
 import 'package:anonymous_chat/utilities/extrentions.dart';
+import 'package:anonymous_chat/widgets/custom_route.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -28,8 +29,7 @@ class ChatHeader extends StatelessWidget {
       highlightColor: Colors.transparent,
       onTap: () {
         Navigator.of(context).push(
-          CupertinoPageRoute(
-            // fullscreenDialog: true,
+          CustomRoute(
             builder: (c) {
               return ChatRoom(
                 room: room,
@@ -76,7 +76,21 @@ class ChatHeader extends StatelessWidget {
                   children: [
                     Hero(
                       tag: '${other.id}${other.nickname}',
-                      transitionOnUserGestures: true,
+                      flightShuttleBuilder: (
+                        BuildContext flightContext,
+                        Animation<double> animation,
+                        HeroFlightDirection flightDirection,
+                        BuildContext fromHeroContext,
+                        BuildContext toHeroContext,
+                      ) {
+                        return DefaultTextStyle(
+                          style: DefaultTextStyle.of(toHeroContext).style,
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: toHeroContext.widget,
+                          ),
+                        );
+                      },
                       child: Material(
                         type: MaterialType.transparency,
                         child: Text(

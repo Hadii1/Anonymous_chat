@@ -39,7 +39,7 @@ class ChatBubble extends StatelessWidget {
       alignment: isReceived ? Alignment.centerLeft : Alignment.centerRight,
       child: Padding(
         padding: EdgeInsets.only(
-          top: 6.0,
+          top: 2.0,
           left: isReceived
               ? isLatestMessage
                   ? 2
@@ -50,6 +50,7 @@ class ChatBubble extends StatelessWidget {
                   ? 2
                   : 8
               : 0,
+          bottom: 2,
         ),
         child: Bubble(
           nip: !isLatestMessage

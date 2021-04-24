@@ -22,20 +22,23 @@ class _HomeState extends State<Home> {
     return Scaffold(
       backgroundColor: style.backgroundColor,
       appBar: TitledAppBar(
-        leading: InkWell(
-          splashColor: Colors.transparent,
-          highlightColor: Colors.transparent,
-          onTap: () {
-            Navigator.of(context).push(
-              CupertinoPageRoute(
-                builder: (_) => Settings(),
-              ),
-            );
-          },
-          child: Icon(
-            Icons.settings,
-            size: 24,
-            color: style.iconColors,
+        leading: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            onTap: () {
+              Navigator.of(context).push(
+                CupertinoPageRoute(
+                  builder: (_) => Settings(),
+                ),
+              );
+            },
+            child: Icon(
+              Icons.settings,
+              size: 24,
+              color: style.iconColors,
+            ),
           ),
         ),
       ),

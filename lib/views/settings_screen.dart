@@ -16,25 +16,28 @@ class Settings extends StatelessWidget {
     return Scaffold(
       backgroundColor: style.backgroundColor,
       appBar: TitledAppBar(
-        leading: InkWell(
-          highlightColor: Colors.transparent,
-          splashColor: Colors.transparent,
-          onTap: () => Navigator.of(context).pop(),
-          child: Row(
-            children: [
-              Icon(
-                Icons.arrow_back_ios,
-                size: 21,
-                color: style.accentColor,
-              ),
-              Text(
-                'Chats',
-                style: style.bodyText.copyWith(
-                  fontSize: 16,
-                  color: style.backgroundContrastColor,
+        leading: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            highlightColor: Colors.transparent,
+            splashColor: Colors.transparent,
+            onTap: () => Navigator.of(context).pop(),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.arrow_back_ios,
+                  size: 21,
+                  color: style.accentColor,
                 ),
-              ),
-            ],
+                Text(
+                  'Chats',
+                  style: style.bodyText.copyWith(
+                    fontSize: 16,
+                    color: style.backgroundContrastColor,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

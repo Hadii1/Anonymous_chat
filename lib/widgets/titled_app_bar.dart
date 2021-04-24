@@ -41,13 +41,10 @@ class TitledAppBar extends PreferredSize {
       leading: leading != null
           ? leading
           : showBackarrow
-              ? Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () => _onBackTapped(context),
-                    child: Icon(Icons.arrow_back_ios),
-                  ),
-                )
+              ? InkWell(
+                onTap: () => _onBackTapped(context),
+                child: Icon(Icons.arrow_back_ios),
+              )
               : SizedBox.shrink(),
       padding: const EdgeInsetsDirectional.only(
         bottom: 8,

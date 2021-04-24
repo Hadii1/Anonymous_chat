@@ -12,34 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-class ShadedContainer extends StatelessWidget {
-  const ShadedContainer({
-    required this.child,
-    required this.stops,
-    this.height,
-    this.width,
-  });
-  final Widget child;
-  final double? width;
-  final double? height;
-  final List<double> stops;
+class CustomRoute extends CupertinoPageRoute {
+  CustomRoute({builder})
+      : super(
+          builder: builder,
+          fullscreenDialog: false,
+          maintainState: true,
+        );
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          stops: stops,
-          colors: [Colors.black, Colors.transparent],
-        ),
-      ),
-      child: child,
-    );
+  Duration get transitionDuration => const Duration(milliseconds: 400);
+
+  @override
+  Widget buildTransitions(BuildContext context, Animation<double> animation,
+      Animation<double> secondaryAnimation, Widget child) {
+    return new FadeTransition(opacity: animation, child: child);
   }
 }
