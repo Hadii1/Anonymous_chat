@@ -34,13 +34,17 @@ class _ChatsScreenState extends State<ChatsScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        CupertinoIcons.battery_empty,
+                        Icons.not_interested,
                         color: style.accentColor,
+                        size: 50,
                       ),
                       SizedBox(height: 24),
                       Text(
-                        'No chats yet.\n Change your tags to match with\n other and start chatting',
-                        style: TextStyle(color: Colors.white),
+                        'No chats yet.\n Select your interests in the \ntags screen to match up with contacts.',
+                        style: TextStyle(
+                          color: Colors.white,
+                          height: 1.4,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ],

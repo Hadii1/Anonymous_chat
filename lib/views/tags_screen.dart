@@ -1,13 +1,9 @@
-import 'dart:async';
-
 import 'package:anonymous_chat/models/tag.dart';
 import 'package:anonymous_chat/models/user.dart';
 import 'package:anonymous_chat/providers/errors_provider.dart';
-import 'package:anonymous_chat/providers/loading_provider.dart';
 import 'package:anonymous_chat/providers/suggestions_provider.dart';
+import 'package:anonymous_chat/providers/tag_searching_provider.dart';
 import 'package:anonymous_chat/providers/tags_provider.dart';
-import 'package:anonymous_chat/services.dart/algolia.dart';
-import 'package:anonymous_chat/services.dart/firestore.dart';
 import 'package:anonymous_chat/services.dart/local_storage.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/widgets/animated_widgets.dart';
@@ -23,165 +19,6 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:tuple/tuple.dart';
 
-final suggestedTagsProvider = ChangeNotifierProvider.autoDispose((ref) {
-  return TagSuggestionsNotifier(ref.read);
-});
-
-class TagSuggestionsNotifier extends ChangeNotifier {
-  late ErrorNotifier _errorNotifier;
-  late LoadingNotifer _loadingNotifier;
-  final Reader read;
-
-  TagSuggestionsNotifier(
-    this.read,
-  ) {
-    _errorNotifier = read(errorsProvider);
-    _loadingNotifier = read(loadingProvider);
-  }
-
-  final FirestoreService firestore = FirestoreService();
-  final LocalStorage storage = LocalStorage();
-  final AlgoliaSearch algolia = AlgoliaSearch();
-
-  List<Tag> suggestedTags = [];
-
-  bool loadingTags = false;
-
-  Timer? _debounceTimer;
-  String? currentLabel;
-
-  set searchedTag(String label) {
-    if (label.isEmpty) {
-      loadingTags = false;
-      suggestedTags = [];
-      notifyListeners();
-      if (_debounceTimer != null && _debounceTimer!.isActive) {
-        _debounceTimer!.cancel();
-
-        return;
-      }
-    }
-
-    loadingTags = true;
-    suggestedTags = [];
-    currentLabel = label;
-    notifyListeners();
-
-    if (_debounceTimer == null) {
-      _debounceTimer = Timer(Duration(seconds: 1), () {
-        _getSuggestedTags(label);
-      });
-    } else {
-      _debounceTimer!.cancel();
-      _debounceTimer = Timer(Duration(seconds: 1), () {
-        _getSuggestedTags(label);
-      });
-    }
-  }
-
-  void onTagPressed({required Tag tag, required bool selected}) async {
-    try {
-      currentLabel = null;
-      suggestedTags = [];
-      notifyListeners();
-
-      if (selected) {
-        await firestore.onUserActivatingTag(
-            tag: tag.copyWith(isActive: selected), userId: storage.user!.id);
-      } else {
-        await firestore.onUserDiactivatingTag(
-          tag: tag.copyWith(isActive: selected),
-          userId: storage.user!.id,
-        );
-      }
-
-      notifyListeners();
-    } on Exception catch (e, s) {
-      _errorNotifier.setError(
-        exception: e,
-        stackTrace: s,
-        hint: 'on tag pressed in suggestions notifier',
-      );
-
-      notifyListeners();
-    }
-    notifyListeners();
-  }
-
-  void onTagAdditionPressed() async {
-    try {
-      _loadingNotifier.isLoading = true;
-
-      String id = firestore.getTagReference();
-
-      Tag tag = Tag(
-        id: id,
-        label: currentLabel!,
-        isActive: true,
-      );
-
-      suggestedTags = [];
-      currentLabel = null;
-      notifyListeners();
-
-      await algolia.addSearchableTag(tag: tag);
-
-      await firestore.addNewTag(
-        tag: tag,
-        userId: storage.user!.id,
-      );
-
-      loadingTags = false;
-      _loadingNotifier.isLoading = false;
-      notifyListeners();
-    } on Exception catch (e, s) {
-      _errorNotifier.setError(
-        exception: e,
-        stackTrace: s,
-        hint: 'Get suggested tags in suggestions notifier',
-      );
-      loadingTags = false;
-      _loadingNotifier.isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  void _getSuggestedTags(String label) async {
-    try {
-      if (label.isEmpty) return;
-      loadingTags = true;
-
-      List<Map<String, dynamic>> algoliaData =
-          await algolia.getTagSuggestions(label: label);
-
-      List<Map<String, dynamic>> data =
-          await FirestoreService().getSuggestedTags(
-        ids: algoliaData
-            .map((Map<String, dynamic> e) => e['id'] as String)
-            .toList(),
-      );
-
-      List selectedTags = read(tagsProvider(storage.user!.id).state)
-          .where((t) => t.isActive == true)
-          .toList();
-      suggestedTags = data.map((e) => Tag.fromMap(e)).toList();
-      suggestedTags.removeWhere((element) => selectedTags.contains(element));
-
-      loadingTags = false;
-
-      notifyListeners();
-    } on Exception catch (e, s) {
-      _errorNotifier.setError(
-        exception: e,
-        stackTrace: s,
-        hint: 'Get suggested tags in suggestions notifier',
-      );
-      loadingTags = false;
-      notifyListeners();
-    }
-  }
-}
-
 class TagsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -193,12 +30,9 @@ class TagsScreen extends StatelessWidget {
       body: KeyboardHider(
         child: Consumer(
           builder: (context, watch, child) {
-            final userTags = watch(tagsProvider(LocalStorage().user!.id).state);
             final tagsNotifier = watch(suggestedTagsProvider);
-            final suggestedContacts = watch(suggestedContactsProvider);
 
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+            return ListView(
               children: [
                 Container(
                   color: style.backgroundColor,
@@ -207,120 +41,211 @@ class TagsScreen extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
                       child: SearchField(
-                        hint: 'Search for tags to match up',
-                        loading: tagsNotifier.loadingTags,
-                        showPlusIcon: tagsNotifier.currentLabel != null &&
-                            tagsNotifier.currentLabel!.isNotEmpty &&
-                            !tagsNotifier.suggestedTags
-                                .map((e) => e.label)
-                                .contains(tagsNotifier.currentLabel),
+                        hint: 'Search or add new tags to match up',
                         onChanged: (value) => tagsNotifier.searchedTag = value,
-                        onPlusPressed: () {
-                          FocusScope.of(context).unfocus();
-                          context
-                              .read(suggestedTagsProvider)
-                              .onTagAdditionPressed();
-                        },
                       ),
                     ),
                   ),
                 ),
+                _TagsSearchResponse(),
                 AnimatedSwitcher(
-                  duration: Duration(milliseconds: 350),
-                  child: tagsNotifier.suggestedTags.isNotEmpty
-                      ? Padding(
-                          padding: const EdgeInsets.only(top: 16.0),
-                          child: _SuggestedTagsList(
-                            tags: tagsNotifier.suggestedTags,
-                            onSelected: (Tag tag) => context
-                                .read(suggestedTagsProvider)
-                                .onTagPressed(
-                                  tag: tag,
-                                  selected: true,
-                                ),
-                          ),
-                        )
-                      : CustomSlide(
-                          startOffset: Offset(0, 1),
-                          endOffset: Offset.zero,
-                          duration: Duration(milliseconds: 250),
-                          child: TagsRow(
-                            tags: userTags,
-                            onSelected: (Tag tag, bool selected) {
-                              context.read(suggestedTagsProvider).onTagPressed(
-                                    tag: tag,
-                                    selected: selected,
-                                  );
-                            },
-                          ),
-                        ),
+                  duration: Duration(milliseconds: 250),
+                  child: tagsNotifier.screenState == null
+                      ? _SuggestedContacts()
+                      : SizedBox.shrink(),
                 ),
-                Expanded(
-                  child: AnimatedSwitcher(
-                    duration: Duration(milliseconds: 150),
-                    child: suggestedContacts.when(
-                      data: (List<Tuple2<User, List<Tag>>> data) {
-                        return data.isEmpty
-                            ? SizedBox.shrink()
-                            : AnimationLimiter(
-                                child: ListView.builder(
-                                  itemCount: data.length,
-                                  itemBuilder: (c, index) {
-                                    return AnimationConfiguration.staggeredList(
-                                      duration: Duration(milliseconds: 300),
-                                      position: index,
-                                      child: SlideAnimation(
-                                        child: Padding(
-                                          padding: EdgeInsets.only(
-                                            left: 24,
-                                            top: index == 0 ? 0 : 16,
-                                          ),
-                                          child: SuggestedContact(
-                                            data: data[index],
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              );
-                      },
-                      loading: () => Center(
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 100.0),
-                          child: SpinKitThreeBounce(
-                            size: 30,
-                            duration: Duration(milliseconds: 800),
-                            color: style.backgroundContrastColor,
-                          ),
-                        ),
-                      ),
-                      error: (e, s) {
-                        context.read(errorsProvider).setError(
-                              exception: e,
-                              stackTrace: s,
-                              hint:
-                                  'Error in watching suggested contacts provider. Retrying.',
-                            );
-
-                        context.refresh(suggestedContactsProvider);
-                        return Center(
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 48.0),
-                            child: SpinKitThreeBounce(
-                              size: 25,
-                              color: style.backgroundContrastColor,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                )
               ],
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+class _TagsSearchResponse extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() => _TagsSearchResponseState();
+}
+
+class _TagsSearchResponseState extends State<_TagsSearchResponse>
+    with SingleTickerProviderStateMixin {
+  @override
+  Widget build(BuildContext context) {
+    ApplicationStyle style = InheritedAppTheme.of(context).style;
+    return Consumer(
+      builder: (context, watch, child) {
+        final userTags = watch(userTagsProvider(LocalStorage().user!.id).state);
+        final tagsNotifier = watch(suggestedTagsProvider);
+        return AnimatedSize(
+          vsync: this,
+          duration: Duration(milliseconds: 260),
+          child: AnimatedSwitcher(
+            duration: Duration(milliseconds: 300),
+            child: () {
+              switch (tagsNotifier.screenState) {
+                case null:
+                  return CustomSlide(
+                    startOffset: Offset(0, 1),
+                    endOffset: Offset.zero,
+                    duration: Duration(milliseconds: 250),
+                    child: TagsRow(
+                      tags: userTags,
+                      onSelected: (Tag tag, bool selected) {
+                        context
+                            .read(suggestedTagsProvider)
+                            .onExistingTagPressed(
+                              tag: tag,
+                              selected: selected,
+                            );
+                      },
+                    ),
+                  );
+                case TagScreenState.addingNewTag:
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 80),
+                    child: SpinKitDualRing(
+                      size: 40,
+                      color: style.accentColor,
+                    ),
+                  );
+
+                case TagScreenState.loadingTags:
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 80),
+                    child: SpinKitDualRing(
+                      size: 40,
+                      color: style.accentColor,
+                    ),
+                  );
+
+                case TagScreenState.showingResults:
+                  return Column(
+                    children: [
+                      tagsNotifier.newTagToAdd != null
+                          ? _NewTagTile(
+                              label: tagsNotifier.currentLabel!,
+                              onAddedPressed: () => context
+                                  .read(suggestedTagsProvider)
+                                  .onTagAdditionPressed(),
+                            )
+                          : SizedBox.shrink(),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16.0),
+                        child: _SuggestedTagsList(
+                          tags: tagsNotifier.suggestedTags,
+                          onSelected: (Tag tag) => context
+                              .read(suggestedTagsProvider)
+                              .onExistingTagPressed(
+                                tag: tag,
+                                selected: true,
+                              ),
+                        ),
+                      ),
+                    ],
+                  );
+              }
+            }(),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _NewTagTile extends StatelessWidget {
+  const _NewTagTile({
+    required this.label,
+    required this.onAddedPressed,
+  });
+  final String label;
+  final Function() onAddedPressed;
+  @override
+  Widget build(BuildContext context) {
+    final style = InheritedAppTheme.of(context).style;
+    return Padding(
+      padding: const EdgeInsets.only(
+        left: 24,
+        right: 24,
+        top: 24,
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Be the first to add this tag',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.6),
+              fontSize: 11,
+            ),
+          ),
+          SizedBox(
+            height: 12,
+          ),
+          Material(
+            color: Colors.black,
+            shape: ContinuousRectangleBorder(
+              borderRadius: BorderRadius.circular(6),
+              side: BorderSide(
+                width: 0.2,
+                color: Colors.white,
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    label,
+                    style: style.bodyText,
+                  ),
+                  InkResponse(
+                    focusColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
+                    hoverColor: Colors.transparent,
+                    radius: 10,
+                    splashColor: style.accentColor,
+                    onTap: () {
+                      onAddedPressed();
+                      FocusScope.of(context).unfocus();
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.black,
+                        border: Border.all(
+                          color: style.accentColor,
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(2.0),
+                        child: Icon(
+                          Icons.add,
+                          color: Colors.white,
+                          size: 17,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(
+            height: 16,
+          ),
+          Divider(
+            thickness: 0.15,
+            color: style.borderColor,
+            indent: MediaQuery.of(context).size.width * 0.15,
+            endIndent: MediaQuery.of(context).size.width * 0.15,
+          ),
+          SizedBox(
+            height: 16,
+          ),
+        ],
       ),
     );
   }
@@ -338,78 +263,186 @@ class _SuggestedTagsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = InheritedAppTheme.of(context).style;
-    return AnimationLimiter(
-      child: Padding(
-        padding: const EdgeInsets.only(left: 24, right: 24, bottom: 16),
-        child: Column(
-          children: AnimationConfiguration.toStaggeredList(
-            childAnimationBuilder: (w) {
-              return SlideAnimation(
-                child: w,
-                verticalOffset: -30,
-                duration: Duration(milliseconds: 250),
-              );
-            },
-            children: List.generate(
-              tags.length,
-              (index) {
-                Tag tag = tags[index];
-                return Material(
-                  color: Colors.black,
-                  shape: ContinuousRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
-                    side: BorderSide(
-                      width: 0.2,
-                      color: Colors.white,
+    return tags.isEmpty
+        ? SizedBox.shrink()
+        : Padding(
+            padding: const EdgeInsets.only(left: 24, right: 24, bottom: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Similar tags',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.6),
+                    fontSize: 11,
+                  ),
+                ),
+                SizedBox(
+                  height: 8,
+                ),
+                Column(
+                  children: AnimationConfiguration.toStaggeredList(
+                    childAnimationBuilder: (w) {
+                      return SlideAnimation(
+                        child: w,
+                        verticalOffset: -30,
+                        duration: Duration(milliseconds: 250),
+                      );
+                    },
+                    children: List.generate(
+                      tags.length,
+                      (index) {
+                        Tag tag = tags[index];
+                        return Material(
+                          color: Colors.black,
+                          shape: ContinuousRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                            side: BorderSide(
+                              width: 0.2,
+                              color: Colors.white,
+                            ),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  tag.label,
+                                  style: style.bodyText,
+                                ),
+                                InkResponse(
+                                  focusColor: Colors.transparent,
+                                  highlightColor: Colors.transparent,
+                                  hoverColor: Colors.transparent,
+                                  radius: 10,
+                                  splashColor: style.accentColor,
+                                  onTap: () {
+                                    onSelected(
+                                      tag,
+                                    );
+                                    FocusScope.of(context).unfocus();
+                                  },
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.black,
+                                      border: Border.all(
+                                        color: style.accentColor,
+                                      ),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(2.0),
+                                      child: Icon(
+                                        Icons.add,
+                                        color: Colors.white,
+                                        size: 17,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          tag.label,
-                          style: style.bodyText,
-                        ),
-                        InkResponse(
-                          focusColor: Colors.transparent,
-                          highlightColor: Colors.transparent,
-                          hoverColor: Colors.transparent,
-                          radius: 10,
-                          splashColor: style.accentColor,
-                          onTap: () => onSelected(
-                            tag,
-                          ),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: tag.isActive
-                                  ? style.accentColor
-                                  : Colors.black,
-                              border: Border.all(
-                                color: style.accentColor,
-                              ),
+                ),
+              ],
+            ),
+          );
+  }
+}
+
+class _SuggestedContacts extends StatefulWidget {
+  @override
+  __SuggestedContactsState createState() => __SuggestedContactsState();
+}
+
+class __SuggestedContactsState extends State<_SuggestedContacts>
+    with SingleTickerProviderStateMixin {
+  @override
+  Widget build(BuildContext context) {
+    ApplicationStyle style = InheritedAppTheme.of(context).style;
+
+    return Consumer(builder: (context, watch, child) {
+      return AnimatedSize(
+        vsync: this,
+        curve: Curves.easeOutCubic,
+        duration: Duration(milliseconds: 300),
+        child: watch(suggestedContactsProvider).when(
+          data: (List<Tuple2<User, List<Tag>>> data) {
+            return Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8),
+              child: AnimatedSwitcher(
+                duration: Duration(milliseconds: 320),
+                child: data.isEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.only(top: 100.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.not_interested,
+                              color: style.accentColor,
+                              size: 50,
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(2.0),
-                              child: Icon(
-                                Icons.add,
+                            SizedBox(height: 24),
+                            Text(
+                              'No contacts found.\nTry activating new tags.',
+                              style: TextStyle(
                                 color: Colors.white,
-                                size: 17,
+                                height: 1.4,
                               ),
+                              textAlign: TextAlign.center,
                             ),
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+                      )
+                    : Fader(
+                        duration: Duration(milliseconds: 300),
+                        child: Column(
+                          children: List.generate(
+                              data.length,
+                              (index) => SuggestedContact(
+                                    data: data[index],
+                                  )),
+                        ),
+                      ),
+              ),
+            );
+          },
+          loading: () => Padding(
+            padding: const EdgeInsets.only(top: 100.0),
+            child: SpinKitThreeBounce(
+              size: 25,
+              duration: Duration(milliseconds: 800),
+              color: style.accentColor,
             ),
           ),
+          error: (e, s) {
+            context.read(errorsProvider).setError(
+                  exception: e,
+                  stackTrace: s,
+                  hint:
+                      'Error in watching suggested contacts provider. Retrying.',
+                );
+
+            context.refresh(suggestedContactsProvider);
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 48.0),
+                child: SpinKitThreeBounce(
+                  size: 25,
+                  color: style.backgroundContrastColor,
+                ),
+              ),
+            );
+          },
         ),
-      ),
-    );
+      );
+    });
   }
 }

@@ -21,7 +21,7 @@ final suggestedContactsProvider =
     List<Tuple2<User, List<Tag>>> suggestions = [];
 
     List<Tag> selectedTags = ref
-        .watch(tagsProvider(LocalStorage().user!.id).state)
+        .watch(userTagsProvider(LocalStorage().user!.id).state)
         .where((t) => t.isActive)
         .toList();
 

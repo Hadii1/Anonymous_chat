@@ -6,6 +6,7 @@ import 'package:anonymous_chat/services.dart/local_storage.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/views/room_screen.dart';
 
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -59,7 +60,7 @@ class SuggestedContact extends StatelessWidget {
               Container(
                 alignment: Alignment.centerLeft,
                 width: 45,
-                height: 50,
+                height: 55,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
@@ -68,13 +69,10 @@ class SuggestedContact extends StatelessWidget {
                   ),
                 ),
                 child: Center(
-                  child: Hero(
-                    tag: '${suggestedUser.id}${suggestedUser.nickname}',
-                    child: Text(
-                      suggestedUser.nickname.substring(0, 1).toUpperCase(),
-                      style: style.chatHeaderLetter,
-                      textAlign: TextAlign.center,
-                    ),
+                  child: Text(
+                    suggestedUser.nickname.substring(0, 1).toUpperCase(),
+                    style: style.chatHeaderLetter,
+                    textAlign: TextAlign.center,
                   ),
                 ),
               ),
@@ -87,11 +85,14 @@ class SuggestedContact extends StatelessWidget {
                   Text(
                     suggestedUser.nickname,
                     style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.white,
+                      fontSize: 16,
+                      color: Colors.white.withOpacity(0.9),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                  // SizedBox(
+                  //   height: 4,
+                  // ),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(

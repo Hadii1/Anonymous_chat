@@ -1,22 +1,14 @@
 import 'package:flutter/material.dart';
 
 import 'package:anonymous_chat/utilities/theme_widget.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class SearchField extends StatefulWidget {
   final String hint;
   final Function(String) onChanged;
-  final Function() onPlusPressed;
-  final bool showPlusIcon;
-  final bool loading;
-
 
   SearchField({
     required this.hint,
     required this.onChanged,
-    required this.showPlusIcon,
-    required this.onPlusPressed,
-    required this.loading,
   });
 
   @override
@@ -25,10 +17,9 @@ class SearchField extends StatefulWidget {
 
 class _SearchFieldState extends State<SearchField> {
   final TextEditingController _controller = TextEditingController();
-  
-  
+
   @override
-  void dispose() { 
+  void dispose() {
     _controller.dispose();
     super.dispose();
   }
@@ -47,34 +38,6 @@ class _SearchFieldState extends State<SearchField> {
         isDense: true,
         contentPadding: EdgeInsets.zero,
         hintText: widget.hint,
-        suffixIcon: Padding(
-          padding: const EdgeInsets.only(right: 6.0),
-          child: AnimatedSwitcher(
-            duration: Duration(milliseconds: 250),
-            child: widget.loading
-                ? SizedBox(
-                    height: 25,
-                    width: 25,
-                    child: SpinKitDualRing(
-                      size: 12,
-                      color: style.accentColor,
-                    ),
-                  )
-                : widget.showPlusIcon
-                    ? InkWell(
-                        onTap: () {
-                          _controller.clear();
-                          widget.onPlusPressed();
-                        },
-                        child: Icon(
-                          Icons.add,
-                          color: style.searchBarHintColor,
-                          size: 21,
-                        ),
-                      )
-                    : SizedBox.shrink(),
-          ),
-        ),
         prefixIconConstraints: BoxConstraints(minHeight: 32, maxWidth: 32),
         suffixIconConstraints: BoxConstraints(minHeight: 32, minWidth: 30),
         prefixIcon: Padding(
@@ -85,7 +48,7 @@ class _SearchFieldState extends State<SearchField> {
             size: 21,
           ),
         ),
-        hintStyle: style.bodyText.copyWith(color: style.searchBarHintColor),
+        hintStyle: style.bodyText.copyWith(color: style.searchBarHintColor,fontSize: 13),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(

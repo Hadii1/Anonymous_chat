@@ -27,10 +27,10 @@ class TitledAppBar extends PreferredSize {
       automaticallyImplyLeading: false,
       automaticallyImplyMiddle: false,
       middle: Text(
-        'AGORA',
+        'ANONIMA',
         style: TextStyle(
           color: style.accentColor,
-          fontSize: 25,
+          fontSize: 24,
           letterSpacing: 4,
           fontWeight: FontWeight.bold,
           fontFamily: 'Montserat',
