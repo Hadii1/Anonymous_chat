@@ -18,12 +18,12 @@ class LocalStorage {
 
   User? get user {
     String? user = prefs.getString('user');
-    if (user == null || user == '') return null;
+    if (user == null || user.isEmpty) return null;
     return User.fromJson(user);
   }
 
-  set user(User? user) =>
-      prefs.setString('user', user == null ? '' : user.toJson());
+  Future<void> setUser(User? user) async =>
+      await prefs.setString('user', user == null ? '' : user.toJson());
 
   ThemeState get preferedTheme {
     String? theme = prefs.getString('theme');

@@ -56,8 +56,8 @@ class NameGeneratorNotifier extends ChangeNotifier {
         nickname: '$color$animal$number',
       );
 
-      storage.user = newUser;
-      FirestoreService().saveUserData(user: newUser);
+      await storage.setUser(newUser);
+      await FirestoreService().saveUserData(user: newUser);
 
       return true;
     } on Exception catch (e, s) {

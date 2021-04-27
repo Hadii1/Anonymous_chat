@@ -43,7 +43,7 @@ final appInitialzationProvider =
       id: AuthService().userId()!,
     );
     User user = User.fromMap(data);
-    LocalStorage().user = user;
+    await LocalStorage().setUser(user);
   }
 
   if (_isAuthenticated) {

@@ -62,7 +62,7 @@ class _AuthProcessNotifier extends ChangeNotifier {
 
       await AuthService().signOut();
 
-      LocalStorage().user = null;
+      await LocalStorage().setUser(null);
 
       _loadingNotifer.isLoading = false;
 
@@ -96,7 +96,7 @@ class _AuthProcessNotifier extends ChangeNotifier {
 
       model.User user = model.User.fromMap(userData);
 
-      LocalStorage().user = user;
+      await LocalStorage().setUser(user);
 
       _loadingNotifer.isLoading = false;
 
@@ -132,9 +132,9 @@ class _AuthProcessNotifier extends ChangeNotifier {
         nickname: '',
       );
 
-      FirestoreService().saveUserData(user: user);
+      await FirestoreService().saveUserData(user: user);
 
-      LocalStorage().user = user;
+      await LocalStorage().setUser(user);
 
       _loadingNotifer.isLoading = false;
 
