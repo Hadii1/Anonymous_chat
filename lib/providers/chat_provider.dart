@@ -36,7 +36,6 @@ class ChatNotifier extends ChangeNotifier {
 
   late List<Message> allMessages;
   late List<Message> successfullySent;
-  late Message lastMessage;
 
   late bool _newRoom;
 
@@ -49,41 +48,33 @@ class ChatNotifier extends ChangeNotifier {
       room.messages.where((m) => m.isSent()).toList(),
     );
 
-    if (allMessages.isNotEmpty) {
-      lastMessage = allMessages.last;
-    }
-
     _newRoom = allMessages.isEmpty;
 
-    read(newMessageChannel(room.id).stream).listen(
-      (Message? msg) {
-        if (msg != null) {
-          lastMessage = msg;
-          if (msg.isReceived()) {
-            allMessages.add(msg);
-            read(chatsSorterProvider).latestActiveChat = room;
+    // Either a new message is added or an exisiting
+    // message is read by the other recipient
 
-            if (isChatPageOpened) {
-              msg.isRead = true;
-              _firestore.markMessageAsRead(roomId: room.id, messageId: msg.id);
-            }
-          } else {
-            successfullySent.add(msg);
-          }
+    read(roomMessagesUpdatesChannel(room.id).stream).listen((Message? message) {
+      if (message == null) return;
 
-          notifyListeners();
+      if (message.isReceived()) {
+        if (!allMessages.contains(message)) allMessages.add(message);
+
+        read(chatsSorterProvider).latestActiveChat = room;
+
+        if (isChatPageOpened) {
+          message.isRead = true;
+          _firestore.markMessageAsRead(roomId: room.id, messageId: message.id);
         }
-      },
-    );
-
-    read(readMessagesChannel(room.id).stream).listen((Message? msg) {
-      if (msg != null && msg.isSent()) {
-        Message current =
-            room.messages.firstWhere((Message message) => message == msg);
-        current.isRead = msg.isRead;
-
-        notifyListeners();
+      } else {
+        if (successfullySent.contains(message)) {
+          if (message.isRead &&
+              !successfullySent.firstWhere((m) => m == message).isRead) {
+            allMessages.firstWhere((element) => element == message).isRead =
+                true;
+          }
+        }
       }
+      notifyListeners();
     });
   }
 
@@ -114,14 +105,17 @@ class ChatNotifier extends ChangeNotifier {
       );
 
       allMessages.add(message);
+      notifyListeners();
 
       if (!_newRoom) {
         read(chatsSorterProvider).latestActiveChat = room;
-        _firestore.writeMessage(roomId: room.id, message: message);
+        await _firestore.writeMessage(roomId: room.id, message: message);
+        successfullySent.add(message);
       } else {
         _newRoom = false;
 
         await _firestore.writeMessage(roomId: room.id, message: message);
+        successfullySent.add(message);
 
         await _firestore.saveNewRoom(
           room: room,

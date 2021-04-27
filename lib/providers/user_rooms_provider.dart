@@ -40,31 +40,18 @@ class ChatsSorter extends StateNotifier<List<Room>> {
 
 // Notifies the sender when a message is received by the recipient
 // or when the recipient gets a message
-final newMessageChannel = StreamProvider.family<Message?, String>((ref, id) {
+final roomMessagesUpdatesChannel =
+    StreamProvider.family<Message?, String>((ref, id) {
   final _firestore = FirestoreService();
 
   return _firestore
-      .newMessagesStream(roomId: id)
+      .roomMessagesUpdates(roomId: id)
       .skip(1)
       .map((List<Map<String, dynamic>> data) {
     assert(data.length <= 1);
     if (data.length == 0) return null;
     Message message = Message.fromMap(data.first);
 
-    return message;
-  });
-});
-
-// Notifies the sender when a message is read by the recipient
-final readMessagesChannel = StreamProvider.family<Message?, String>((ref, id) {
-  final _firestore = FirestoreService();
-  return _firestore
-      .readRecipientChangesStream(roomId: id)
-      .skip(1)
-      .map((List<Map<String, dynamic>> event) {
-    assert(event.length <= 1);
-    if (event.length == 0) return null;
-    Message message = Message.fromMap(event.first);
     return message;
   });
 });

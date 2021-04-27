@@ -81,7 +81,9 @@ class FirestoreService implements IFirestoreService {
     QuerySnapshot querySnapshot = await _db
         .collection('Users')
         .where('activeTags', arrayContainsAny: tagsIds)
-        .get();
+        .get(GetOptions(
+          source: Source.server,
+        ));
 
     List<Map<String, dynamic>> usersData = [];
 
@@ -199,23 +201,7 @@ class FirestoreService implements IFirestoreService {
   }
 
   @override
-  Stream<List<Map<String, dynamic>>> newMessagesStream(
-      {required String roomId}) {
-    return _db
-        .collection('Rooms')
-        .doc(roomId)
-        .collection('Messages')
-        .snapshots(includeMetadataChanges: true)
-        .map(
-          (QuerySnapshot event) => event.docChanges
-              .where((change) => change.type == DocumentChangeType.added)
-              .where((element) => !element.doc.metadata.isFromCache)
-              .map((DocumentChange e) => e.doc.data()!)
-              .toList(),
-        );
-  }
-
-  Stream<List<Map<String, dynamic>>> readRecipientChangesStream(
+  Stream<List<Map<String, dynamic>>> roomMessagesUpdates(
       {required String roomId}) {
     return _db
         .collection('Rooms')
@@ -223,10 +209,9 @@ class FirestoreService implements IFirestoreService {
         .collection('Messages')
         .snapshots()
         .map(
-          (event) => event.docChanges
-              .where((element) => element.type == DocumentChangeType.modified)
+          (QuerySnapshot event) => event.docChanges
               .where((element) => !element.doc.metadata.isFromCache)
-              .map((e) => e.doc.data()!)
+              .map((DocumentChange e) => e.doc.data()!)
               .toList(),
         );
   }
@@ -258,20 +243,6 @@ class FirestoreService implements IFirestoreService {
 
   @override
   String getTagReference() => _db.collection('Tags').doc().id;
-
-  // @override
-  // Stream<Map<String, dynamic>> roomLatestMessage({required String roomId}) {
-  //   return _db
-  //       .collection('Rooms')
-  //       .doc(roomId)
-  //       .collection('Messages')
-  //       .orderBy('time')
-  //       .limit(1)
-  //       .snapshots()
-  //       .map(
-  //         (QuerySnapshot q) => q.docs.first.data()!,
-  //       );
-  // }
 
   @override
   void markMessageAsRead({required String roomId, required String messageId}) {
