@@ -126,6 +126,42 @@ class Settings extends StatelessWidget {
                     )
                   ],
                 ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: Divider(
+                  thickness: 0.15,
+                  color: style.borderColor,
+                ),
+              ),
+              InkWell(
+                splashColor: Colors.transparent,
+                highlightColor: Colors.transparent,
+                onTap: () async {
+                  bool success =
+                      await context.read(authProvider).onDeleteAccountPressed();
+
+                  if (success)
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (_) => LoginScreen(),
+                      ),
+                      (route) => false,
+                    );
+                },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Delete Account',
+                      style: style.title3Style,
+                    ),
+                    Icon(
+                      Icons.delete,
+                      color: style.iconColors,
+                    )
+                  ],
+                ),
               )
             ],
           ),

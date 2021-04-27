@@ -148,4 +148,25 @@ class _AuthProcessNotifier extends ChangeNotifier {
       return false;
     }
   }
+
+  Future<bool> onDeleteAccountPressed() async {
+    try {
+      _loadingNotifer.isLoading = true;
+
+      await FirestoreService().deleteAccount(userId: LocalStorage().user!.id);
+      await AuthService().signOut();
+      await LocalStorage().setUser(null);
+
+      _loadingNotifer.isLoading = false;
+
+      return true;
+    } on Exception catch (e, s) {
+      _errorNotifier.setError(
+        exception: e,
+        stackTrace: s,
+      );
+      _loadingNotifer.isLoading = false;
+      return false;
+    }
+  }
 }

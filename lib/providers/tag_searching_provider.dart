@@ -177,8 +177,8 @@ class TagSuggestionsNotifier extends ChangeNotifier {
 
       // If tag is new allow adding it
       if (!suggestedTags
-          .map((e) => e.label.toLowerCase())
-          .contains(label.toLowerCase())) {
+          .map((e) => e.label.toLowerCase().trim())
+          .contains(label.toLowerCase().trim())) {
         newTagToAdd = Tag(
           id: firestore.getTagReference(),
           isActive: true,

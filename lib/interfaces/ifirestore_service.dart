@@ -21,6 +21,8 @@ abstract class IFirestoreService {
   Future<List<Map<String, dynamic>?>> getMatchingUsers(
       {required List<String> tagsIds});
 
+  Future<void> deleteAccount({required String userId});
+
   Future<List<Map<String, dynamic>>> getSuggestedTags(
       {required List<String> ids});
 
@@ -51,5 +53,4 @@ abstract class IFirestoreService {
 
   void markMessageAsRead({required String roomId, required String messageId});
 
-  Future<void> deleteAccount({required userId});
 }

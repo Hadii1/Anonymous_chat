@@ -370,7 +370,7 @@ class __SuggestedContactsState extends State<_SuggestedContacts>
       return AnimatedSize(
         vsync: this,
         curve: Curves.easeOutCubic,
-        duration: Duration(milliseconds: 320),
+        duration: Duration(milliseconds: 250),
         child: watch(suggestedContactsProvider).when(
           data: (List<Tuple2<User, List<Tag>>> data) {
             return Padding(
