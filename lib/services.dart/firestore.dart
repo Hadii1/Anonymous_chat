@@ -144,7 +144,7 @@ class FirestoreService implements IFirestoreService {
         .snapshots()
         .map(
           (QuerySnapshot event) =>
-              event.docs.map((QueryDocumentSnapshot e) => e.data()!).toList(),
+              event.docChanges.map((e) => e.doc.data()!).toList(),
         );
   }
 

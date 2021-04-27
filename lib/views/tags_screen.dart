@@ -370,20 +370,23 @@ class __SuggestedContactsState extends State<_SuggestedContacts>
       return AnimatedSize(
         vsync: this,
         curve: Curves.easeOutCubic,
-        duration: Duration(milliseconds: 300),
+        duration: Duration(milliseconds: 320),
         child: watch(suggestedContactsProvider).when(
           data: (List<Tuple2<User, List<Tag>>> data) {
             return Padding(
               padding:
                   const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8),
-              child: AnimatedSwitcher(
-                duration: Duration(milliseconds: 320),
-                child: data.isEmpty
-                    ? Padding(
+              child: data.isEmpty
+                  ? Fader(
+                      duration: Duration(milliseconds: 300),
+                      child: Padding(
                         padding: const EdgeInsets.only(top: 100.0),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
+                            SizedBox(
+                              height: 50,
+                            ),
                             Icon(
                               Icons.not_interested,
                               color: style.accentColor,
@@ -400,18 +403,18 @@ class __SuggestedContactsState extends State<_SuggestedContacts>
                             ),
                           ],
                         ),
-                      )
-                    : Fader(
-                        duration: Duration(milliseconds: 300),
-                        child: Column(
-                          children: List.generate(
-                              data.length,
-                              (index) => SuggestedContact(
-                                    data: data[index],
-                                  )),
-                        ),
                       ),
-              ),
+                    )
+                  : Fader(
+                      duration: Duration(milliseconds: 300),
+                      child: Column(
+                        children: List.generate(
+                            data.length,
+                            (index) => SuggestedContact(
+                                  data: data[index],
+                                )),
+                      ),
+                    ),
             );
           },
           loading: () => Padding(

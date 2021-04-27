@@ -68,31 +68,29 @@ class TagSuggestionsNotifier extends ChangeNotifier {
       if (_debounceTimer != null && _debounceTimer!.isActive) {
         _debounceTimer!.cancel();
       }
-
-      return;
-    }
-
-    // To avoid unnessecary rebuilds
-    if (screenState != TagScreenState.loadingTags ||
-        currentLabel != null ||
-        suggestedTags.isNotEmpty) {
-      screenState = TagScreenState.loadingTags;
-      newTagToAdd = null;
-      suggestedTags = [];
-      notifyListeners();
-    }
-
-    currentLabel = label;
-
-    if (_debounceTimer == null) {
-      _debounceTimer = Timer(Duration(milliseconds: 500), () {
-        _getSuggestedTags();
-      });
     } else {
-      _debounceTimer!.cancel();
-      _debounceTimer = Timer(Duration(milliseconds: 500), () {
-        _getSuggestedTags();
-      });
+      // To avoid unnessecary rebuilds
+      if (screenState != TagScreenState.loadingTags ||
+          currentLabel != null ||
+          suggestedTags.isNotEmpty) {
+        screenState = TagScreenState.loadingTags;
+        newTagToAdd = null;
+        suggestedTags = [];
+        notifyListeners();
+      }
+
+      currentLabel = label;
+
+      if (_debounceTimer == null) {
+        _debounceTimer = Timer(Duration(milliseconds: 500), () {
+          _getSuggestedTags(label);
+        });
+      } else {
+        _debounceTimer!.cancel();
+        _debounceTimer = Timer(Duration(milliseconds: 500), () {
+          _getSuggestedTags(label);
+        });
+      }
     }
   }
 
@@ -154,9 +152,9 @@ class TagSuggestionsNotifier extends ChangeNotifier {
     }
   }
 
-  void _getSuggestedTags() async {
+  void _getSuggestedTags(String label) async {
     try {
-      if (currentLabel == null || currentLabel!.isEmpty) return;
+      if (label.isEmpty) return;
 
       screenState = TagScreenState.loadingTags;
 
@@ -180,11 +178,11 @@ class TagSuggestionsNotifier extends ChangeNotifier {
       // If tag is new allow adding it
       if (!suggestedTags
           .map((e) => e.label.toLowerCase())
-          .contains(currentLabel!.toLowerCase())) {
+          .contains(label.toLowerCase())) {
         newTagToAdd = Tag(
           id: firestore.getTagReference(),
           isActive: true,
-          label: currentLabel!,
+          label: label,
         );
       }
 
