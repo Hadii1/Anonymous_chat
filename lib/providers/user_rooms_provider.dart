@@ -57,17 +57,14 @@ final roomMessagesUpdatesChannel =
 });
 
 final userRoomsProvider = StreamProvider.autoDispose<List<Room>>(
-  (ref) async* {
+  (_) async* {
     final _firestore = FirestoreService();
-    final _user = LocalStorage().user;
+    final _user = LocalStorage().user!;
 
     List<Room> rooms = [];
 
     await for (List<Map<String, dynamic>?> data
-        in FirestoreService().userRooms(userId: _user!.id)) {
-      // if (_user == null) {
-      //   yield [];
-      // }
+        in FirestoreService().userRooms(userId: _user.id)) {
       for (Map<String, dynamic>? m in data) {
         Room room = Room.fromFirestoreMap(m!);
 

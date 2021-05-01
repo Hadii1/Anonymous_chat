@@ -99,9 +99,8 @@ class Settings extends StatelessWidget {
               SizedBox(
                 height: 48,
               ),
-              InkWell(
-                splashColor: Colors.transparent,
-                highlightColor: Colors.transparent,
+              _SettingTile(
+                title: 'Sign Out',
                 onTap: () async {
                   bool success =
                       await context.read(authProvider).onSignOutPressed();
@@ -113,19 +112,7 @@ class Settings extends StatelessWidget {
                       (route) => false,
                     );
                 },
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Sign Out',
-                      style: style.title3Style,
-                    ),
-                    Icon(
-                      Icons.exit_to_app_rounded,
-                      color: style.iconColors,
-                    )
-                  ],
-                ),
+                icon: Icons.exit_to_app_rounded,
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -134,9 +121,8 @@ class Settings extends StatelessWidget {
                   color: style.borderColor,
                 ),
               ),
-              InkWell(
-                splashColor: Colors.transparent,
-                highlightColor: Colors.transparent,
+              _SettingTile(
+                title: 'Delete Account',
                 onTap: () async {
                   bool success =
                       await context.read(authProvider).onDeleteAccountPressed();
@@ -149,23 +135,46 @@ class Settings extends StatelessWidget {
                       (route) => false,
                     );
                 },
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Delete Account',
-                      style: style.title3Style,
-                    ),
-                    Icon(
-                      Icons.delete,
-                      color: style.iconColors,
-                    )
-                  ],
-                ),
-              )
+                icon: Icons.delete,
+              ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _SettingTile extends StatelessWidget {
+  final String title;
+  final Function() onTap;
+  final IconData icon;
+
+  const _SettingTile({
+    required this.title,
+    required this.onTap,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    ApplicationStyle style = InheritedAppTheme.of(context).style;
+    return InkWell(
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      onTap: onTap,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: style.title3Style,
+          ),
+          Icon(
+            icon,
+            color: style.iconColors,
+          )
+        ],
       ),
     );
   }

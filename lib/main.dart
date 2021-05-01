@@ -11,9 +11,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // 2-suggestion tiles on tap ui change
 // 3- chat room screen cupertino back gesture
 // 4-deleting all relevant info from the delted account
-// 5- unhandled expetion permission when signing out
 // 6- check ur junk hint in email forgot password
 // 7- change sent email info and name from firebase console
+// 8- Blocking users
+// 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
