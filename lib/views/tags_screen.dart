@@ -124,7 +124,7 @@ class _TagsSearchResponseState extends State<_TagsSearchResponse>
                     children: [
                       tagsNotifier.newTagToAdd != null
                           ? _NewTagTile(
-                              label: tagsNotifier.currentLabel!,
+                              label: tagsNotifier.newTagToAdd!.label,
                               onAddedPressed: () => context
                                   .read(suggestedTagsProvider)
                                   .onTagAdditionPressed(),

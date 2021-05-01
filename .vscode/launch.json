@@ -14,13 +14,19 @@
             "name": "iPhone 12 simulator",
             "request": "launch",
             "type": "dart",
-            "deviceId": "7D628FA0-81AE-4B31-8F81-A16ABC2828F6"
+            "deviceId": "3AE945F7-4060-494D-AD3D-E3A83A0506AD"
         },
         {
             "name": "Khaled",
             "request": "launch",
             "type": "dart",
             "deviceId": "ff02d5fa306270205f3da97e1e6d50efdd0631bc"
+        },
+        {
+            "name": "Pixel 3a",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "emulator-5554"
         }
     ],
     "compounds": [
@@ -28,7 +34,8 @@
             "name": "All",
             "configurations": [
                 "iPhone 12 simulator",
-                "iPhone"
+                "iPhone",
+                "Khaled",
             ]
         }
     ]

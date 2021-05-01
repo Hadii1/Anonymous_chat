@@ -8,7 +8,7 @@ import 'package:anonymous_chat/services.dart/local_storage.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final chatsSorterProvider = StateNotifierProvider(
+final chatsSorterProvider = StateNotifierProvider.autoDispose(
   (ref) => ChatsSorter(ref.watch(userRoomsProvider).data!.value),
 );
 
@@ -41,7 +41,7 @@ class ChatsSorter extends StateNotifier<List<Room>> {
 // Notifies the sender when a message is received by the recipient
 // or when the recipient gets a message
 final roomMessagesUpdatesChannel =
-    StreamProvider.family<Message?, String>((ref, id) {
+    StreamProvider.autoDispose.family<Message?, String>((ref, id) {
   final _firestore = FirestoreService();
 
   return _firestore
@@ -56,19 +56,18 @@ final roomMessagesUpdatesChannel =
   });
 });
 
-final userRoomsProvider = StreamProvider<List<Room>>(
+final userRoomsProvider = StreamProvider.autoDispose<List<Room>>(
   (ref) async* {
     final _firestore = FirestoreService();
     final _user = LocalStorage().user;
 
     List<Room> rooms = [];
 
-    if (_user == null) {
-      yield [];
-    }
-
     await for (List<Map<String, dynamic>?> data
         in FirestoreService().userRooms(userId: _user!.id)) {
+      // if (_user == null) {
+      //   yield [];
+      // }
       for (Map<String, dynamic>? m in data) {
         Room room = Room.fromFirestoreMap(m!);
 

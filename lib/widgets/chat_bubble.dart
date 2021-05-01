@@ -15,7 +15,6 @@
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/utilities/extrentions.dart';
-import 'package:anonymous_chat/widgets/animated_widgets.dart';
 import 'package:bubble/bubble.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';

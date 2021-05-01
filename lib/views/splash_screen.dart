@@ -3,6 +3,7 @@ import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/services.dart/algolia.dart';
 import 'package:anonymous_chat/services.dart/authentication.dart';
 import 'package:anonymous_chat/services.dart/firestore.dart';
+import 'package:anonymous_chat/services.dart/push_notificaitons.dart';
 import 'package:anonymous_chat/utilities/app_navigator.dart';
 import 'package:anonymous_chat/services.dart/local_storage.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
@@ -23,11 +24,14 @@ enum AppInitiState {
   userNotAuthenticated,
 }
 
+// TODO: Add try block
+
 final appInitialzationProvider =
     FutureProvider.autoDispose<AppInitiState>((ref) async {
-  await LocalStorage.initState();
   await Firebase.initializeApp();
+  await LocalStorage.init();
   await AlgoliaSearch.init();
+  await NotificationsService.init();
 
   SystemChrome.setSystemUIOverlayStyle(
     LocalStorage().preferedTheme == ThemeState.dark

@@ -10,7 +10,7 @@ class LocalStorage {
 
   LocalStorage._internal();
 
-  static Future<void> initState() async {
+  static Future<void> init() async {
     prefs = await SharedPreferences.getInstance();
   }
 

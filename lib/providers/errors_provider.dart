@@ -16,7 +16,7 @@ final errorsProvider = StateNotifierProvider(
 class ErrorNotifier extends StateNotifier<String> {
   ErrorNotifier({required Stream<ConnectivityResult> connectivityStream})
       : super('') {
-    connectivityStream.listen(
+    connectivityStream.skip(1).listen(
       (event) {
         print(event);
         if (event == ConnectivityResult.none) {
