@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/room.dart';
 import 'package:anonymous_chat/models/user.dart';
+import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/services.dart/firestore.dart';
 import 'package:anonymous_chat/services.dart/local_storage.dart';
 
@@ -41,7 +42,7 @@ class ChatsSorter extends StateNotifier<List<Room>> {
 // Notifies the sender when a message is received by the recipient
 // or when the recipient gets a message
 final roomMessagesUpdatesChannel =
-    StreamProvider.autoDispose.family<Message?, String>((ref, id) {
+    StreamProvider.family<Message?, String>((ref, id) {
   final _firestore = FirestoreService();
 
   return _firestore
@@ -57,53 +58,63 @@ final roomMessagesUpdatesChannel =
 });
 
 final userRoomsProvider = StreamProvider.autoDispose<List<Room>>(
-  (_) async* {
-    final _firestore = FirestoreService();
-    final _user = LocalStorage().user!;
+  (ref) async* {
+    try {
+      ref.onDispose(() {
+        print('disposed');
+      });
 
-    List<Room> rooms = [];
+      final _firestore = FirestoreService();
+      final _user = LocalStorage().user!;
 
-    await for (List<Map<String, dynamic>?> data
-        in FirestoreService().userRooms(userId: _user.id)) {
-      for (Map<String, dynamic>? m in data) {
-        Room room = Room.fromFirestoreMap(m!);
+      List<Room> rooms = [];
 
-        Map<String, dynamic> contactData = await _firestore.getUserData(
-          id: room.participants.firstWhere(
-            (String id) => id != _user.id,
-          ),
-        );
+      await for (List<Map<String, dynamic>?> data
+          in FirestoreService().userRooms(userId: _user.id)) {
+        for (Map<String, dynamic>? m in data) {
+          Room room = Room.fromFirestoreMap(m!);
 
-        User other = User.fromMap(contactData);
-        List<Message> roomMessages = [];
+          Map<String, dynamic> contactData = await _firestore.getUserData(
+            id: room.participants.firstWhere(
+              (String id) => id != _user.id,
+            ),
+          );
 
-        List<Map<String, dynamic>> messagesData =
-            await _firestore.getAllMessages(roomId: room.id);
+          User other = User.fromMap(contactData);
+          List<Message> roomMessages = [];
 
-        for (Map<String, dynamic> m in messagesData) {
-          Message message = Message.fromMap(m);
+          List<Map<String, dynamic>> messagesData =
+              await _firestore.getAllMessages(roomId: room.id);
 
-          roomMessages.add(message);
+          for (Map<String, dynamic> m in messagesData) {
+            Message message = Message.fromMap(m);
+
+            roomMessages.add(message);
+          }
+
+          roomMessages.sort((a, b) => a.time.compareTo(b.time));
+
+          rooms.add(
+            Room(
+              users: [_user, other],
+              id: room.id,
+              participants: [_user.id, other.id],
+              messages: roomMessages,
+            ),
+          );
+        }
+        if (rooms.isNotEmpty) {
+          rooms.sort(
+            (a, b) => -a.messages.last.time.compareTo(b.messages.last.time),
+          );
         }
 
-        roomMessages.sort((a, b) => a.time.compareTo(b.time));
-
-        rooms.add(
-          Room(
-            users: [_user, other],
-            id: room.id,
-            participants: [_user.id, other.id],
-            messages: roomMessages,
-          ),
-        );
+        yield rooms;
       }
-      if (rooms.isNotEmpty) {
-        rooms.sort(
-          (a, b) => -a.messages.last.time.compareTo(b.messages.last.time),
-        );
-      }
-
-      yield rooms;
+    } on Exception catch (e, s) {
+      ref
+          .read(errorsProvider)
+          .submitError(exception: e, stackTrace: s, hint: 'userRoomsProvider');
     }
   },
 );

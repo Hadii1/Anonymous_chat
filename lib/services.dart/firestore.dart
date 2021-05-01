@@ -59,7 +59,6 @@ class FirestoreService implements IFirestoreService {
         .snapshots()
         .map(
           (QuerySnapshot q) => q.docChanges
-              .where((element) => !element.doc.metadata.isFromCache)
               .map((DocumentChange e) => e.doc.data()!)
               .toList(),
         );
