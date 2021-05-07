@@ -104,6 +104,7 @@ class Settings extends StatelessWidget {
                 onTap: () async {
                   bool success =
                       await context.read(authProvider).onSignOutPressed();
+
                   if (success)
                     Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(

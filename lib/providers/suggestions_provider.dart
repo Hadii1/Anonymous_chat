@@ -10,14 +10,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tuple/tuple.dart';
 
 final suggestedContactsProvider =
-    FutureProvider.autoDispose<List<Tuple2<User, List<Tag>>>>(
+    FutureProvider.autoDispose<List<Tuple2<User, List<Tag>>>?>(
   (ref) async {
     List<String> userContacts = [];
-    List<Room> currentRooms = ref.watch(userRoomsProvider).data!.value;
+    AsyncData<List<Room>>? a = ref.watch(userRoomsProvider).data;
+    // This means loading state
+    if (a == null) return null;
+    List<Room> currentRooms = a.value;
 
     for (Room r in currentRooms) {
       userContacts.addAll(r.participants);
     }
+    
     List<Tuple2<User, List<Tag>>> suggestions = [];
 
     List<Tag> selectedTags = ref

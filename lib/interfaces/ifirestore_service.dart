@@ -2,6 +2,8 @@ import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/room.dart';
 import 'package:anonymous_chat/models/tag.dart';
 import 'package:anonymous_chat/models/user.dart';
+import 'package:anonymous_chat/utilities/enums.dart';
+import 'package:tuple/tuple.dart';
 
 abstract class IFirestoreService {
   Future<void> saveUserData({required User user});
@@ -16,7 +18,8 @@ abstract class IFirestoreService {
 
   Future<List<Map<String, dynamic>>> getAllMessages({required String roomId});
 
-  Stream<List<Map<String, dynamic>?>> userRooms({required String userId});
+  Stream<List<Tuple2<Map<String, dynamic>?, RoomChangeType>>> userRooms(
+      {required String userId});
 
   Future<List<Map<String, dynamic>?>> getMatchingUsers(
       {required List<String> tagsIds});
@@ -33,13 +36,10 @@ abstract class IFirestoreService {
   Stream<List<Map<String, dynamic>>> roomMessagesUpdates(
       {required String roomId});
 
-
   Future<void> onUserDiactivatingTag(
       {required Tag tag, required String userId});
 
   Future<void> onUserActivatingTag({required Tag tag, required String userId});
-
-  // Stream<Map<String, dynamic>> roomLatestMessage({required String roomId});
 
   String getRoomReference();
 
@@ -50,5 +50,4 @@ abstract class IFirestoreService {
   });
 
   void markMessageAsRead({required String roomId, required String messageId});
-
 }

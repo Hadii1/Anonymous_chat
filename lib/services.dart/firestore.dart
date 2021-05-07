@@ -3,8 +3,10 @@ import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/room.dart';
 import 'package:anonymous_chat/models/tag.dart';
 import 'package:anonymous_chat/models/user.dart';
+import 'package:anonymous_chat/utilities/enums.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tuple/tuple.dart';
 
 class FirestoreService implements IFirestoreService {
   static final FirestoreService _instance = FirestoreService._internal();
@@ -52,16 +54,29 @@ class FirestoreService implements IFirestoreService {
   }
 
   @override
-  Stream<List<Map<String, dynamic>?>> userRooms({required String userId}) {
+  Stream<List<Tuple2<Map<String, dynamic>?, RoomChangeType>>> userRooms(
+      {required String userId}) {
     return _db
         .collection('Rooms')
         .where('participants', arrayContains: userId)
         .snapshots()
-        .map(
-          (QuerySnapshot q) => q.docChanges
-              .map((DocumentChange e) => e.doc.data()!)
-              .toList(),
-        );
+        .map((QuerySnapshot snapshot) => snapshot.docChanges.map(
+              (DocumentChange c) {
+                late RoomChangeType type;
+                switch (c.type) {
+                  case DocumentChangeType.added:
+                    type = RoomChangeType.added;
+                    break;
+                  case DocumentChangeType.modified:
+                    type = RoomChangeType.edited;
+                    break;
+                  case DocumentChangeType.removed:
+                    type = RoomChangeType.delete;
+                    break;
+                }
+                return Tuple2(c.doc.data()!, type);
+              },
+            ).toList());
   }
 
   @override
@@ -256,6 +271,15 @@ class FirestoreService implements IFirestoreService {
   }
 
   Future<void> deleteAccount({required userId}) async {
+    QuerySnapshot d = await _db
+        .collection('Rooms')
+        .where('participants', arrayContains: userId)
+        .get();
+
+    for (QueryDocumentSnapshot a in d.docs) {
+      await a.reference.delete();
+    }
+
     await _db.collection('Users').doc(userId).delete();
   }
 }

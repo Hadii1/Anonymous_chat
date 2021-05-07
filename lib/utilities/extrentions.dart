@@ -39,3 +39,7 @@ extension DateTimeFormatting on int {
     return 'NOOO';
   }
 }
+
+// extension FunctionRetrying on Function {
+//   retry({Duration duration, bool incremental = false}) => this();
+// }

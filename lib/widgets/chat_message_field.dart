@@ -56,6 +56,8 @@ class _MessageBoxState extends State<MessageBox> {
             Expanded(
               child: TextField(
                 autocorrect: false,
+                keyboardType: TextInputType.text,
+                textCapitalization: TextCapitalization.sentences,
                 cursorColor: style.accentColor,
                 style: style.bodyText,
                 controller: _controller,

@@ -19,8 +19,8 @@ class CustomRoute extends CupertinoPageRoute {
   CustomRoute({builder})
       : super(
           builder: builder,
-          fullscreenDialog: false,
-          maintainState: true,
+          fullscreenDialog: true,
+          maintainState: false,
         );
 
   @override

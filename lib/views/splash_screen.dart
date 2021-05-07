@@ -24,8 +24,6 @@ enum AppInitiState {
   userNotAuthenticated,
 }
 
-// TODO: Add try block
-
 final appInitialzationProvider =
     FutureProvider.autoDispose<AppInitiState>((ref) async {
   await Firebase.initializeApp();

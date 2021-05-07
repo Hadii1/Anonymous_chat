@@ -29,8 +29,8 @@ class NotificationsService {
   static Future<void> init() async {
     _fcm = FirebaseMessaging.instance;
 
-    String? token = await _fcm.getToken();
-    print(token);
+    // String? token = await _fcm.getToken();
+    // print(token);
 
     if (Platform.isIOS) {
       await _fcm.requestPermission(

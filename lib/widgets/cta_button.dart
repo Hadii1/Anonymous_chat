@@ -27,15 +27,16 @@ class CtaButton extends StatelessWidget {
           ),
         ),
         style: ButtonStyle(
+            overlayColor: MaterialStateProperty.all(style.accentColor.withOpacity(0.1)),
             shape: MaterialStateProperty.all(
-          RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-            side: BorderSide(
-              color: isPrimary ? style.accentColor : style.borderColor,
-              width: 0.35,
-            ),
-          ),
-        )),
+              RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+                side: BorderSide(
+                  color: isPrimary ? style.accentColor : style.borderColor,
+                  width: 0.35,
+                ),
+              ),
+            )),
         onPressed: onPressed,
       ),
     );

@@ -192,44 +192,50 @@ class _NewTagTile extends StatelessWidget {
                 color: Colors.white,
               ),
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    label,
-                    style: style.bodyText,
-                  ),
-                  InkResponse(
-                    focusColor: Colors.transparent,
-                    highlightColor: Colors.transparent,
-                    hoverColor: Colors.transparent,
-                    radius: 10,
-                    splashColor: style.accentColor,
-                    onTap: () {
-                      onAddedPressed();
-                      FocusScope.of(context).unfocus();
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.black,
-                        border: Border.all(
-                          color: style.accentColor,
+            child: InkWell(
+              onTap: () {
+                onAddedPressed();
+                FocusScope.of(context).unfocus();
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      label,
+                      style: style.bodyText,
+                    ),
+                    InkResponse(
+                      focusColor: Colors.transparent,
+                      highlightColor: Colors.transparent,
+                      hoverColor: Colors.transparent,
+                      radius: 10,
+                      splashColor: style.accentColor,
+                      onTap: () {
+                        onAddedPressed();
+                        FocusScope.of(context).unfocus();
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.black,
+                          border: Border.all(
+                            color: style.accentColor,
+                          ),
                         ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(2.0),
-                        child: Icon(
-                          Icons.add,
-                          color: Colors.white,
-                          size: 17,
+                        child: Padding(
+                          padding: const EdgeInsets.all(2.0),
+                          child: Icon(
+                            Icons.add,
+                            color: Colors.white,
+                            size: 17,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -302,46 +308,57 @@ class _SuggestedTagsList extends StatelessWidget {
                               color: Colors.white,
                             ),
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  tag.label,
-                                  style: style.bodyText,
-                                ),
-                                InkResponse(
-                                  focusColor: Colors.transparent,
-                                  highlightColor: Colors.transparent,
-                                  hoverColor: Colors.transparent,
-                                  radius: 10,
-                                  splashColor: style.accentColor,
-                                  onTap: () {
-                                    onSelected(
-                                      tag,
-                                    );
-                                    FocusScope.of(context).unfocus();
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: Colors.black,
-                                      border: Border.all(
-                                        color: style.accentColor,
+                          child: InkWell(
+                            splashColor: style.accentColor,
+                            highlightColor: style.accentColor,
+                            onTap: () {
+                              onSelected(
+                                tag,
+                              );
+                              FocusScope.of(context).unfocus();
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    tag.label,
+                                    style: style.bodyText,
+                                  ),
+                                  InkResponse(
+                                    focusColor: Colors.transparent,
+                                    highlightColor: Colors.transparent,
+                                    hoverColor: Colors.transparent,
+                                    radius: 10,
+                                    splashColor: style.accentColor,
+                                    onTap: () {
+                                      onSelected(
+                                        tag,
+                                      );
+                                      FocusScope.of(context).unfocus();
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Colors.black,
+                                        border: Border.all(
+                                          color: style.accentColor,
+                                        ),
                                       ),
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(2.0),
-                                      child: Icon(
-                                        Icons.add,
-                                        color: Colors.white,
-                                        size: 17,
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(2.0),
+                                        child: Icon(
+                                          Icons.add,
+                                          color: Colors.white,
+                                          size: 17,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         );
@@ -365,57 +382,66 @@ class __SuggestedContactsState extends State<_SuggestedContacts>
   @override
   Widget build(BuildContext context) {
     ApplicationStyle style = InheritedAppTheme.of(context).style;
-
     return Consumer(builder: (context, watch, child) {
       return AnimatedSize(
         vsync: this,
         curve: Curves.easeOutCubic,
         duration: Duration(milliseconds: 250),
         child: watch(suggestedContactsProvider).when(
-          data: (List<Tuple2<User, List<Tag>>> data) {
-            return Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8),
-              child: data.isEmpty
-                  ? Fader(
-                      duration: Duration(milliseconds: 300),
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 100.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              height: 50,
-                            ),
-                            Icon(
-                              Icons.not_interested,
-                              color: style.accentColor,
-                              size: 50,
-                            ),
-                            SizedBox(height: 24),
-                            Text(
-                              'No contacts found.\nTry activating new tags.',
-                              style: TextStyle(
-                                color: Colors.white,
-                                height: 1.4,
+          data: (List<Tuple2<User, List<Tag>>>? data) {
+            return data == null
+                ? Padding(
+                  padding: const EdgeInsets.only(top: 100.0),
+                  child: SpinKitThreeBounce(
+                    size: 25,
+                    duration: Duration(milliseconds: 800),
+                    color: style.loadingBarColor,
+                  ),
+                )
+                : Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24.0, vertical: 8),
+                    child: data.isEmpty
+                        ? Fader(
+                            duration: Duration(milliseconds: 300),
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 100.0),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    height: 50,
+                                  ),
+                                  Icon(
+                                    Icons.not_interested,
+                                    color: style.accentColor,
+                                    size: 50,
+                                  ),
+                                  SizedBox(height: 24),
+                                  Text(
+                                    'No contacts found.\nTry activating new tags.',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      height: 1.4,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
                               ),
-                              textAlign: TextAlign.center,
                             ),
-                          ],
-                        ),
-                      ),
-                    )
-                  : Fader(
-                      duration: Duration(milliseconds: 300),
-                      child: Column(
-                        children: List.generate(
-                            data.length,
-                            (index) => SuggestedContact(
+                          )
+                        : Fader(
+                            duration: Duration(milliseconds: 300),
+                            child: Column(
+                              children: List.generate(
+                                data.length,
+                                (index) => SuggestedContact(
                                   data: data[index],
-                                )),
-                      ),
-                    ),
-            );
+                                ),
+                              ),
+                            ),
+                          ),
+                  );
           },
           loading: () => Padding(
             padding: const EdgeInsets.only(top: 100.0),

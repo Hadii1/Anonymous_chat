@@ -48,7 +48,17 @@ class _SearchFieldState extends State<SearchField> {
             size: 21,
           ),
         ),
-        hintStyle: style.bodyText.copyWith(color: style.searchBarHintColor,fontSize: 13),
+        // Just to keep the text centered
+        suffixIcon: Padding(
+          padding: const EdgeInsets.only(left: 6.0),
+          child: Icon(
+            Icons.search,
+            color: Colors.transparent,
+            size: 21,
+          ),
+        ),
+        hintStyle: style.bodyText
+            .copyWith(color: style.searchBarHintColor, fontSize: 13),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(

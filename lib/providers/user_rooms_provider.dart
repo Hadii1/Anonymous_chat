@@ -3,11 +3,12 @@ import 'dart:async';
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/room.dart';
 import 'package:anonymous_chat/models/user.dart';
-import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/services.dart/firestore.dart';
 import 'package:anonymous_chat/services.dart/local_storage.dart';
+import 'package:anonymous_chat/utilities/enums.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tuple/tuple.dart';
 
 final chatsSorterProvider = StateNotifierProvider.autoDispose(
   (ref) => ChatsSorter(ref.watch(userRoomsProvider).data!.value),
@@ -59,20 +60,22 @@ final roomMessagesUpdatesChannel =
 
 final userRoomsProvider = StreamProvider.autoDispose<List<Room>>(
   (ref) async* {
-    try {
-      ref.onDispose(() {
-        print('disposed');
-      });
+    final _firestore = FirestoreService();
+    final _user = LocalStorage().user!;
+    ref.onDispose(() {
+      print('disposed');
+    });
 
-      final _firestore = FirestoreService();
-      final _user = LocalStorage().user!;
+    List<Room> rooms = [];
 
-      List<Room> rooms = [];
-
-      await for (List<Map<String, dynamic>?> data
-          in FirestoreService().userRooms(userId: _user.id)) {
-        for (Map<String, dynamic>? m in data) {
-          Room room = Room.fromFirestoreMap(m!);
+    await for (List<Tuple2<Map<String, dynamic>?, RoomChangeType>> data
+        in FirestoreService().userRooms(userId: _user.id)) {
+      for (Tuple2<Map<String, dynamic>?, RoomChangeType> m in data) {
+        if (m.item2 == RoomChangeType.delete) {
+          Room room = Room.fromFirestoreMap(m.item1!);
+          rooms.remove(room);
+        } else {
+          Room room = Room.fromFirestoreMap(m.item1!);
 
           Map<String, dynamic> contactData = await _firestore.getUserData(
             id: room.participants.firstWhere(
@@ -103,18 +106,13 @@ final userRoomsProvider = StreamProvider.autoDispose<List<Room>>(
             ),
           );
         }
-        if (rooms.isNotEmpty) {
-          rooms.sort(
-            (a, b) => -a.messages.last.time.compareTo(b.messages.last.time),
-          );
-        }
-
-        yield rooms;
       }
-    } on Exception catch (e, s) {
-      ref
-          .read(errorsProvider)
-          .submitError(exception: e, stackTrace: s, hint: 'userRoomsProvider');
+      if (rooms.isNotEmpty) {
+        rooms.sort(
+          (a, b) => -a.messages.last.time.compareTo(b.messages.last.time),
+        );
+      }
+      yield rooms;
     }
   },
 );
