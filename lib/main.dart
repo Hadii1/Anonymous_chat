@@ -7,8 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // TODO:
 // 1- notifications
-// 6- check ur junk hint in email forgot password
-// 7- change sent email info and name from firebase console
 // 8- Blocking users
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

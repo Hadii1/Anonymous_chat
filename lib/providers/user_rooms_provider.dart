@@ -61,10 +61,11 @@ final roomMessagesUpdatesChannel =
 final userRoomsProvider = StreamProvider.autoDispose<List<Room>>(
   (ref) async* {
     final _firestore = FirestoreService();
-    final _user = LocalStorage().user!;
-    ref.onDispose(() {
-      print('disposed');
-    });
+    final _user = LocalStorage().user;
+
+    if (_user == null) {
+      return;
+    }
 
     List<Room> rooms = [];
 

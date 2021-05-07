@@ -76,10 +76,10 @@ class TagSuggestionsNotifier extends ChangeNotifier {
         screenState = TagScreenState.loadingTags;
         newTagToAdd = null;
         suggestedTags = [];
-        notifyListeners();
       }
 
       currentLabel = label;
+      notifyListeners();
 
       if (_debounceTimer == null) {
         _debounceTimer = Timer(Duration(milliseconds: 500), () {
