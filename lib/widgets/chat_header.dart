@@ -9,11 +9,18 @@ import 'package:anonymous_chat/widgets/custom_route.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 
 class ChatHeader extends StatelessWidget {
   final Room room;
+  final Function(Room) onDeletePressed;
+  final Function(Room) onBlockPressed;
 
-  const ChatHeader({required this.room});
+  const ChatHeader({
+    required this.room,
+    required this.onDeletePressed,
+    required this.onBlockPressed,
+  });
 
   User get other =>
       room.users!.firstWhere((User user) => user.id != LocalStorage().user!.id);
@@ -38,89 +45,134 @@ class ChatHeader extends StatelessWidget {
           ),
         );
       },
-      child: Row(
-        children: [
-          AnimatedContainer(
-            duration: Duration(milliseconds: 250),
-            alignment: Alignment.centerLeft,
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: lastMessage.isSent() || lastMessage.isRead
-                  ? Colors.transparent
-                  : style.accentColor.withOpacity(0.5),
-              border: Border.all(
-                width: 0.2,
-                color: style.borderColor,
-              ),
-            ),
-            child: Center(
-              child: Text(
-                other.nickname.substring(0, 1).toUpperCase(),
-                style: style.chatHeaderLetter,
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ),
-          SizedBox(
-            width: 12,
-          ),
-          Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Slidable(
+        actionPane: SlidableDrawerActionPane(),
+        actionExtentRatio: 0.2,
+        fastThreshold: 1800,
+        actions: [
+          SlideAction(
+            onTap: () => onDeletePressed(room),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Hero(
-                      tag: '${other.id}${other.nickname}',
-                      flightShuttleBuilder: (
-                        BuildContext flightContext,
-                        Animation<double> animation,
-                        HeroFlightDirection flightDirection,
-                        BuildContext fromHeroContext,
-                        BuildContext toHeroContext,
-                      ) {
-                        return DefaultTextStyle(
-                          style: DefaultTextStyle.of(toHeroContext).style,
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: toHeroContext.widget,
-                          ),
-                        );
-                      },
-                      child: Material(
-                        type: MaterialType.transparency,
-                        child: Text(
-                          other.nickname,
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Text(
-                      lastMessage.content,
-                      style: style.bodyText,
-                    )
-                  ],
+                Icon(
+                  Icons.delete,
+                  color: Colors.white,
                 ),
                 Text(
-                  lastMessage.time.formatDate(),
-                  style:
-                      style.bodyText.copyWith(color: style.chatHeaderMsgTime),
-                )
+                  'Delete',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                  ),
+                ),
               ],
             ),
           ),
-          SizedBox(
-            width: 24,
+          SlideAction(
+            onTap: () => onBlockPressed(room),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Icon(
+                  Icons.block,
+                  color: Colors.white,
+                ),
+                Text(
+                  'Block',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
+        child: Row(
+          children: [
+            AnimatedContainer(
+              duration: Duration(milliseconds: 250),
+              alignment: Alignment.centerLeft,
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: lastMessage.isSent() || lastMessage.isRead
+                    ? Colors.transparent
+                    : style.accentColor.withOpacity(0.5),
+                border: Border.all(
+                  width: 0.2,
+                  color: style.borderColor,
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  other.nickname.substring(0, 1).toUpperCase(),
+                  style: style.chatHeaderLetter,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+            SizedBox(
+              width: 12,
+            ),
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Hero(
+                        tag: '${other.id}${other.nickname}',
+                        flightShuttleBuilder: (
+                          BuildContext flightContext,
+                          Animation<double> animation,
+                          HeroFlightDirection flightDirection,
+                          BuildContext fromHeroContext,
+                          BuildContext toHeroContext,
+                        ) {
+                          return DefaultTextStyle(
+                            style: DefaultTextStyle.of(toHeroContext).style,
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: toHeroContext.widget,
+                            ),
+                          );
+                        },
+                        child: Material(
+                          type: MaterialType.transparency,
+                          child: Text(
+                            other.nickname,
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Text(
+                        lastMessage.content,
+                        style: style.bodyText,
+                      )
+                    ],
+                  ),
+                  Text(
+                    lastMessage.time.formatDate(),
+                    style:
+                        style.bodyText.copyWith(color: style.chatHeaderMsgTime),
+                  )
+                ],
+              ),
+            ),
+            SizedBox(
+              width: 24,
+            ),
+          ],
+        ),
       ),
     );
   }

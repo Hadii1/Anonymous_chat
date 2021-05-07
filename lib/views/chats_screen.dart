@@ -68,9 +68,15 @@ class _ChatsScreenState extends State<ChatsScreen> {
                                 children: [
                                   Padding(
                                     padding: EdgeInsets.only(
-                                      left: 24,
+                                      left: 0,
                                     ),
                                     child: ChatHeader(
+                                      onBlockPressed: (Room room) => context
+                                          .read(chatsSorterProvider)
+                                          .blockContact(roomId: room.id),
+                                      onDeletePressed: (Room room) => context
+                                          .read(chatsSorterProvider)
+                                          .deleteChat(roomId: room.id),
                                       room: room,
                                     ),
                                   ),
@@ -103,6 +109,12 @@ class _ChatsScreenState extends State<ChatsScreen> {
                                       left: 24,
                                     ),
                                     child: ChatHeader(
+                                      onBlockPressed: (Room room) => context
+                                          .read(chatsSorterProvider)
+                                          .blockContact(roomId: room.id),
+                                      onDeletePressed: (Room room) => context
+                                          .read(chatsSorterProvider)
+                                          .deleteChat(roomId: room.id),
                                       room: room,
                                     ),
                                   ),

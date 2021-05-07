@@ -15,18 +15,17 @@ final chatsSorterProvider = StateNotifierProvider.autoDispose(
 );
 
 class ChatsSorter extends StateNotifier<List<Room>> {
-  ChatsSorter(this.rooms) : super(rooms);
+  ChatsSorter(this.rooms) : super(rooms) {
+    rooms.sort(
+      (a, b) => -a.messages.last.time.compareTo(b.messages.last.time),
+    );
+  }
 
-  late List<Room> rooms;
-
-  final StreamController<int> _indexCtrl = StreamController.broadcast();
-
-  Stream<int> get changedIndex => _indexCtrl.stream;
+  final List<Room> rooms;
 
   set latestActiveChat(Room room) {
     int index = rooms.indexOf(room);
     if (index != -1) {
-      _indexCtrl.sink.add(index);
       rooms.removeAt(index);
       rooms.insert(0, room);
 
@@ -34,9 +33,16 @@ class ChatsSorter extends StateNotifier<List<Room>> {
     }
   }
 
+  void deleteChat({required String roomId}) {
+    FirestoreService().deleteChat(roomId: roomId);
+    rooms.removeWhere((element) => element.id == roomId);
+    state = rooms;
+  }
+
+  void blockContact({required String roomId}) {}
+
   void dispose() {
     super.dispose();
-    _indexCtrl.close();
   }
 }
 
@@ -108,11 +114,7 @@ final userRoomsProvider = StreamProvider.autoDispose<List<Room>>(
           );
         }
       }
-      if (rooms.isNotEmpty) {
-        rooms.sort(
-          (a, b) => -a.messages.last.time.compareTo(b.messages.last.time),
-        );
-      }
+
       yield rooms;
     }
   },

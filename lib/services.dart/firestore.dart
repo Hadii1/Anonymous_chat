@@ -30,10 +30,10 @@ class FirestoreService implements IFirestoreService {
         );
   }
 
-  // Future<Map<String, dynamic>> getRoom(String id) async {
-  //   DocumentSnapshot a = await _db.collection('Rooms').doc(id).get();
-  //   return a.data()!;
-  // }
+  @override
+  Future<void> deleteChat({required String roomId}) async {
+    await _db.collection('Rooms').doc(roomId).delete();
+  }
 
   @override
   Future<void> saveUserData({required User user, List<Tag>? tags}) async {
