@@ -23,7 +23,7 @@ class ChatHeader extends StatelessWidget {
   });
 
   User get other =>
-      room.users!.firstWhere((User user) => user.id != LocalStorage().user!.id);
+      room.users!.firstWhere((User user) => user != LocalStorage().user);
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +32,7 @@ class ChatHeader extends StatelessWidget {
     Message lastMessage = room.messages.last;
 
     return Consumer(builder: (context, watch, _) {
-      List<String> blockedContacts = watch(blockedContactsProvider.state);
+      List<User> blockedContacts = watch(blockedContactsProvider.state)!;
       return InkWell(
         splashColor: Colors.transparent,
         highlightColor: Colors.transparent,
@@ -73,14 +73,12 @@ class ChatHeader extends StatelessWidget {
             ),
             SlideAction(
               onTap: () => context.read(blockedContactsProvider).toggleBlock(
-                    other: room.participants.firstWhere(
-                      (id) => id != LocalStorage().user!.id,
-                    ),
-                    block: !blockedContacts.contains(other.id),
+                    other: other,
+                    block: !blockedContacts.contains(other),
                   ),
               child: AnimatedSwitcher(
                 duration: Duration(milliseconds: 250),
-                child: blockedContacts.contains(other.id)
+                child: blockedContacts.contains(other)
                     ? Column(
                         key: ValueKey<int>(0),
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,

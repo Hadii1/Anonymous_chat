@@ -1,6 +1,7 @@
 import 'package:anonymous_chat/providers/auth_provider.dart';
 import 'package:anonymous_chat/services.dart/local_storage.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
+import 'package:anonymous_chat/views/blocked_contacts_list.dart';
 import 'package:anonymous_chat/views/login.dart';
 import 'package:anonymous_chat/widgets/titled_app_bar.dart';
 
@@ -98,6 +99,25 @@ class Settings extends StatelessWidget {
               ),
               SizedBox(
                 height: 48,
+              ),
+              _SettingTile(
+                title: 'Blocked Contacts',
+                onTap: () async {
+                  Navigator.of(context).push(
+                    CupertinoPageRoute(
+                      builder: (c) => BlockedContactsScreen(),
+                      fullscreenDialog: true,
+                    ),
+                  );
+                },
+                icon: Icons.block,
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: Divider(
+                  thickness: 0.15,
+                  color: style.borderColor,
+                ),
               ),
               _SettingTile(
                 title: 'Sign Out',

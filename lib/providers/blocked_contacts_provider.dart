@@ -21,38 +21,61 @@ final blockedContactsProvider = StateNotifierProvider.autoDispose(
   (ref) => BlockedContactsNotifier(),
 );
 
-class BlockedContactsNotifier extends StateNotifier<List<String>> {
-  BlockedContactsNotifier() : super([]) {
+class BlockedContactsNotifier extends StateNotifier<List<User>?> {
+  BlockedContactsNotifier() : super(null) {
     init();
   }
   final firestore = FirestoreService();
   late User user;
+  List<User> blockedUsers = [];
 
   void init() async {
-    Map<String, dynamic> data =
-        await firestore.getUserData(id: LocalStorage().user!.id);
-    user = User.fromMap(data);
-    state = user.blockedUsers;
+    try {
+      Map<String, dynamic> data =
+          await firestore.getUserData(id: LocalStorage().user!.id);
+      user = User.fromMap(data);
+
+      for (String id in user.blockedUsers) {
+        Map<String, dynamic> data =
+            await FirestoreService().getUserData(id: id);
+        User user = User.fromMap(data);
+        blockedUsers.add(user);
+      }
+      state = blockedUsers;
+    } on Exception catch (e, _) {
+      await Future.delayed(Duration(seconds: 2));
+      init();
+    }
   }
 
-  void toggleBlock({required String other, required bool block}) {
+  void toggleBlock({required User other, required bool block}) {
     if (block) {
-      user.blockedUsers.add(other);
-      state = user.blockedUsers;
-      firestore.blockUser(client: user.id, other: other);
+      user.blockedUsers.add(other.id);
+      blockedUsers.add(other);
+      state = blockedUsers;
+      firestore.blockUser(client: user.id, other: other.id);
     } else {
-      user.blockedUsers.remove(other);
-      state = user.blockedUsers;
-      firestore.unblockUser(client: user.id, other: other);
+      user.blockedUsers.remove(other.id);
+      blockedUsers.remove(other);
+      state = blockedUsers;
+      firestore.unblockUser(client: user.id, other: other.id);
     }
   }
 }
 
-final blockedByContactsProvider = StreamProvider.autoDispose<List<String>>(
+final blockedByContactsProvider = StreamProvider.autoDispose<List<User>>(
   (ref) async* {
-    await for (List<String> a in FirestoreService()
+    await for (List<String> ids in FirestoreService()
         .blockedByStream(userId: LocalStorage().user!.id)) {
-      yield a;
+      List<User> users = [];
+
+      for (String id in ids) {
+        Map<String, dynamic> userData =
+            await FirestoreService().getUserData(id: id);
+        User user = User.fromMap(userData);
+        users.add(user);
+      }
+      yield users;
     }
   },
 );

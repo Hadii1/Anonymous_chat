@@ -54,7 +54,8 @@ class _ChatRoomState extends State<ChatRoom> {
       backgroundColor: style.backgroundColor,
       body: Consumer(builder: (context, watch, _) {
         final chatNotifier = watch(chattingProvider(widget.room));
-        List<String> blockedContacts = watch(blockedContactsProvider.state);
+        List<User> blockedContacts = watch(blockedContactsProvider.state)!;
+
         return SizedBox(
           height: MediaQuery.of(context).size.height,
           child: Stack(
@@ -117,7 +118,7 @@ class _ChatRoomState extends State<ChatRoom> {
                         onSendPressed: (String value) {
                           chatNotifier.onSendPressed(value);
                         },
-                        isContactBlocked: blockedContacts.contains(other.id),
+                        isContactBlocked: blockedContacts.contains(other),
                       ),
                     ),
                   ],
@@ -172,14 +173,14 @@ class _ChatRoomState extends State<ChatRoom> {
                         ),
                         AnimatedSwitcher(
                           duration: Duration(milliseconds: 300),
-                          child: blockedContacts.contains(other.id)
+                          child: blockedContacts.contains(other)
                               ? InkWell(
                                   onTap: () => context
                                       .read(blockedContactsProvider)
                                       .toggleBlock(
-                                          other: other.id,
-                                          block: !blockedContacts
-                                              .contains(other.id)),
+                                        other: other,
+                                        block: !blockedContacts.contains(other),
+                                      ),
                                   splashColor: Colors.transparent,
                                   highlightColor: Colors.transparent,
                                   child: Padding(

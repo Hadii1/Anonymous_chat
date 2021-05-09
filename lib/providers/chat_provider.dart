@@ -41,7 +41,7 @@ class ChatNotifier extends ChangeNotifier {
   late bool _newRoom;
   late bool _isBlockedByOther;
 
-  String get other => room.participants.firstWhere((String i) => i != _user.id);
+  User get other => room.users!.firstWhere((User i) => i != _user);
 
   bool isChatPageOpened = false;
 
@@ -89,7 +89,7 @@ class ChatNotifier extends ChangeNotifier {
     _isBlockedByOther =
         read(blockedByContactsProvider).data!.value.contains(other);
 
-    read(blockedByContactsProvider.stream).listen((List<String> blockedBy) {
+    read(blockedByContactsProvider.stream).listen((List<User> blockedBy) {
       if (blockedBy.contains(other)) {
         _isBlockedByOther = true;
       } else {

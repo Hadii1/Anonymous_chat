@@ -1,6 +1,8 @@
 import 'package:anonymous_chat/models/room.dart';
+import 'package:anonymous_chat/models/user.dart';
 import 'package:anonymous_chat/providers/blocked_contacts_provider.dart';
 import 'package:anonymous_chat/providers/chat_provider.dart';
+import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/providers/user_rooms_provider.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/widgets/animated_widgets.dart';
@@ -29,10 +31,13 @@ class _ChatsScreenState extends State<ChatsScreen> {
         return watch(userRoomsProvider).when(
           data: (List<Room> rooms) {
             List<Room> sortedRooms = watch(chatsListProvider.state);
-            AsyncData<List<String>>? blockedContacts =
+
+            AsyncData<List<User>>? blockedBy =
                 watch(blockedByContactsProvider).data;
 
-            if (blockedContacts == null) {
+            List<User>? blockedContacts = watch(blockedContactsProvider.state);
+
+            if (blockedBy == null || blockedContacts == null) {
               return Center(
                 child: SpinKitThreeBounce(
                   color: style.loadingBarColor,
@@ -143,8 +148,10 @@ class _ChatsScreenState extends State<ChatsScreen> {
           ),
           error: (e, s) {
             context.refresh(userRoomsProvider);
-            print(e);
-            print(s);
+            context
+                .read(errorsProvider)
+                .submitError(exception: e, stackTrace: s);
+
             return Center(
               child: SpinKitThreeBounce(
                 color: style.loadingBarColor,

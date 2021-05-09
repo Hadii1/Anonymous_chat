@@ -94,8 +94,9 @@ final userRoomsProvider = StreamProvider.autoDispose<List<Room>>(
 
           for (Map<String, dynamic> m in messagesData) {
             Message message = Message.fromMap(m);
-
-            roomMessages.add(message);
+            if (!message.isSenderBlocked) {
+              roomMessages.add(message);
+            }
           }
 
           roomMessages.sort((a, b) => a.time.compareTo(b.time));

@@ -113,7 +113,7 @@ class ErrorNotifier extends StateNotifier<String> {
 
   void submitError({
     required Object exception,
-    required StackTrace stackTrace,
+    required StackTrace? stackTrace,
     String? hint,
   }) {
     print(exception);

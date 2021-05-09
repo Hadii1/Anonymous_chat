@@ -304,6 +304,7 @@ class FirestoreService implements IFirestoreService {
 
   @override
   Future<void> deleteAccount({required userId}) async {
+    //  Delete the user rooms
     QuerySnapshot d = await _db
         .collection('Rooms')
         .where('participants', arrayContains: userId)
@@ -313,6 +314,23 @@ class FirestoreService implements IFirestoreService {
       await a.reference.delete();
     }
 
+    //  Delete references where the user is blocked
+    QuerySnapshot s = await _db
+        .collection('Users')
+        .where('blockedContacts', arrayContains: userId)
+        .get();
+
+    for (QueryDocumentSnapshot a in s.docs) {
+      await _db.collection('Users').doc(a.id).update(
+        {
+          'blockedUsers': FieldValue.arrayRemove(
+            [userId],
+          )
+        },
+      );
+    }
+
+    // Delete the user document
     await _db.collection('Users').doc(userId).delete();
   }
 }
