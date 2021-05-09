@@ -1,16 +1,17 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 
 class User {
   final String nickname;
   final String email;
   final String id;
   final List<String> activeTags;
+  final List<String> blockedUsers;
 
   User({
     required this.nickname,
     required this.email,
     required this.id,
+    required this.blockedUsers,
     required this.activeTags,
   });
 
@@ -19,11 +20,13 @@ class User {
     String? email,
     String? id,
     List<String>? activeTags,
+    List<String>? blockedUsers,
   }) {
     return User(
       nickname: nickname ?? this.nickname,
       email: email ?? this.email,
       id: id ?? this.id,
+      blockedUsers: blockedUsers ?? this.blockedUsers,
       activeTags: activeTags ?? this.activeTags,
     );
   }
@@ -34,15 +37,8 @@ class User {
       'email': email,
       'id': id,
       'activeTags': activeTags,
+      'blockedUsers': blockedUsers,
     };
-  }
-
-  factory User.fromUser(User user) {
-    return User(
-        nickname: user.nickname,
-        email: user.email,
-        id: user.id,
-        activeTags: user.activeTags);
   }
 
   factory User.fromMap(Map<String, dynamic> map) {
@@ -50,6 +46,7 @@ class User {
       nickname: map['nickname'],
       email: map['email'],
       id: map['id'],
+      blockedUsers: List<String>.from(map['blockedUsers']),
       activeTags: List<String>.from(map['activeTags']),
     );
   }
@@ -59,19 +56,10 @@ class User {
   factory User.fromJson(String source) => User.fromMap(json.decode(source));
 
   @override
-  String toString() {
-    return 'FirestoreUser(nickname: $nickname, email: $email, id: $id, activeTags: $activeTags)';
-  }
-
-  @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
 
-    return other is User &&
-        other.nickname == nickname &&
-        other.email == email &&
-        other.id == id &&
-        listEquals(other.activeTags, activeTags);
+    return other is User && other.id == id;
   }
 
   @override

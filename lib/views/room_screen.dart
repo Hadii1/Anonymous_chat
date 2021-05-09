@@ -1,6 +1,7 @@
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/room.dart';
 import 'package:anonymous_chat/models/user.dart';
+import 'package:anonymous_chat/providers/blocked_contacts_provider.dart';
 import 'package:anonymous_chat/providers/chat_provider.dart';
 import 'package:anonymous_chat/services.dart/local_storage.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
@@ -51,130 +52,160 @@ class _ChatRoomState extends State<ChatRoom> {
     ApplicationStyle style = InheritedAppTheme.of(context).style;
     return Scaffold(
       backgroundColor: style.backgroundColor,
-      body: SizedBox(
-        height: MediaQuery.of(context).size.height,
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 65),
-              child: Consumer(
-                builder: (context, watch, _) {
-                  final chatNotifier = watch(chattingProvider(widget.room));
-                  return Column(
-                    children: [
-                      Expanded(
-                        child: Fader(
-                          duration: Duration(milliseconds: 300),
-                          child: KeyboardHider(
-                            child: SingleChildScrollView(
-                              reverse: true,
-                              child: Padding(
-                                padding: const EdgeInsets.only(
-                                  top: 24,
-                                  left: 2,
-                                  right: 2,
-                                  bottom: 0,
-                                ),
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: chatNotifier.allMessages.isEmpty
-                                      ? [
-                                          Container(),
-                                        ]
-                                      : List.generate(
-                                          chatNotifier.allMessages.length,
-                                          (index) {
-                                            Message message =
-                                                chatNotifier.allMessages[index];
+      body: Consumer(builder: (context, watch, _) {
+        final chatNotifier = watch(chattingProvider(widget.room));
+        List<String> blockedContacts = watch(blockedContactsProvider.state);
+        return SizedBox(
+          height: MediaQuery.of(context).size.height,
+          child: Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 65),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: Fader(
+                        duration: Duration(milliseconds: 300),
+                        child: KeyboardHider(
+                          child: SingleChildScrollView(
+                            reverse: true,
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                top: 24,
+                                left: 2,
+                                right: 2,
+                                bottom: 0,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: chatNotifier.allMessages.isEmpty
+                                    ? [
+                                        Container(),
+                                      ]
+                                    : List.generate(
+                                        chatNotifier.allMessages.length,
+                                        (index) {
+                                          Message message =
+                                              chatNotifier.allMessages[index];
 
-                                            return CustomSlide(
-                                              duration:
-                                                  Duration(milliseconds: 250),
-                                              startOffset: Offset(0, 1),
-                                              child: ChatBubble(
-                                                message: message,
-                                                isLatestMessage: chatNotifier
-                                                    .isLatestMessage(message),
-                                                isReceived:
-                                                    message.isReceived(),
-                                                isSuccesful: chatNotifier
-                                                    .isSuccessful(message),
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                ),
+                                          return CustomSlide(
+                                            duration:
+                                                Duration(milliseconds: 250),
+                                            startOffset: Offset(0, 1),
+                                            child: ChatBubble(
+                                              message: message,
+                                              isLatestMessage: chatNotifier
+                                                  .isLatestMessage(message),
+                                              isReceived: message.isReceived(),
+                                              isSuccesful: chatNotifier
+                                                  .isSuccessful(message),
+                                            ),
+                                          );
+                                        },
+                                      ),
                               ),
                             ),
                           ),
                         ),
                       ),
-                      CustomSlide(
-                        duration: Duration(milliseconds: 500),
-                        delay: Duration(milliseconds: 200),
-                        startOffset: Offset(0, 1),
-                        child: MessageBox(
-                          onSendPressed: (String value) {
-                            chatNotifier.onSendPressed(value);
-                          },
-                        ),
+                    ),
+                    CustomSlide(
+                      duration: Duration(milliseconds: 500),
+                      delay: Duration(milliseconds: 200),
+                      startOffset: Offset(0, 1),
+                      child: MessageBox(
+                        onSendPressed: (String value) {
+                          chatNotifier.onSendPressed(value);
+                        },
+                        isContactBlocked: blockedContacts.contains(other.id),
                       ),
-                    ],
-                  );
-                },
+                    ),
+                  ],
+                ),
               ),
-            ),
-            ShadedContainer(
-              stops: [0.65, 0.95],
-              child: SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.only(
-                    left: 24,
-                    right: 24,
-                    top: 12,
-                    bottom: 36,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      InkWell(
-                        highlightColor: Colors.transparent,
-                        splashColor: Colors.transparent,
-                        onTap: () => Navigator.of(context).pop(),
-                        child: Icon(
-                          Icons.arrow_back_ios,
-                          size: 21,
-                          color: style.accentColor,
-                        ),
-                      ),
-                      Hero(
-                        tag: '${other.id}${other.nickname}',
-                        child: Material(
-                          type: MaterialType.transparency,
-                          child: Text(
-                            other.nickname,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 20,
-                              color: Colors.white,
+              ShadedContainer(
+                stops: [0.65, 0.95],
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                      left: 24,
+                      right: 24,
+                      top: 12,
+                      bottom: 36,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            InkWell(
+                              highlightColor: Colors.transparent,
+                              splashColor: Colors.transparent,
+                              onTap: () => Navigator.of(context).pop(),
+                              child: Icon(
+                                Icons.arrow_back_ios,
+                                size: 21,
+                                color: style.accentColor,
+                              ),
                             ),
-                          ),
+                            Hero(
+                              tag: '${other.id}${other.nickname}',
+                              child: Material(
+                                type: MaterialType.transparency,
+                                child: Text(
+                                  other.nickname,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              Icons.arrow_back_ios,
+                              size: 21,
+                              color: Colors.transparent,
+                            ),
+                          ],
                         ),
-                      ),
-                      Icon(
-                        Icons.arrow_back_ios,
-                        size: 21,
-                        color: Colors.transparent,
-                      ),
-                    ],
+                        AnimatedSwitcher(
+                          duration: Duration(milliseconds: 300),
+                          child: blockedContacts.contains(other.id)
+                              ? InkWell(
+                                  onTap: () => context
+                                      .read(blockedContactsProvider)
+                                      .toggleBlock(
+                                          other: other.id,
+                                          block: !blockedContacts
+                                              .contains(other.id)),
+                                  splashColor: Colors.transparent,
+                                  highlightColor: Colors.transparent,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(6.0),
+                                    child: Text(
+                                      'Unblock contact to continue chat',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: style.accentColor,
+                                        letterSpacing: 1,
+                                        fontSize: 10,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : SizedBox.shrink(),
+                        )
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
+            ],
+          ),
+        );
+      }),
     );
   }
 }

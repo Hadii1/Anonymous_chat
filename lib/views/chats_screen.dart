@@ -1,4 +1,5 @@
 import 'package:anonymous_chat/models/room.dart';
+import 'package:anonymous_chat/providers/blocked_contacts_provider.dart';
 import 'package:anonymous_chat/providers/chat_provider.dart';
 import 'package:anonymous_chat/providers/user_rooms_provider.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
@@ -27,7 +28,18 @@ class _ChatsScreenState extends State<ChatsScreen> {
       builder: (context, watch, _) {
         return watch(userRoomsProvider).when(
           data: (List<Room> rooms) {
-            List<Room> sortedRooms = watch(chatsSorterProvider.state);
+            List<Room> sortedRooms = watch(chatsListProvider.state);
+            AsyncData<List<String>>? blockedContacts =
+                watch(blockedByContactsProvider).data;
+
+            if (blockedContacts == null) {
+              return Center(
+                child: SpinKitThreeBounce(
+                  color: style.loadingBarColor,
+                  size: 25,
+                ),
+              );
+            }
 
             return rooms.isEmpty
                 ? Column(
@@ -66,19 +78,9 @@ class _ChatsScreenState extends State<ChatsScreen> {
                               padding: EdgeInsets.only(top: 16),
                               child: Column(
                                 children: [
-                                  Padding(
-                                    padding: EdgeInsets.only(
-                                      left: 0,
-                                    ),
-                                    child: ChatHeader(
-                                      onBlockPressed: (Room room) => context
-                                          .read(chatsSorterProvider)
-                                          .blockContact(roomId: room.id),
-                                      onDeletePressed: (Room room) => context
-                                          .read(chatsSorterProvider)
-                                          .deleteChat(roomId: room.id),
-                                      room: room,
-                                    ),
+                                  ChatHeader(
+                                    onDeletePressed: (_) {},
+                                    room: room,
                                   ),
                                   Divider(
                                     thickness: 0.15,
@@ -109,11 +111,8 @@ class _ChatsScreenState extends State<ChatsScreen> {
                                       left: 24,
                                     ),
                                     child: ChatHeader(
-                                      onBlockPressed: (Room room) => context
-                                          .read(chatsSorterProvider)
-                                          .blockContact(roomId: room.id),
                                       onDeletePressed: (Room room) => context
-                                          .read(chatsSorterProvider)
+                                          .read(chatsListProvider)
                                           .deleteChat(roomId: room.id),
                                       room: room,
                                     ),

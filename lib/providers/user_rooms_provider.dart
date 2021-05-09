@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/room.dart';
 import 'package:anonymous_chat/models/user.dart';
@@ -10,12 +8,12 @@ import 'package:anonymous_chat/utilities/enums.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tuple/tuple.dart';
 
-final chatsSorterProvider = StateNotifierProvider.autoDispose(
-  (ref) => ChatsSorter(ref.watch(userRoomsProvider).data!.value),
+final chatsListProvider = StateNotifierProvider.autoDispose(
+  (ref) => ChatsListNotifier(ref.watch(userRoomsProvider).data!.value),
 );
 
-class ChatsSorter extends StateNotifier<List<Room>> {
-  ChatsSorter(this.rooms) : super(rooms) {
+class ChatsListNotifier extends StateNotifier<List<Room>> {
+  ChatsListNotifier(this.rooms) : super(rooms) {
     rooms.sort(
       (a, b) => -a.messages.last.time.compareTo(b.messages.last.time),
     );
@@ -38,8 +36,6 @@ class ChatsSorter extends StateNotifier<List<Room>> {
     rooms.removeWhere((element) => element.id == roomId);
     state = rooms;
   }
-
-  void blockContact({required String roomId}) {}
 
   void dispose() {
     super.dispose();

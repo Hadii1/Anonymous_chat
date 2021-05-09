@@ -90,24 +90,24 @@ class ChatBubble extends StatelessWidget {
               isReceived
                   ? SizedBox.shrink()
                   : Padding(
-                    padding: const EdgeInsets.only(left: 4.0, top: 4),
-                    child: AnimatedSwitcher(
-                      duration: Duration(seconds: 1),
-                      child: isSuccesful
-                          ? Icon(
-                              CupertinoIcons.check_mark,
-                              color: message.isRead
-                                  ? style.accentColor
-                                  : Colors.white,
-                              size: 12,
-                            )
-                          : Icon(
-                              CupertinoIcons.clock,
-                              color: Colors.white,
-                              size: 12,
-                            ),
-                    ),
-                  )
+                      padding: const EdgeInsets.only(left: 4.0, top: 4),
+                      child: AnimatedSwitcher(
+                        duration: Duration(seconds: 1),
+                        child: isSuccesful
+                            ? Icon(
+                                CupertinoIcons.check_mark,
+                                color: message.isRead
+                                    ? style.accentColor
+                                    : Colors.white,
+                                size: 12,
+                              )
+                            : Icon(
+                                CupertinoIcons.clock,
+                                color: Colors.white,
+                                size: 12,
+                              ),
+                      ),
+                    )
             ],
           ),
           color: style.backgroundColor,

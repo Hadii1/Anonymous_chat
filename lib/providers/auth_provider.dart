@@ -127,6 +127,7 @@ class _AuthProcessNotifier extends ChangeNotifier {
 
       model.User user = model.User(
         id: credential.user!.uid,
+        blockedUsers: [],
         activeTags: [],
         email: email.trim(),
         nickname: '',

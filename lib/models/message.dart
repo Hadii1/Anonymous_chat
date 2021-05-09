@@ -5,6 +5,7 @@ class Message {
   final String recipient;
   final String content;
   final String id;
+  final bool isSenderBlocked;
   // Milliseconds since epoch
   final int time;
   bool isRead;
@@ -12,6 +13,7 @@ class Message {
   Message({
     required this.sender,
     required this.recipient,
+    required this.isSenderBlocked,
     required this.content,
     required this.time,
     required this.id,
@@ -25,6 +27,7 @@ class Message {
       'content': content,
       'time': time,
       'id': id,
+      'isSenderBlocked': isSenderBlocked,
       'isRead': isRead,
     };
   }
@@ -36,7 +39,8 @@ class Message {
       recipient: map['recipient'],
       content: map['content'],
       time: map['time'],
-      isRead: map['isRead']?? false,
+      isSenderBlocked: map['isSenderBlocked'],
+      isRead: map['isRead'] ?? false,
     );
   }
 

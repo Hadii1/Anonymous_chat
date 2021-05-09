@@ -36,6 +36,25 @@ class FirestoreService implements IFirestoreService {
   }
 
   @override
+  Future<void> blockUser({
+    required String client,
+    required String other,
+  }) async {
+    await _db.collection('Users').doc(client).update({
+      'blockedUsers': FieldValue.arrayUnion([other])
+    });
+  }
+
+  Future<void> unblockUser({
+    required String client,
+    required String other,
+  }) async {
+    await _db.collection('Users').doc(client).update({
+      'blockedUsers': FieldValue.arrayRemove([other])
+    });
+  }
+
+  @override
   Future<void> saveUserData({required User user, List<Tag>? tags}) async {
     await _db.runTransaction((transaction) async {
       transaction.set(
@@ -77,6 +96,19 @@ class FirestoreService implements IFirestoreService {
                 return Tuple2(c.doc.data()!, type);
               },
             ).toList());
+  }
+
+  @override
+  Stream<List<String>> blockedByStream({required String userId}) {
+    return _db
+        .collection('Users')
+        .where('blockedUsers', arrayContains: userId)
+        .snapshots()
+        .map(
+          (QuerySnapshot querySnapshot) => querySnapshot.docs
+              .map((QueryDocumentSnapshot s) => (s.data()!['id']) as String)
+              .toList(),
+        );
   }
 
   @override
@@ -270,6 +302,7 @@ class FirestoreService implements IFirestoreService {
     );
   }
 
+  @override
   Future<void> deleteAccount({required userId}) async {
     QuerySnapshot d = await _db
         .collection('Rooms')

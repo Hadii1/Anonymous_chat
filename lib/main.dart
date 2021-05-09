@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // TODO:
 // 1- notifications
-// 8- Blocking users
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 

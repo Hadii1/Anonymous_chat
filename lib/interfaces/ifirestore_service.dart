@@ -52,4 +52,16 @@ abstract class IFirestoreService {
   void markMessageAsRead({required String roomId, required String messageId});
 
   Future<void> deleteChat({required String roomId});
+
+  Future<void> blockUser({
+    required String client,
+    required String other,
+  });
+
+  Future<void> unblockUser({
+    required String client,
+    required String other,
+  });
+
+  Stream<List<String>> blockedByStream({required String userId});
 }

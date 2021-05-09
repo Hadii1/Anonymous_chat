@@ -19,9 +19,11 @@ import 'package:flutter/material.dart';
 
 class MessageBox extends StatefulWidget {
   final Function(String) onSendPressed;
+  final bool isContactBlocked;
 
   const MessageBox({
     required this.onSendPressed,
+    required this.isContactBlocked,
   });
 
   @override
@@ -40,6 +42,20 @@ class _MessageBoxState extends State<MessageBox> {
   }
 
   @override
+  void dispose() {
+    super.dispose();
+    _controller.dispose();
+  }
+
+  @override
+  void didUpdateWidget(MessageBox oldWidget) {
+    if (oldWidget.isContactBlocked != widget.isContactBlocked) {
+      if (mounted) setState(() {});
+    }
+    super.didUpdateWidget(oldWidget);
+  }
+
+  @override
   Widget build(BuildContext context) {
     ApplicationStyle style = InheritedAppTheme.of(context).style;
 
@@ -55,6 +71,7 @@ class _MessageBoxState extends State<MessageBox> {
           children: [
             Expanded(
               child: TextField(
+                enabled: !widget.isContactBlocked,
                 autocorrect: false,
                 keyboardType: TextInputType.text,
                 textCapitalization: TextCapitalization.sentences,

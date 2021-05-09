@@ -1,6 +1,7 @@
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/room.dart';
 import 'package:anonymous_chat/models/user.dart';
+import 'package:anonymous_chat/providers/blocked_contacts_provider.dart';
 import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/providers/user_rooms_provider.dart';
 import 'package:anonymous_chat/services.dart/firestore.dart';
@@ -38,6 +39,9 @@ class ChatNotifier extends ChangeNotifier {
   late List<Message> successfullySent;
 
   late bool _newRoom;
+  late bool _isBlockedByOther;
+
+  String get other => room.participants.firstWhere((String i) => i != _user.id);
 
   bool isChatPageOpened = false;
 
@@ -53,28 +57,44 @@ class ChatNotifier extends ChangeNotifier {
     // Either a new message is added or an exisiting
     // message is read by the other recipient
 
-    read(roomMessagesUpdatesChannel(room.id).stream).listen((Message? message) {
-      if (message == null) return;
+    read(roomMessagesUpdatesChannel(room.id).stream).listen(
+      (Message? message) {
+        if (message == null) return;
 
-      if (message.isReceived()) {
-        if (!allMessages.contains(message)) allMessages.add(message);
+        if (message.isReceived()) {
+          if (message.isSenderBlocked) return;
 
-        read(chatsSorterProvider).latestActiveChat = room;
+          if (!allMessages.contains(message)) allMessages.add(message);
 
-        if (isChatPageOpened) {
-          message.isRead = true;
-          _firestore.markMessageAsRead(roomId: room.id, messageId: message.id);
-        }
-      } else {
-        if (successfullySent.contains(message)) {
-          if (message.isRead &&
-              !successfullySent.firstWhere((m) => m == message).isRead) {
-            allMessages.firstWhere((element) => element == message).isRead =
-                true;
+          read(chatsListProvider).latestActiveChat = room;
+
+          if (isChatPageOpened) {
+            message.isRead = true;
+            _firestore.markMessageAsRead(
+                roomId: room.id, messageId: message.id);
+          }
+        } else {
+          if (successfullySent.contains(message)) {
+            if (message.isRead &&
+                !successfullySent.firstWhere((m) => m == message).isRead) {
+              allMessages.firstWhere((element) => element == message).isRead =
+                  true;
+            }
           }
         }
+        notifyListeners();
+      },
+    );
+
+    _isBlockedByOther =
+        read(blockedByContactsProvider).data!.value.contains(other);
+
+    read(blockedByContactsProvider.stream).listen((List<String> blockedBy) {
+      if (blockedBy.contains(other)) {
+        _isBlockedByOther = true;
+      } else {
+        _isBlockedByOther = false;
       }
-      notifyListeners();
     });
   }
 
@@ -96,6 +116,7 @@ class ChatNotifier extends ChangeNotifier {
   Future<void> onSendPressed(String msg) async {
     try {
       Message message = Message(
+        isSenderBlocked: _isBlockedByOther,
         sender: _user.id,
         recipient: recipient,
         content: msg,
@@ -108,7 +129,7 @@ class ChatNotifier extends ChangeNotifier {
       notifyListeners();
 
       if (!_newRoom) {
-        read(chatsSorterProvider).latestActiveChat = room;
+        read(chatsListProvider).latestActiveChat = room;
         await _firestore.writeMessage(roomId: room.id, message: message);
         successfullySent.add(message);
       } else {
@@ -121,7 +142,7 @@ class ChatNotifier extends ChangeNotifier {
           room: room,
         );
 
-        read(chatsSorterProvider).latestActiveChat = room;
+        read(chatsListProvider).latestActiveChat = room;
       }
 
       notifyListeners();
