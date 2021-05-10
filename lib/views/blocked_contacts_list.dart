@@ -19,6 +19,8 @@ import 'package:anonymous_chat/widgets/animated_widgets.dart';
 import 'package:anonymous_chat/widgets/titled_app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluttericon/font_awesome_icons.dart';
+import 'package:fluttericon/fontelico_icons.dart';
 import 'package:implicitly_animated_reorderable_list/implicitly_animated_reorderable_list.dart';
 import 'package:implicitly_animated_reorderable_list/transitions.dart';
 
@@ -30,7 +32,7 @@ class BlockedContactsScreen extends StatelessWidget {
         backgroundColor: Colors.black,
         body: SafeArea(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               TitledAppBar(
                 showBackarrow: true,
@@ -40,8 +42,30 @@ class BlockedContactsScreen extends StatelessWidget {
                   builder: (context, watch, _) {
                     List<User> blockedUsers =
                         watch(blockedContactsProvider.state)!;
-                    // TODO: empty state
-                    if (blockedUsers.isEmpty) return SizedBox.shrink();
+
+                    if (blockedUsers.isEmpty)
+                      return Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            height: 50,
+                          ),
+                          Icon(
+                            Fontelico.emo_happy,
+                            color: style.accentColor,
+                            size: 50,
+                          ),
+                          SizedBox(height: 24),
+                          Text(
+                            'No Blocked Contacts',
+                            style: TextStyle(
+                              color: Colors.white,
+                              height: 1.4,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      );
                     return CustomSlide(
                       duration: Duration(milliseconds: 300),
                       startOffset: Offset(0, 0.4),

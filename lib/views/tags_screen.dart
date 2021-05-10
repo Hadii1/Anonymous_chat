@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import 'package:fluttericon/font_awesome_icons.dart';
 import 'package:tuple/tuple.dart';
 
 class TagsScreen extends StatelessWidget {
@@ -383,6 +384,9 @@ class __SuggestedContactsState extends State<_SuggestedContacts>
   Widget build(BuildContext context) {
     ApplicationStyle style = InheritedAppTheme.of(context).style;
     return Consumer(builder: (context, watch, child) {
+      final activeTags = watch(userTagsProvider(LocalStorage().user!.id).state)
+          .where((Tag tag) => tag.isActive);
+      final allTags = watch(userTagsProvider(LocalStorage().user!.id).state);
       return AnimatedSize(
         vsync: this,
         curve: Curves.easeOutCubic,
@@ -391,13 +395,13 @@ class __SuggestedContactsState extends State<_SuggestedContacts>
           data: (List<Tuple2<User, List<Tag>>>? data) {
             return data == null
                 ? Padding(
-                  padding: const EdgeInsets.only(top: 100.0),
-                  child: SpinKitThreeBounce(
-                    size: 25,
-                    duration: Duration(milliseconds: 800),
-                    color: style.loadingBarColor,
-                  ),
-                )
+                    padding: const EdgeInsets.only(top: 100.0),
+                    child: SpinKitThreeBounce(
+                      size: 25,
+                      duration: Duration(milliseconds: 800),
+                      color: style.loadingBarColor,
+                    ),
+                  )
                 : Padding(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 24.0, vertical: 8),
@@ -413,13 +417,17 @@ class __SuggestedContactsState extends State<_SuggestedContacts>
                                     height: 50,
                                   ),
                                   Icon(
-                                    Icons.not_interested,
+                                    FontAwesome.search,
                                     color: style.accentColor,
                                     size: 50,
                                   ),
                                   SizedBox(height: 24),
                                   Text(
-                                    'No contacts found.\nTry activating new tags.',
+                                    allTags.isEmpty
+                                        ? 'Search and activate \nnew tags to match up with\nother contacts.'
+                                        : activeTags.isEmpty
+                                            ? 'No current active tags.'
+                                            : 'No contacts are sharing\nyour active tags.\nTry changing or adding\nnew tags.',
                                     style: TextStyle(
                                       color: Colors.white,
                                       height: 1.4,

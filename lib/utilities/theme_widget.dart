@@ -107,6 +107,7 @@ class ApplicationStyle {
     ),
     title2Style: TextStyle(
       color: Colors.white,
+      fontFamily: 'Montserat',
       fontSize: 21,
       wordSpacing: 1.2,
       fontWeight: FontWeight.bold,

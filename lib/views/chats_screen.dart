@@ -8,6 +8,8 @@ import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/widgets/animated_widgets.dart';
 import 'package:anonymous_chat/widgets/chat_header.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:fluttericon/fontelico_icons.dart';
+import 'package:fluttericon/iconic_icons.dart';
 
 import 'package:implicitly_animated_reorderable_list/implicitly_animated_reorderable_list.dart';
 
@@ -51,7 +53,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        Icons.not_interested,
+                        Iconic.chat,
                         color: style.accentColor,
                         size: 50,
                       ),

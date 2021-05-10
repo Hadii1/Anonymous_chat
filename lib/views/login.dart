@@ -46,7 +46,7 @@ class LoginScreen extends StatelessWidget {
                       },
                       children: <Widget>[
                         Text(
-                          'WELCOME TO XXX',
+                          'WELCOME TO ANONIMA',
                           textAlign: TextAlign.center,
                           style: style.title2Style,
                         ),
