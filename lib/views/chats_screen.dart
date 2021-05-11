@@ -8,7 +8,6 @@ import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/widgets/animated_widgets.dart';
 import 'package:anonymous_chat/widgets/chat_header.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:fluttericon/fontelico_icons.dart';
 import 'package:fluttericon/iconic_icons.dart';
 
 import 'package:implicitly_animated_reorderable_list/implicitly_animated_reorderable_list.dart';
@@ -86,8 +85,8 @@ class _ChatsScreenState extends State<ChatsScreen> {
                               child: Column(
                                 children: [
                                   ChatHeader(
-                                    onDeletePressed: (_) {},
                                     room: room,
+                                    archivable: true,
                                   ),
                                   Divider(
                                     thickness: 0.15,
@@ -118,10 +117,8 @@ class _ChatsScreenState extends State<ChatsScreen> {
                                       left: 24,
                                     ),
                                     child: ChatHeader(
-                                      onDeletePressed: (Room room) => context
-                                          .read(chatsListProvider)
-                                          .deleteChat(roomId: room.id),
                                       room: room,
+                                      archivable: true,
                                     ),
                                   ),
                                   Divider(

@@ -6,28 +6,31 @@ class User {
   final String id;
   final List<String> activeTags;
   final List<String> blockedUsers;
+  final List<String> archivedRooms;
 
   User({
     required this.nickname,
     required this.email,
     required this.id,
     required this.blockedUsers,
+    required this.archivedRooms,
     required this.activeTags,
   });
 
-  User copyWith({
-    String? nickname,
-    String? email,
-    String? id,
-    List<String>? activeTags,
-    List<String>? blockedUsers,
-  }) {
+  User copyWith(
+      {String? nickname,
+      String? email,
+      String? id,
+      List<String>? activeTags,
+      List<String>? blockedUsers,
+      List<String>? archivedRooms}) {
     return User(
       nickname: nickname ?? this.nickname,
       email: email ?? this.email,
       id: id ?? this.id,
       blockedUsers: blockedUsers ?? this.blockedUsers,
       activeTags: activeTags ?? this.activeTags,
+      archivedRooms: archivedRooms ?? this.archivedRooms,
     );
   }
 
@@ -38,6 +41,7 @@ class User {
       'id': id,
       'activeTags': activeTags,
       'blockedUsers': blockedUsers,
+      'archivedRooms': archivedRooms,
     };
   }
 
@@ -48,6 +52,7 @@ class User {
       id: map['id'],
       blockedUsers: List<String>.from(map['blockedUsers']),
       activeTags: List<String>.from(map['activeTags']),
+      archivedRooms: List<String>.from(map['archivedRooms']),
     );
   }
 

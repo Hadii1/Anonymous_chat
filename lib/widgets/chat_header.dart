@@ -1,7 +1,9 @@
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/room.dart';
 import 'package:anonymous_chat/models/user.dart';
+import 'package:anonymous_chat/providers/archived_rooms_provider.dart';
 import 'package:anonymous_chat/providers/blocked_contacts_provider.dart';
+import 'package:anonymous_chat/providers/user_rooms_provider.dart';
 import 'package:anonymous_chat/services.dart/local_storage.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/views/room_screen.dart';
@@ -12,14 +14,15 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:fluttericon/linearicons_free_icons.dart';
 
 class ChatHeader extends StatelessWidget {
   final Room room;
-  final Function(Room) onDeletePressed;
+  final bool archivable;
 
   const ChatHeader({
     required this.room,
-    required this.onDeletePressed,
+    required this.archivable,
   });
 
   User get other =>
@@ -53,13 +56,14 @@ class ChatHeader extends StatelessWidget {
           fastThreshold: 1800,
           actions: [
             SlideAction(
-              onTap: () => onDeletePressed(room),
+              onTap: () =>
+                  context.read(chatsListProvider).deleteChat(roomId: room.id),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   Icon(
-                    Icons.delete,
-                    color: Colors.white,
+                    LineariconsFree.trash,
+                    color: Colors.white.withOpacity(0.85),
                   ),
                   Text(
                     'Delete',
@@ -84,8 +88,8 @@ class ChatHeader extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           Icon(
-                            Icons.access_time,
-                            color: Colors.white,
+                            LineariconsFree.thumbs_up,
+                            color: Colors.white.withOpacity(0.85),
                           ),
                           Text(
                             'Unblock',
@@ -101,8 +105,8 @@ class ChatHeader extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           Icon(
-                            Icons.block,
-                            color: Colors.white,
+                            LineariconsFree.hand,
+                            color: Colors.white.withOpacity(0.85),
                           ),
                           Text(
                             'Block',
@@ -115,6 +119,27 @@ class ChatHeader extends StatelessWidget {
                       ),
               ),
             ),
+            SlideAction(
+              onTap: () => context
+                  .read(archivedRoomsProvider)
+                  .editArchives(room: room, archive: archivable),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Icon(
+                    LineariconsFree.database_1,
+                    color: Colors.white.withOpacity(0.85),
+                  ),
+                  Text(
+                    archivable ? 'Archive' : 'Restore',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            )
           ],
           child: Row(
             children: [

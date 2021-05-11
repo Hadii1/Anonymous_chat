@@ -31,6 +31,8 @@ final appInitialzationProvider =
   await AlgoliaSearch.init();
   await NotificationsService.init();
 
+// await AuthService().signOut();
+
   SystemChrome.setSystemUIOverlayStyle(
     LocalStorage().preferedTheme == ThemeState.dark
         ? SystemUiOverlayStyle.light

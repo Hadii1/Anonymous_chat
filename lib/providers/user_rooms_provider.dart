@@ -1,6 +1,8 @@
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/room.dart';
 import 'package:anonymous_chat/models/user.dart';
+import 'package:anonymous_chat/providers/archived_rooms_provider.dart';
+import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/services.dart/firestore.dart';
 import 'package:anonymous_chat/services.dart/local_storage.dart';
 import 'package:anonymous_chat/utilities/enums.dart';
@@ -9,32 +11,61 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tuple/tuple.dart';
 
 final chatsListProvider = StateNotifierProvider.autoDispose(
-  (ref) => ChatsListNotifier(ref.watch(userRoomsProvider).data!.value),
+  (ref) => ChatsListNotifier(
+    rooms: ref.watch(userRoomsProvider).data!.value,
+    archivedRooms: ref.watch(archivedRoomsProvider.state),
+    errorNotifier: ref.read(errorsProvider),
+  ),
 );
 
 class ChatsListNotifier extends StateNotifier<List<Room>> {
-  ChatsListNotifier(this.rooms) : super(rooms) {
-    rooms.sort(
+  ChatsListNotifier({
+    required this.rooms,
+    required this.archivedRooms,
+    required this.errorNotifier,
+  }) : super(rooms) {
+    chatsList = List.from(rooms);
+
+    chatsList.sort(
       (a, b) => -a.messages.last.time.compareTo(b.messages.last.time),
     );
+
+    if (archivedRooms != null && archivedRooms!.isNotEmpty) {
+      chatsList.removeWhere(
+        (Room room) => archivedRooms!.contains(room),
+      );
+    }
+    state = chatsList;
   }
 
+  List<Room> chatsList = [];
+
+  final ErrorNotifier errorNotifier;
   final List<Room> rooms;
+  final List<Room>? archivedRooms;
 
   set latestActiveChat(Room room) {
-    int index = rooms.indexOf(room);
+    int index = chatsList.indexOf(room);
     if (index != -1) {
-      rooms.removeAt(index);
-      rooms.insert(0, room);
+      chatsList.removeAt(index);
+      chatsList.insert(0, room);
 
-      state = rooms;
+      state = chatsList;
     }
   }
 
   void deleteChat({required String roomId}) {
-    FirestoreService().deleteChat(roomId: roomId);
-    rooms.removeWhere((element) => element.id == roomId);
-    state = rooms;
+    try {
+      FirestoreService().deleteChat(roomId: roomId);
+      // rooms.removeWhere((element) => element.id == roomId);
+      chatsList.removeWhere((element) => element.id == roomId);
+      state = rooms;
+    } on Exception catch (e, s) {
+      Future.delayed(Duration(seconds: 2))
+          .then((value) => deleteChat(roomId: roomId));
+
+      errorNotifier.submitError(exception: e, stackTrace: s);
+    }
   }
 
   void dispose() {

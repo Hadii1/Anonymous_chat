@@ -63,5 +63,9 @@ abstract class IFirestoreService {
     required String other,
   });
 
+  Future<void> archiveChat({required String userId, required String roomId});
+  
+  Future<void> unArchiveChat({required String userId, required String roomId});
+
   Stream<List<String>> blockedByStream({required String userId});
 }

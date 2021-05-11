@@ -129,6 +129,7 @@ class _AuthProcessNotifier extends ChangeNotifier {
         id: credential.user!.uid,
         blockedUsers: [],
         activeTags: [],
+        archivedRooms: [],
         email: email.trim(),
         nickname: '',
       );

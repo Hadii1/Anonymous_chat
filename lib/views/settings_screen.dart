@@ -1,6 +1,7 @@
 import 'package:anonymous_chat/providers/auth_provider.dart';
 import 'package:anonymous_chat/services.dart/local_storage.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
+import 'package:anonymous_chat/views/archived_contacts_list.dart';
 import 'package:anonymous_chat/views/blocked_contacts_list.dart';
 import 'package:anonymous_chat/views/login.dart';
 import 'package:anonymous_chat/widgets/titled_app_bar.dart';
@@ -11,6 +12,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class Settings extends StatelessWidget {
+  // TODO: change all icons + archive empty icon
+
   @override
   Widget build(BuildContext context) {
     ApplicationStyle style = InheritedAppTheme.of(context).style;
@@ -106,6 +109,25 @@ class Settings extends StatelessWidget {
                   Navigator.of(context).push(
                     CupertinoPageRoute(
                       builder: (c) => BlockedContactsScreen(),
+                      fullscreenDialog: true,
+                    ),
+                  );
+                },
+                icon: Icons.block,
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: Divider(
+                  thickness: 0.15,
+                  color: style.borderColor,
+                ),
+              ),
+              _SettingTile(
+                title: 'Archived Rooms',
+                onTap: () async {
+                  Navigator.of(context).push(
+                    CupertinoPageRoute(
+                      builder: (c) => ArchivedContactsList(),
                       fullscreenDialog: true,
                     ),
                   );

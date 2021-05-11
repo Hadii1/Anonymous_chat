@@ -333,4 +333,26 @@ class FirestoreService implements IFirestoreService {
     // Delete the user document
     await _db.collection('Users').doc(userId).delete();
   }
+
+  @override
+  Future<void> archiveChat(
+          {required String userId, required String roomId}) async =>
+      await _db.collection('Users').doc(userId).update(
+        {
+          'archivedRooms': FieldValue.arrayUnion(
+            [roomId],
+          )
+        },
+      );
+
+  @override
+  Future<void> unArchiveChat(
+          {required String userId, required String roomId}) async =>
+      await _db.collection('Users').doc(userId).update(
+        {
+          'archivedRooms': FieldValue.arrayRemove(
+            [roomId],
+          )
+        },
+      );
 }

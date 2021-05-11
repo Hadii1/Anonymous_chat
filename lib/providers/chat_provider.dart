@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/room.dart';
 import 'package:anonymous_chat/models/user.dart';
+import 'package:anonymous_chat/providers/archived_rooms_provider.dart';
 import 'package:anonymous_chat/providers/blocked_contacts_provider.dart';
 import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/providers/user_rooms_provider.dart';
@@ -12,11 +15,15 @@ import 'package:flutter/foundation.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final chattingProvider = ChangeNotifierProvider.family<ChatNotifier, Room>(
+final chattingProvider =
+    ChangeNotifierProvider.autoDispose.family<ChatNotifier, Room>(
   (ref, room) {
+    ref.maintainState = true;
+
     return ChatNotifier(
       ref.read,
       room: room,
+      isArchived: ref.watch(archivedRoomsProvider.state)?.contains(room),
     );
   },
 );
@@ -25,6 +32,7 @@ class ChatNotifier extends ChangeNotifier {
   ChatNotifier(
     this.read, {
     required this.room,
+    required this.isArchived,
   }) {
     initializeRoom();
   }
@@ -32,8 +40,12 @@ class ChatNotifier extends ChangeNotifier {
   final Room room;
   final Reader read;
 
+  final bool? isArchived;
+
   final User _user = LocalStorage().user!;
   final FirestoreService _firestore = FirestoreService();
+
+  late StreamSubscription subscription;
 
   late List<Message> allMessages;
   late List<Message> successfullySent;
@@ -44,6 +56,11 @@ class ChatNotifier extends ChangeNotifier {
   User get other => room.users!.firstWhere((User i) => i != _user);
 
   bool isChatPageOpened = false;
+
+  void dispose() {
+    super.dispose();
+    subscription.cancel();
+  }
 
   void initializeRoom() {
     allMessages = room.messages;
@@ -56,13 +73,17 @@ class ChatNotifier extends ChangeNotifier {
 
     // Either a new message is added or an exisiting
     // message is read by the other recipient
-
-    read(roomMessagesUpdatesChannel(room.id).stream).listen(
+    subscription = read(roomMessagesUpdatesChannel(room.id).stream).listen(
       (Message? message) {
         if (message == null) return;
 
         if (message.isReceived()) {
           if (message.isSenderBlocked) return;
+
+          if (isArchived != null && isArchived!) {
+            read(archivedRoomsProvider)
+                .editArchives(room: room, archive: false);
+          }
 
           if (!allMessages.contains(message)) allMessages.add(message);
 
@@ -115,6 +136,9 @@ class ChatNotifier extends ChangeNotifier {
 
   Future<void> onSendPressed(String msg) async {
     try {
+      if (isArchived != null && isArchived!) {
+        read(archivedRoomsProvider).editArchives(room: room, archive: false);
+      }
       Message message = Message(
         isSenderBlocked: _isBlockedByOther,
         sender: _user.id,
