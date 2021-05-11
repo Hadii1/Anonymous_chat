@@ -18,8 +18,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 final chattingProvider =
     ChangeNotifierProvider.autoDispose.family<ChatNotifier, Room>(
   (ref, room) {
-    ref.maintainState = true;
-
     return ChatNotifier(
       ref.read,
       room: room,
@@ -45,7 +43,8 @@ class ChatNotifier extends ChangeNotifier {
   final User _user = LocalStorage().user!;
   final FirestoreService _firestore = FirestoreService();
 
-  late StreamSubscription subscription;
+  late StreamSubscription<Message?> serverMessageUpdatesSubscription;
+  late StreamSubscription<List<User>> blockedBySubscricption;
 
   late List<Message> allMessages;
   late List<Message> successfullySent;
@@ -59,7 +58,8 @@ class ChatNotifier extends ChangeNotifier {
 
   void dispose() {
     super.dispose();
-    subscription.cancel();
+    serverMessageUpdatesSubscription.cancel();
+    blockedBySubscricption.cancel();
   }
 
   void initializeRoom() {
@@ -73,7 +73,8 @@ class ChatNotifier extends ChangeNotifier {
 
     // Either a new message is added or an exisiting
     // message is read by the other recipient
-    subscription = read(roomMessagesUpdatesChannel(room.id).stream).listen(
+    serverMessageUpdatesSubscription =
+        read(roomMessagesUpdatesChannel(room.id).stream).listen(
       (Message? message) {
         if (message == null) return;
 
@@ -110,7 +111,8 @@ class ChatNotifier extends ChangeNotifier {
     _isBlockedByOther =
         read(blockedByContactsProvider).data!.value.contains(other);
 
-    read(blockedByContactsProvider.stream).listen((List<User> blockedBy) {
+    blockedBySubscricption =
+        read(blockedByContactsProvider.stream).listen((List<User> blockedBy) {
       if (blockedBy.contains(other)) {
         _isBlockedByOther = true;
       } else {
@@ -136,9 +138,6 @@ class ChatNotifier extends ChangeNotifier {
 
   Future<void> onSendPressed(String msg) async {
     try {
-      if (isArchived != null && isArchived!) {
-        read(archivedRoomsProvider).editArchives(room: room, archive: false);
-      }
       Message message = Message(
         isSenderBlocked: _isBlockedByOther,
         sender: _user.id,
@@ -170,6 +169,10 @@ class ChatNotifier extends ChangeNotifier {
       }
 
       notifyListeners();
+
+      if (isArchived != null && isArchived!) {
+        read(archivedRoomsProvider).editArchives(room: room, archive: false);
+      }
     } on Exception catch (e, s) {
       read(errorsProvider).submitError(
         exception: e,
