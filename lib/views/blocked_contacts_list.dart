@@ -17,10 +17,12 @@ import 'package:anonymous_chat/providers/blocked_contacts_provider.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/widgets/animated_widgets.dart';
 import 'package:anonymous_chat/widgets/titled_app_bar.dart';
+
 import 'package:flutter/material.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:fluttericon/fontelico_icons.dart';
+import 'package:fluttericon/linearicons_free_icons.dart';
 import 'package:implicitly_animated_reorderable_list/implicitly_animated_reorderable_list.dart';
 import 'package:implicitly_animated_reorderable_list/transitions.dart';
 
@@ -63,7 +65,7 @@ class BlockedContactsScreen extends StatelessWidget {
                             height: 50,
                           ),
                           Icon(
-                            Fontelico.emo_happy,
+                            LineariconsFree.checkmark_cicle,
                             color: style.accentColor,
                             size: 50,
                           ),
@@ -78,7 +80,7 @@ class BlockedContactsScreen extends StatelessWidget {
                           ),
                         ],
                       );
-                      
+
                     return CustomSlide(
                       duration: Duration(milliseconds: 300),
                       startOffset: Offset(0, 0.4),

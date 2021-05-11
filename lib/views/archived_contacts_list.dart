@@ -21,7 +21,7 @@ import 'package:anonymous_chat/widgets/titled_app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:fluttericon/fontelico_icons.dart';
+import 'package:fluttericon/linearicons_free_icons.dart';
 import 'package:implicitly_animated_reorderable_list/implicitly_animated_reorderable_list.dart';
 import 'package:implicitly_animated_reorderable_list/transitions.dart';
 
@@ -64,7 +64,7 @@ class ArchivedContactsList extends StatelessWidget {
                             height: 50,
                           ),
                           Icon(
-                            Fontelico.emo_happy,
+                            LineariconsFree.file_empty,
                             color: style.accentColor,
                             size: 50,
                           ),

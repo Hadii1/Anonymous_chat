@@ -10,10 +10,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttericon/linearicons_free_icons.dart';
 
 class Settings extends StatelessWidget {
-  // TODO: change all icons + archive empty icon
-
   @override
   Widget build(BuildContext context) {
     ApplicationStyle style = InheritedAppTheme.of(context).style;
@@ -113,7 +112,7 @@ class Settings extends StatelessWidget {
                     ),
                   );
                 },
-                icon: Icons.block,
+                icon: LineariconsFree.warning,
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -132,7 +131,7 @@ class Settings extends StatelessWidget {
                     ),
                   );
                 },
-                icon: Icons.block,
+                icon: LineariconsFree.database_1,
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -155,7 +154,7 @@ class Settings extends StatelessWidget {
                       (route) => false,
                     );
                 },
-                icon: Icons.exit_to_app_rounded,
+                icon: LineariconsFree.exit,
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -178,7 +177,7 @@ class Settings extends StatelessWidget {
                       (route) => false,
                     );
                 },
-                icon: Icons.delete,
+                icon: LineariconsFree.trash,
               ),
             ],
           ),
@@ -215,7 +214,8 @@ class _SettingTile extends StatelessWidget {
           ),
           Icon(
             icon,
-            color: style.iconColors,
+            color: Colors.white.withOpacity(0.85),
+            size: 21,
           )
         ],
       ),
