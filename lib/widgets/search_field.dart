@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 
+
 class SearchField extends StatefulWidget {
   final String hint;
   final Function(String) onChanged;

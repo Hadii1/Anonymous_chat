@@ -41,7 +41,7 @@ class ChatHeader extends StatelessWidget {
         highlightColor: Colors.transparent,
         onTap: () {
           Navigator.of(context).push(
-            CustomRoute(
+            FadingRoute(
               builder: (c) {
                 return ChatRoom(
                   room: room,

@@ -17,7 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
-import 'package:fluttericon/font_awesome_icons.dart';
+import 'package:fluttericon/linecons_icons.dart';
 import 'package:tuple/tuple.dart';
 
 class TagsScreen extends StatelessWidget {
@@ -402,54 +402,47 @@ class __SuggestedContactsState extends State<_SuggestedContacts>
                       color: style.loadingBarColor,
                     ),
                   )
-                : Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24.0, vertical: 8),
-                    child: data.isEmpty
-                        ? Fader(
-                            duration: Duration(milliseconds: 300),
-                            child: Padding(
-                              padding: const EdgeInsets.only(top: 100.0),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  SizedBox(
-                                    height: 50,
-                                  ),
-                                  Icon(
-                                    FontAwesome.search,
-                                    color: style.accentColor,
-                                    size: 50,
-                                  ),
-                                  SizedBox(height: 24),
-                                  Text(
-                                    allTags.isEmpty
-                                        ? 'Search and activate \nnew tags to match up with\nother contacts.'
-                                        : activeTags.isEmpty
-                                            ? 'No current active tags.'
-                                            : 'No contacts are sharing\nyour active tags.\nTry changing or adding\nnew tags.',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      height: 1.4,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ],
-                              ),
+                : data.isEmpty
+                    ? Padding(
+                      padding: const EdgeInsets.only(top: 100.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            height: 50,
+                          ),
+                          Icon(
+                            Linecons.search,
+                            color: style.accentColor,
+                            size: 50,
+                          ),
+                          SizedBox(height: 24),
+                          Text(
+                            allTags.isEmpty
+                                ? 'Search and activate \nnew tags to match up with\nother contacts.'
+                                : activeTags.isEmpty
+                                    ? 'No current active tags.'
+                                    : 'No contacts are sharing\nyour active tags.\nTry changing or adding\nnew tags.',
+                            style: TextStyle(
+                              color: Colors.white,
+                              height: 1.4,
                             ),
-                          )
-                        : Fader(
-                            duration: Duration(milliseconds: 300),
-                            child: Column(
-                              children: List.generate(
-                                data.length,
-                                (index) => SuggestedContact(
-                                  data: data[index],
-                                ),
-                              ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    )
+                    : Fader(
+                        duration: Duration(milliseconds: 300),
+                        child: Column(
+                          children: List.generate(
+                            data.length,
+                            (index) => SuggestedContact(
+                              data: data[index],
                             ),
                           ),
-                  );
+                        ),
+                      );
           },
           loading: () => Padding(
             padding: const EdgeInsets.only(top: 100.0),

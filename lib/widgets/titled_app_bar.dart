@@ -6,7 +6,7 @@ class TitledAppBar extends PreferredSize {
   TitledAppBar({
     this.trailing,
     this.leading,
-    this.showBackarrow = false,
+    this.previousPageTitle,
   }) : super(
           child: SizedBox.shrink(),
           preferredSize: Size.fromHeight(kToolbarHeight),
@@ -14,18 +14,16 @@ class TitledAppBar extends PreferredSize {
 
   final Widget? trailing;
   final Widget? leading;
-  final bool showBackarrow;
-
-  void _onBackTapped(BuildContext context) => Navigator.of(context).canPop()
-      ? Navigator.of(context).pop(context)
-      : null;
+  final String? previousPageTitle;
 
   @override
   Widget build(BuildContext context) {
     final style = InheritedAppTheme.of(context).style;
+
     return CupertinoNavigationBar(
       automaticallyImplyLeading: false,
       automaticallyImplyMiddle: false,
+      previousPageTitle: previousPageTitle,
       middle: Text(
         'ANONIMA',
         style: TextStyle(
@@ -36,23 +34,38 @@ class TitledAppBar extends PreferredSize {
           fontFamily: 'Montserat',
         ),
       ),
-      trailing: trailing != null ? trailing : SizedBox.shrink(),
+      trailing: trailing,
       backgroundColor: style.backgroundColor,
-      leading: leading != null
-          ? leading
-          : showBackarrow
-              ? InkWell(
-                  onTap: () => _onBackTapped(context),
-                  child: Icon(
-                    Icons.arrow_back_ios,
+      leading: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+          onTap: () => Navigator.of(context).pop(),
+          child: leading ??
+              Row(
+                children: [
+                  Icon(
+                    CupertinoIcons.back,
                     color: style.accentColor,
-                    size: 22,
+                    size: 24,
                   ),
-                )
-              : SizedBox.shrink(),
+                  previousPageTitle != null
+                      ? Text(
+                          previousPageTitle!,
+                          style: TextStyle(
+                            color: style.accentColor,
+                            fontSize: 16,
+                          ),
+                        )
+                      : SizedBox.shrink()
+                ],
+              ),
+        ),
+      ),
       padding: const EdgeInsetsDirectional.only(
         bottom: 8,
-        start: 24,
+        start: 12,
         end: 24,
         top: 8,
       ),

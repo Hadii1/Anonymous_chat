@@ -36,119 +36,129 @@ class ArchivedContactsList extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               TitledAppBar(
-                showBackarrow: true,
+                previousPageTitle: 'Settings',
               ),
               Expanded(
                 child: Consumer(
                   builder: (context, watch, _) {
                     List<Room>? archivedRooms =
                         watch(archivedRoomsProvider.state);
-
-                    if (archivedRooms == null) {
-                      return Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SpinKitThreeBounce(
-                            color: style.loadingBarColor,
-                            size: 25,
-                          ),
-                        ],
-                      );
-                    }
-
-                    if (archivedRooms.isEmpty)
-                      return Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            height: 50,
-                          ),
-                          Icon(
-                            LineariconsFree.file_empty,
-                            color: style.accentColor,
-                            size: 50,
-                          ),
-                          SizedBox(height: 24),
-                          Text(
-                            'No Archived Rooms',
-                            style: TextStyle(
-                              color: Colors.white,
-                              height: 1.4,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      );
-                    return CustomSlide(
-                      duration: Duration(milliseconds: 300),
-                      startOffset: Offset(0, 0.4),
-                      child: Fader(
-                        duration: Duration(milliseconds: 250),
-                        child: ImplicitlyAnimatedList<Room>(
-                          areItemsTheSame: (a, b) => a.id == b.id,
-                          items: archivedRooms,
-                          insertDuration: Duration(milliseconds: 200),
-                          removeDuration: Duration(milliseconds: 200),
-                          removeItemBuilder: (context, animation, room) {
-                            return SizeFadeTransition(
-                              animation: animation,
-                              child: Padding(
-                                padding: EdgeInsets.only(top: 16),
-                                child: Column(
+                    return AnimatedSwitcher(
+                      duration: Duration(milliseconds: 250),
+                      child: archivedRooms == null
+                          ? Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SpinKitThreeBounce(
+                                  color: style.loadingBarColor,
+                                  size: 25,
+                                ),
+                              ],
+                            )
+                          : archivedRooms.isEmpty
+                              ? Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    ChatHeader(
-                                      room: room,
-                                      archivable: false,
+                                    SizedBox(
+                                      height: 50,
                                     ),
-                                    Divider(
-                                      thickness: 0.15,
-                                      color: style.borderColor,
-                                      indent:
-                                          MediaQuery.of(context).size.width *
-                                              0.15,
-                                      endIndent:
-                                          MediaQuery.of(context).size.width *
-                                              0.15,
+                                    Icon(
+                                      LineariconsFree.file_empty,
+                                      color: style.accentColor,
+                                      size: 50,
+                                    ),
+                                    SizedBox(height: 24),
+                                    Text(
+                                      'No Archived Rooms',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        height: 1.4,
+                                      ),
+                                      textAlign: TextAlign.center,
                                     ),
                                   ],
-                                ),
-                              ),
-                            );
-                          },
-                          itemBuilder: (context, animation, room, index) {
-                            return SizeFadeTransition(
-                              animation: animation,
-                              child: Padding(
-                                padding:
-                                    EdgeInsets.only(top: index == 0 ? 16.0 : 8),
-                                child: Column(
-                                  children: [
-                                    Padding(
-                                      padding: EdgeInsets.only(
-                                        left: 24,
-                                      ),
-                                      child: ChatHeader(
-                                        room: room,
-                                        archivable: false,
-                                      ),
+                                )
+                              : CustomSlide(
+                                  duration: Duration(milliseconds: 300),
+                                  startOffset: Offset(0, 0.4),
+                                  child: Fader(
+                                    duration: Duration(milliseconds: 250),
+                                    child: ImplicitlyAnimatedList<Room>(
+                                      areItemsTheSame: (a, b) => a.id == b.id,
+                                      items: archivedRooms,
+                                      insertDuration:
+                                          Duration(milliseconds: 200),
+                                      removeDuration:
+                                          Duration(milliseconds: 200),
+                                      removeItemBuilder:
+                                          (context, animation, room) {
+                                        return SizeFadeTransition(
+                                          animation: animation,
+                                          child: Padding(
+                                            padding: EdgeInsets.only(top: 16),
+                                            child: Column(
+                                              children: [
+                                                ChatHeader(
+                                                  room: room,
+                                                  archivable: false,
+                                                ),
+                                                Divider(
+                                                  thickness: 0.15,
+                                                  color: style.borderColor,
+                                                  indent: MediaQuery.of(context)
+                                                          .size
+                                                          .width *
+                                                      0.15,
+                                                  endIndent:
+                                                      MediaQuery.of(context)
+                                                              .size
+                                                              .width *
+                                                          0.15,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      itemBuilder:
+                                          (context, animation, room, index) {
+                                        return SizeFadeTransition(
+                                          animation: animation,
+                                          child: Padding(
+                                            padding: EdgeInsets.only(
+                                                top: index == 0 ? 16.0 : 8),
+                                            child: Column(
+                                              children: [
+                                                Padding(
+                                                  padding: EdgeInsets.only(
+                                                    left: 24,
+                                                  ),
+                                                  child: ChatHeader(
+                                                    room: room,
+                                                    archivable: false,
+                                                  ),
+                                                ),
+                                                Divider(
+                                                  thickness: 0.15,
+                                                  color: style.borderColor,
+                                                  indent: MediaQuery.of(context)
+                                                          .size
+                                                          .width *
+                                                      0.15,
+                                                  endIndent:
+                                                      MediaQuery.of(context)
+                                                              .size
+                                                              .width *
+                                                          0.15,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      },
                                     ),
-                                    Divider(
-                                      thickness: 0.15,
-                                      color: style.borderColor,
-                                      indent:
-                                          MediaQuery.of(context).size.width *
-                                              0.15,
-                                      endIndent:
-                                          MediaQuery.of(context).size.width *
-                                              0.15,
-                                    ),
-                                  ],
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
                     );
                   },
                 ),
