@@ -153,25 +153,30 @@ class ChatNotifier extends ChangeNotifier {
 
       if (!_newRoom) {
         read(chatsListProvider).latestActiveChat = room;
+
         await _firestore.writeMessage(roomId: room.id, message: message);
+
         successfullySent.add(message);
+
+        notifyListeners();
+
+        if (isArchived != null && isArchived!) {
+          read(archivedRoomsProvider).editArchives(room: room, archive: false);
+        }
       } else {
         _newRoom = false;
 
         await _firestore.writeMessage(roomId: room.id, message: message);
+
         successfullySent.add(message);
+
+        notifyListeners();
 
         await _firestore.saveNewRoom(
           room: room,
         );
 
         read(chatsListProvider).latestActiveChat = room;
-      }
-
-      notifyListeners();
-
-      if (isArchived != null && isArchived!) {
-        read(archivedRoomsProvider).editArchives(room: room, archive: false);
       }
     } on Exception catch (e, s) {
       read(errorsProvider).submitError(
