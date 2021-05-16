@@ -12,7 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'dart:async';
+
 import 'package:anonymous_chat/models/user.dart';
+import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/services.dart/firestore.dart';
 import 'package:anonymous_chat/services.dart/local_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -63,19 +66,47 @@ class BlockedContactsNotifier extends StateNotifier<List<User>?> {
   }
 }
 
-final blockedByContactsProvider = StreamProvider.autoDispose<List<User>>(
-  (ref) async* {
-    await for (List<String> ids in FirestoreService()
-        .blockedByStream(userId: LocalStorage().user!.id)) {
-      List<User> users = [];
+class BlockedByContactsNotifier extends StateNotifier<List<User>?> {
+  BlockedByContactsNotifier(this._errorNotifier) : super(null) {
+    init();
+  }
+  late StreamSubscription<List<String>> _subscription;
+  final ErrorNotifier _errorNotifier;
+  List<User> users = [];
 
-      for (String id in ids) {
-        Map<String, dynamic> userData =
-            await FirestoreService().getUserData(id: id);
-        User user = User.fromMap(userData);
-        users.add(user);
+  void init() {
+    _subscription = FirestoreService()
+        .blockedByStream(userId: LocalStorage().user!.id)
+        .listen((List<String> ids) async {
+      try {
+        _handleChange(ids);
+      } on Exception catch (e, s) {
+        _errorNotifier.submitError(exception: e, stackTrace: s);
+        Future.delayed(Duration(seconds: 2)).then((_) => _handleChange(ids));
       }
-      yield users;
+    });
+  }
+
+  void _handleChange(List<String> ids) async {
+    users.clear();
+    for (String id in ids) {
+      Map<String, dynamic> userData =
+          await FirestoreService().getUserData(id: id);
+      User user = User.fromMap(userData);
+      users.add(user);
     }
-  },
+    state = List.from(users);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _subscription.cancel();
+  }
+}
+
+final blockedByProvider = StateNotifierProvider.autoDispose(
+  (ref) => BlockedByContactsNotifier(
+    ref.read(errorsProvider),
+  ),
 );

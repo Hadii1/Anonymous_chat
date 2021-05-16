@@ -22,6 +22,11 @@ final chattingProvider =
       ref.read,
       room: room,
       isArchived: ref.watch(archivedRoomsProvider.state)?.contains(room),
+      isBlockedByOther: ref.watch(blockedByProvider.state)!.contains(
+            room.users!.firstWhere(
+              (User i) => i != LocalStorage().user,
+            ),
+          ),
     );
   },
 );
@@ -31,6 +36,7 @@ class ChatNotifier extends ChangeNotifier {
     this.read, {
     required this.room,
     required this.isArchived,
+    required this.isBlockedByOther,
   }) {
     initializeRoom();
   }
@@ -38,19 +44,17 @@ class ChatNotifier extends ChangeNotifier {
   final Room room;
   final Reader read;
 
-  final bool? isArchived;
-
   final User _user = LocalStorage().user!;
   final FirestoreService _firestore = FirestoreService();
 
   late StreamSubscription<Message?> serverMessageUpdatesSubscription;
-  late StreamSubscription<List<User>> blockedBySubscricption;
 
   late List<Message> allMessages;
   late List<Message> successfullySent;
 
   late bool _newRoom;
-  late bool _isBlockedByOther;
+  final bool? isArchived;
+  final bool isBlockedByOther;
 
   User get other => room.users!.firstWhere((User i) => i != _user);
 
@@ -59,7 +63,6 @@ class ChatNotifier extends ChangeNotifier {
   void dispose() {
     super.dispose();
     serverMessageUpdatesSubscription.cancel();
-    blockedBySubscricption.cancel();
   }
 
   void initializeRoom() {
@@ -107,18 +110,6 @@ class ChatNotifier extends ChangeNotifier {
         notifyListeners();
       },
     );
-
-    _isBlockedByOther =
-        read(blockedByContactsProvider).data!.value.contains(other);
-
-    blockedBySubscricption =
-        read(blockedByContactsProvider.stream).listen((List<User> blockedBy) {
-      if (blockedBy.contains(other)) {
-        _isBlockedByOther = true;
-      } else {
-        _isBlockedByOther = false;
-      }
-    });
   }
 
   // Mark all messages as read
@@ -139,7 +130,7 @@ class ChatNotifier extends ChangeNotifier {
   Future<void> onSendPressed(String msg) async {
     try {
       Message message = Message(
-        isSenderBlocked: _isBlockedByOther,
+        isSenderBlocked: isBlockedByOther,
         sender: _user.id,
         recipient: recipient,
         content: msg,

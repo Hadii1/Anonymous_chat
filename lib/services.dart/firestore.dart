@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:anonymous_chat/interfaces/ifirestore_service.dart';
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/room.dart';
@@ -73,29 +75,32 @@ class FirestoreService implements IFirestoreService {
   }
 
   @override
-  Stream<List<Tuple2<Map<String, dynamic>?, RoomChangeType>>> userRooms(
-      {required String userId}) {
+  Stream<List<Tuple2<Map<String, dynamic>, RoomChangeType>>> userRooms({
+    required String userId,
+  }) {
     return _db
         .collection('Rooms')
         .where('participants', arrayContains: userId)
         .snapshots()
-        .map((QuerySnapshot snapshot) => snapshot.docChanges.map(
-              (DocumentChange c) {
-                late RoomChangeType type;
-                switch (c.type) {
-                  case DocumentChangeType.added:
-                    type = RoomChangeType.added;
-                    break;
-                  case DocumentChangeType.modified:
-                    type = RoomChangeType.edited;
-                    break;
-                  case DocumentChangeType.removed:
-                    type = RoomChangeType.delete;
-                    break;
-                }
-                return Tuple2(c.doc.data()!, type);
-              },
-            ).toList());
+        .map(
+          (QuerySnapshot snapshot) => snapshot.docChanges.map(
+            (DocumentChange c) {
+              late RoomChangeType type;
+              switch (c.type) {
+                case DocumentChangeType.added:
+                  type = RoomChangeType.added;
+                  break;
+                case DocumentChangeType.modified:
+                  type = RoomChangeType.edited;
+                  break;
+                case DocumentChangeType.removed:
+                  type = RoomChangeType.delete;
+                  break;
+              }
+              return Tuple2(c.doc.data()!, type);
+            },
+          ).toList(),
+        );
   }
 
   @override

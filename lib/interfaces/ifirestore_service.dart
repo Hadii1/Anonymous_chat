@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/room.dart';
 import 'package:anonymous_chat/models/tag.dart';
@@ -18,8 +20,9 @@ abstract class IFirestoreService {
 
   Future<List<Map<String, dynamic>>> getAllMessages({required String roomId});
 
-  Stream<List<Tuple2<Map<String, dynamic>?, RoomChangeType>>> userRooms(
-      {required String userId});
+  Stream<List<Tuple2<Map<String, dynamic>, RoomChangeType>>> userRooms({
+    required String userId,
+  });
 
   Future<List<Map<String, dynamic>?>> getMatchingUsers(
       {required List<String> tagsIds});
@@ -64,7 +67,7 @@ abstract class IFirestoreService {
   });
 
   Future<void> archiveChat({required String userId, required String roomId});
-  
+
   Future<void> unArchiveChat({required String userId, required String roomId});
 
   Stream<List<String>> blockedByStream({required String userId});

@@ -23,8 +23,9 @@ import 'package:anonymous_chat/services.dart/firestore.dart';
 
 final archivedRoomsProvider = StateNotifierProvider.autoDispose(
   (ref) => ArchivedRoomsNotifier(
-      errorNotifier: ref.read(errorsProvider),
-      userRooms: ref.watch(userRoomsProvider).data?.value),
+    errorNotifier: ref.read(errorsProvider),
+    userRooms: ref.watch(userRoomsProvider.state),
+  ),
 );
 
 class ArchivedRoomsNotifier extends StateNotifier<List<Room>?> {
@@ -45,22 +46,23 @@ class ArchivedRoomsNotifier extends StateNotifier<List<Room>?> {
 
   void init() async {
     try {
-      Map<String, dynamic> data =
-          await firestore.getUserData(id: storage.user!.id);
-      User user = User.fromMap(data);
-
       if (userRooms == null) {
         state = null;
         return;
       } else if (userRooms!.isEmpty) {
         state = [];
         return;
-      } else
+      } else {
+        Map<String, dynamic> data =
+            await firestore.getUserData(id: storage.user!.id);
+        User user = User.fromMap(data);
+
         archivedRooms = userRooms
             ?.where((room) => user.archivedRooms.contains(room.id))
             .toList();
 
-      state = archivedRooms;
+        state = archivedRooms;
+      }
     } on Exception catch (e, s) {
       Future.delayed(Duration(seconds: 2)).then((value) => init());
 

@@ -156,7 +156,7 @@ class TagSuggestionsNotifier extends ChangeNotifier {
     try {
       if (label.isEmpty) return;
 
-    screenState = TagScreenState.loadingTags;
+      screenState = TagScreenState.loadingTags;
 
       List<Map<String, dynamic>> algoliaData =
           await algolia.getTagSuggestions(label: currentLabel!);

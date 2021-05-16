@@ -2,7 +2,6 @@ import 'package:anonymous_chat/models/room.dart';
 import 'package:anonymous_chat/models/user.dart';
 import 'package:anonymous_chat/providers/blocked_contacts_provider.dart';
 import 'package:anonymous_chat/providers/chat_provider.dart';
-import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/providers/user_rooms_provider.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/widgets/animated_widgets.dart';
@@ -29,16 +28,17 @@ class _ChatsScreenState extends State<ChatsScreen> {
     ApplicationStyle style = InheritedAppTheme.of(context).style;
     return Consumer(
       builder: (context, watch, _) {
-        return watch(userRoomsProvider).when(
-          data: (List<Room> rooms) {
-            List<Room> sortedRooms = watch(chatsListProvider.state);
+        List<Room>? chatRooms = watch(chatsListProvider.state);
 
-            AsyncData<List<User>>? blockedBy =
-                watch(blockedByContactsProvider).data;
+        List<User>? blockedBy = watch(blockedByProvider.state);
 
-            List<User>? blockedContacts = watch(blockedContactsProvider.state);
-
-            if (blockedBy == null || blockedContacts == null) {
+        List<User>? blockedContacts = watch(blockedContactsProvider.state);
+        return AnimatedSwitcher(
+          duration: Duration(milliseconds: 350),
+          child: () {
+            if (chatRooms == null ||
+                blockedBy == null ||
+                blockedContacts == null) {
               return Center(
                 child: SpinKitThreeBounce(
                   color: style.loadingBarColor,
@@ -47,7 +47,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
               );
             }
 
-            return rooms.isEmpty
+            return chatRooms.isEmpty
                 ? Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -74,7 +74,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
                       duration: Duration(milliseconds: 250),
                       child: ImplicitlyAnimatedList<Room>(
                         areItemsTheSame: (a, b) => a.id == b.id,
-                        items: sortedRooms,
+                        items: chatRooms,
                         insertDuration: Duration(milliseconds: 200),
                         removeDuration: Duration(milliseconds: 200),
                         removeItemBuilder: (context, animation, room) {
@@ -138,26 +138,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
                       ),
                     ),
                   );
-          },
-          loading: () => Center(
-            child: SpinKitThreeBounce(
-              color: style.loadingBarColor,
-              size: 25,
-            ),
-          ),
-          error: (e, s) {
-            context.refresh(userRoomsProvider);
-            context
-                .read(errorsProvider)
-                .submitError(exception: e, stackTrace: s);
-
-            return Center(
-              child: SpinKitThreeBounce(
-                color: style.loadingBarColor,
-                size: 25,
-              ),
-            );
-          },
+          }(),
         );
       },
     );

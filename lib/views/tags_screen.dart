@@ -50,7 +50,7 @@ class TagsScreen extends StatelessWidget {
                 ),
                 _TagsSearchResponse(),
                 AnimatedSwitcher(
-                  duration: Duration(milliseconds: 250),
+                  duration: Duration(milliseconds: 350),
                   child: tagsNotifier.screenState == null
                       ? _SuggestedContacts()
                       : SizedBox.shrink(),
@@ -89,9 +89,7 @@ class _TagsSearchResponseState extends State<_TagsSearchResponse>
                   return TagsRow(
                     tags: userTags,
                     onSelected: (Tag tag, bool selected) {
-                      context
-                          .read(suggestedTagsProvider)
-                          .onExistingTagPressed(
+                      context.read(suggestedTagsProvider).onExistingTagPressed(
                             tag: tag,
                             selected: selected,
                           );
@@ -387,7 +385,7 @@ class __SuggestedContactsState extends State<_SuggestedContacts>
         return AnimatedSize(
           vsync: this,
           curve: Curves.easeOutCubic,
-          duration: Duration(milliseconds: 250),
+          duration: Duration(milliseconds: 350),
           child: watch(suggestedContactsProvider).when(
             data: (List<Tuple2<User, List<Tag>>>? data) {
               return data == null
