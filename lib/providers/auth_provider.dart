@@ -1,9 +1,11 @@
+import 'package:anonymous_chat/models/activity_status.dart';
 import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/providers/loading_provider.dart';
 import 'package:anonymous_chat/services.dart/authentication.dart';
 import 'package:anonymous_chat/services.dart/firestore.dart';
 import 'package:anonymous_chat/models/user.dart' as model;
 import 'package:anonymous_chat/services.dart/local_storage.dart';
+import 'package:anonymous_chat/providers/activity_status_provider.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -13,22 +15,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final authProvider = ChangeNotifierProvider(
   (ref) => _AuthProcessNotifier(
-    ref.read(errorsProvider),
-    ref.read(loadingProvider),
+    ref.read,
   ),
 );
 
 class _AuthProcessNotifier extends ChangeNotifier {
-  final ErrorNotifier _errorNotifier;
-  final LoadingNotifer _loadingNotifer;
+  late ErrorNotifier _errorNotifier;
+  late LoadingNotifer _loadingNotifer;
+  final Reader read;
 
   String email = '';
   String password = '';
 
   _AuthProcessNotifier(
-    this._errorNotifier,
-    this._loadingNotifer,
-  );
+    this.read,
+  ) {
+    _errorNotifier = read(errorsProvider);
+    _loadingNotifer = read(loadingProvider);
+  }
 
   void onForgetPasswordPressed() async {
     if (email.isEmpty) {
@@ -59,6 +63,11 @@ class _AuthProcessNotifier extends ChangeNotifier {
   Future<bool> onSignOutPressed() async {
     try {
       _loadingNotifer.isLoading = true;
+
+      await read(userActivityStateProvider).set(
+        activityStatus: ActivityStatus.offline(
+            lastSeen: DateTime.now().millisecondsSinceEpoch),
+      );
 
       await AuthService().signOut();
 
@@ -155,6 +164,10 @@ class _AuthProcessNotifier extends ChangeNotifier {
     try {
       _loadingNotifer.isLoading = true;
 
+      await read(userActivityStateProvider).set(
+        activityStatus: ActivityStatus.offline(
+            lastSeen: DateTime.now().millisecondsSinceEpoch),
+      );
       await FirestoreService().deleteAccount(userId: LocalStorage().user!.id);
       await AuthService().signOut();
       await LocalStorage().setUser(null);

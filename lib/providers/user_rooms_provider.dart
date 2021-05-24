@@ -71,8 +71,6 @@ class ChatsListNotifier extends StateNotifier<List<Room>?> {
       errorNotifier.submitError(exception: e, stackTrace: s);
     }
   }
-
-
 }
 
 // Notifies the sender when a message is received by the recipient
@@ -171,5 +169,5 @@ class UserRoomsNotifier extends StateNotifier<List<Room>?> {
   }
 }
 
-final userRoomsProvider =
-    StateNotifierProvider((ref) => UserRoomsNotifier(ref.read(errorsProvider)));
+final userRoomsProvider = StateNotifierProvider.autoDispose(
+    (ref) => UserRoomsNotifier(ref.read(errorsProvider)));

@@ -58,7 +58,7 @@ class ChatNotifier extends ChangeNotifier {
 
   User get other => room.users!.firstWhere((User i) => i != _user);
 
-  bool isChatPageOpened = false;
+  bool _isChatPageOpened = false;
 
   void dispose() {
     super.dispose();
@@ -93,7 +93,7 @@ class ChatNotifier extends ChangeNotifier {
 
           read(chatsListProvider).latestActiveChat = room;
 
-          if (isChatPageOpened) {
+          if (_isChatPageOpened) {
             message.isRead = true;
             _firestore.markMessageAsRead(
                 roomId: room.id, messageId: message.id);
@@ -114,6 +114,7 @@ class ChatNotifier extends ChangeNotifier {
 
   // Mark all messages as read
   void onChatOpened() {
+    _isChatPageOpened = true;
     if (!_newRoom) {
       room.messages
           .where((m) => m.isReceived() && !m.isRead)
@@ -125,6 +126,11 @@ class ChatNotifier extends ChangeNotifier {
 
       notifyListeners();
     }
+  }
+
+  void onChatClosed() {
+    _isChatPageOpened = false;
+    // notifyListeners();
   }
 
   Future<void> onSendPressed(String msg) async {

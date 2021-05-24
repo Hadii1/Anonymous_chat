@@ -6,6 +6,7 @@ import 'package:anonymous_chat/services.dart/firestore.dart';
 import 'package:anonymous_chat/services.dart/push_notificaitons.dart';
 import 'package:anonymous_chat/utilities/app_navigator.dart';
 import 'package:anonymous_chat/services.dart/local_storage.dart';
+import 'package:anonymous_chat/utilities/enums.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/widgets/error_notification.dart';
 import 'package:anonymous_chat/widgets/loading_widget.dart';
@@ -18,14 +19,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
-enum AppInitiState {
-  userAuthenticatedAndNicknamed,
-  userAuthenticated,
-  userNotAuthenticated,
-}
-
 final appInitialzationProvider =
-    FutureProvider.autoDispose<AppInitiState>((ref) async {
+    FutureProvider.autoDispose<UserState>((ref) async {
   await Firebase.initializeApp();
   await LocalStorage.init();
   await AlgoliaSearch.init();
@@ -58,10 +53,10 @@ final appInitialzationProvider =
 
   if (_isAuthenticated) {
     return _isNicknamed
-        ? AppInitiState.userAuthenticatedAndNicknamed
-        : AppInitiState.userAuthenticated;
+        ? UserState.userAuthenticatedAndNicknamed
+        : UserState.userAuthenticated;
   } else {
-    return AppInitiState.userNotAuthenticated;
+    return UserState.userNotAuthenticated;
   }
 });
 
@@ -76,10 +71,9 @@ class InitializaitonScreen extends StatelessWidget {
                 child: Stack(
                   children: [
                     AppNavigator(
-                      isAuthenticated:
-                          state != AppInitiState.userNotAuthenticated,
+                      isAuthenticated: state != UserState.userNotAuthenticated,
                       isNicknamed:
-                          state == AppInitiState.userAuthenticatedAndNicknamed,
+                          state == UserState.userAuthenticatedAndNicknamed,
                     ),
                     ErrorNotification(),
                     LoadingWidget(),

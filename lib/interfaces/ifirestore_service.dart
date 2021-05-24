@@ -71,4 +71,9 @@ abstract class IFirestoreService {
   Future<void> unArchiveChat({required String userId, required String roomId});
 
   Stream<List<String>> blockedByStream({required String userId});
+
+  Stream<Map<String, dynamic>> activityStatusStream({required String id});
+
+  Future<void> updateUserStatus(
+      {required String userId, required Map<String, dynamic> status});
 }

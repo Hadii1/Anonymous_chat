@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'dart:async';
+
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 
 import 'package:flutter/cupertino.dart';
@@ -19,10 +21,13 @@ import 'package:flutter/material.dart';
 
 class MessageBox extends StatefulWidget {
   final Function(String) onSendPressed;
+  final Function(bool) onTypingStateChange;
+
   final bool isContactBlocked;
 
   const MessageBox({
     required this.onSendPressed,
+    required this.onTypingStateChange,
     required this.isContactBlocked,
   });
 
@@ -30,13 +35,66 @@ class MessageBox extends StatefulWidget {
   _MessageBoxState createState() => _MessageBoxState();
 }
 
+class _TypingIndicatorThrottle {
+  final void Function(bool) f;
+
+  final Duration waitingTime;
+
+  DateTime? lastCallTime;
+
+  _TypingIndicatorThrottle({
+    required this.waitingTime,
+    required this.f,
+  });
+
+  Timer? timer;
+  bool lastState = false;
+
+  void onType() {
+    if (timer != null) {
+      _restartTimer();
+    }
+    // First Call
+    if (lastCallTime == null) {
+      lastCallTime = DateTime.now();
+      f(true);
+
+      timer = Timer(waitingTime, () {
+        f(false);
+      });
+    } else {
+      if (DateTime.now().difference(lastCallTime!) >= waitingTime &&
+          !lastState) {
+        lastCallTime = DateTime.now();
+        lastState = true;
+        f(true);
+      }
+    }
+  }
+
+  _restartTimer() {
+    timer!.cancel();
+    timer = Timer(waitingTime, () {
+      f(false);
+      lastState = false;
+    });
+  }
+}
+
 class _MessageBoxState extends State<MessageBox> {
   final _controller = TextEditingController();
 
   @override
   void initState() {
+    _TypingIndicatorThrottle throttle = _TypingIndicatorThrottle(
+      waitingTime: Duration(seconds: 2),
+      f: widget.onTypingStateChange,
+    );
+
     _controller.addListener(() {
-      setState(() {});
+      setState(() {
+        throttle.onType();
+      });
     });
     super.initState();
   }

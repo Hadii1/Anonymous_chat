@@ -360,4 +360,22 @@ class FirestoreService implements IFirestoreService {
           )
         },
       );
+
+  @override
+  Stream<Map<String, dynamic>> activityStatusStream({required String id}) {
+    return _db
+        .collection('Users')
+        .doc(id)
+        .snapshots()
+        .map((DocumentSnapshot event) => event.data()!['activityStatus']);
+  }
+
+  @override
+  Future<void> updateUserStatus(
+      {required String userId, required Map<String, dynamic> status}) async {
+    return _db
+        .collection('Users')
+        .doc(userId)
+        .set({'activityStatus': status}, SetOptions(merge: true));
+  }
 }

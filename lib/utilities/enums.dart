@@ -17,3 +17,9 @@ enum RoomChangeType {
   delete,
   edited,
 }
+
+enum UserState {
+  userAuthenticatedAndNicknamed,
+  userAuthenticated,
+  userNotAuthenticated,
+}

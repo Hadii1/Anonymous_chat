@@ -1,6 +1,8 @@
+import 'package:anonymous_chat/models/activity_status.dart';
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/room.dart';
 import 'package:anonymous_chat/models/user.dart';
+import 'package:anonymous_chat/providers/activity_status_provider.dart';
 import 'package:anonymous_chat/providers/blocked_contacts_provider.dart';
 import 'package:anonymous_chat/providers/chat_provider.dart';
 import 'package:anonymous_chat/services.dart/local_storage.dart';
@@ -11,6 +13,7 @@ import 'package:anonymous_chat/widgets/chat_message_field.dart';
 import 'package:anonymous_chat/widgets/keyboard_hider.dart';
 import 'package:anonymous_chat/utilities/extrentions.dart';
 import 'package:anonymous_chat/widgets/shaded_container.dart';
+import 'package:anonymous_chat/widgets/typing_indicator.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -37,13 +40,12 @@ class _ChatRoomState extends State<ChatRoom> {
 
     WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
       context.read(chattingProvider(widget.room)).onChatOpened();
-      context.read(chattingProvider(widget.room)).isChatPageOpened = true;
     });
   }
 
   @override
   void deactivate() {
-    context.read(chattingProvider(widget.room)).isChatPageOpened = false;
+    context.read(chattingProvider(widget.room)).onChatClosed();
     super.deactivate();
   }
 
@@ -63,6 +65,7 @@ class _ChatRoomState extends State<ChatRoom> {
               Padding(
                 padding: const EdgeInsets.only(top: 65),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: Fader(
@@ -110,6 +113,19 @@ class _ChatRoomState extends State<ChatRoom> {
                         ),
                       ),
                     ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 2),
+                      child: Consumer(
+                        builder: (context, watch, _) {
+                          ActivityStatus status = watch(
+                              contactActivityStateProvider(other.id).state);
+                          return TypingIndicatorSpacer(
+                            showIndicator:
+                                status.state == ActivityStatus.TYPING,
+                          );
+                        },
+                      ),
+                    ),
                     CustomSlide(
                       duration: Duration(milliseconds: 500),
                       delay: Duration(milliseconds: 200),
@@ -119,6 +135,13 @@ class _ChatRoomState extends State<ChatRoom> {
                           chatNotifier.onSendPressed(value);
                         },
                         isContactBlocked: blockedContacts.contains(other),
+                        onTypingStateChange: (bool typing) {
+                          context.read(userActivityStateProvider).set(
+                                activityStatus: typing
+                                    ? ActivityStatus.chatting(otherId: other.id)
+                                    : ActivityStatus.online(),
+                              );
+                        },
                       ),
                     ),
                   ],
@@ -150,19 +173,52 @@ class _ChatRoomState extends State<ChatRoom> {
                                 color: style.accentColor,
                               ),
                             ),
-                            Hero(
-                              tag: '${other.id}${other.nickname}',
-                              child: Material(
-                                type: MaterialType.transparency,
-                                child: Text(
-                                  other.nickname,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    color: Colors.white,
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Hero(
+                                  tag: '${other.id}${other.nickname}',
+                                  child: Material(
+                                    type: MaterialType.transparency,
+                                    child: Text(
+                                      other.nickname,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        color: Colors.white,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 4.0),
+                                  child: Consumer(
+                                    builder: (context, watch, _) {
+                                      ActivityStatus status = watch(
+                                          contactActivityStateProvider(other.id)
+                                              .state);
+                                      switch (status.state) {
+                                        case ActivityStatus.LOADING:
+                                          return SizedBox.shrink();
+
+                                        default:
+                                          return Container(
+                                            width: 8,
+                                            height: 8,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: status.state ==
+                                                      ActivityStatus.OFFLINE
+                                                  ? style.iconColors
+                                                  : style.accentColor,
+                                            ),
+                                          );
+                                      }
+                                    },
+                                  ),
+                                )
+                              ],
                             ),
                             Icon(
                               Icons.arrow_back_ios,
