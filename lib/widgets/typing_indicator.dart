@@ -17,15 +17,15 @@ import 'package:bubble/bubble.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
-class TypingIndicatorSpacer extends StatefulWidget {
+class TypingIndicator extends StatefulWidget {
   final bool showIndicator;
 
-  const TypingIndicatorSpacer({required this.showIndicator});
+  const TypingIndicator({required this.showIndicator});
   @override
-  _TypingIndicatorSpacerState createState() => _TypingIndicatorSpacerState();
+  _TypingIndicatorState createState() => _TypingIndicatorState();
 }
 
-class _TypingIndicatorSpacerState extends State<TypingIndicatorSpacer>
+class _TypingIndicatorState extends State<TypingIndicator>
     with TickerProviderStateMixin {
   late AnimationController _appearanceController;
   late Animation<double> _indicatorSpaceAnimation;
@@ -41,7 +41,7 @@ class _TypingIndicatorSpacerState extends State<TypingIndicatorSpacer>
     _indicatorSpaceAnimation = CurvedAnimation(
       parent: _appearanceController,
       curve: const Interval(0.0, 0.4, curve: Curves.easeOut),
-      reverseCurve: const Interval(0.0, 1.0, curve: Curves.easeOut),
+      reverseCurve: const Interval(0.0, 1.0, curve: Curves.easeIn),
     ).drive(Tween<double>(
       begin: 0.0,
       end: 30.0,
@@ -53,7 +53,7 @@ class _TypingIndicatorSpacerState extends State<TypingIndicatorSpacer>
   }
 
   @override
-  void didUpdateWidget(TypingIndicatorSpacer oldWidget) {
+  void didUpdateWidget(TypingIndicator oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     if (widget.showIndicator != oldWidget.showIndicator) {
@@ -79,7 +79,7 @@ class _TypingIndicatorSpacerState extends State<TypingIndicatorSpacer>
 
   void _hideIndicator() {
     _appearanceController
-      ..duration = const Duration(milliseconds: 150)
+      ..duration = const Duration(milliseconds: 350)
       ..reverse();
   }
 

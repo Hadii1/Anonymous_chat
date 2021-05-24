@@ -84,24 +84,31 @@ class _TypingIndicatorThrottle {
 class _MessageBoxState extends State<MessageBox> {
   final _controller = TextEditingController();
 
+  late _TypingIndicatorThrottle throttle;
+
   @override
   void initState() {
-    _TypingIndicatorThrottle throttle = _TypingIndicatorThrottle(
+    throttle = _TypingIndicatorThrottle(
       waitingTime: Duration(seconds: 2),
       f: widget.onTypingStateChange,
     );
 
-    _controller.addListener(() {
+    _controller.addListener(_inputListener);
+    super.initState();
+  }
+
+  void _inputListener() {
+    if (_controller.text.isNotEmpty) {
       setState(() {
         throttle.onType();
       });
-    });
-    super.initState();
+    }
   }
 
   @override
   void dispose() {
     super.dispose();
+    _controller.removeListener(_inputListener);
     _controller.dispose();
   }
 

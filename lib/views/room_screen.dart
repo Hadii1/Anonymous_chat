@@ -119,7 +119,7 @@ class _ChatRoomState extends State<ChatRoom> {
                         builder: (context, watch, _) {
                           ActivityStatus status = watch(
                               contactActivityStateProvider(other.id).state);
-                          return TypingIndicatorSpacer(
+                          return TypingIndicator(
                             showIndicator:
                                 status.state == ActivityStatus.TYPING,
                           );
@@ -203,7 +203,9 @@ class _ChatRoomState extends State<ChatRoom> {
                                           return SizedBox.shrink();
 
                                         default:
-                                          return Container(
+                                          return AnimatedContainer(
+                                            duration:
+                                                Duration(milliseconds: 300),
                                             width: 8,
                                             height: 8,
                                             decoration: BoxDecoration(
