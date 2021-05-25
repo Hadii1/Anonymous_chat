@@ -55,8 +55,17 @@ class TagSuggestionsNotifier extends ChangeNotifier {
   TagScreenState? screenState;
   Timer? _debounceTimer;
   String? currentLabel;
+  StreamSubscription<void>? _suggestedTagsSub;
+
+  @override
+  void dispose() {
+    if (_suggestedTagsSub != null) _suggestedTagsSub!.cancel();
+    super.dispose();
+  }
 
   set searchedTag(String label) {
+    if (_suggestedTagsSub != null) _suggestedTagsSub!.cancel();
+
     if (label.isEmpty) {
       screenState = null;
       newTagToAdd = null;
@@ -75,22 +84,24 @@ class TagSuggestionsNotifier extends ChangeNotifier {
           suggestedTags.isNotEmpty) {
         screenState = TagScreenState.loadingTags;
         newTagToAdd = null;
-        suggestedTags = [];
+        suggestedTags.clear();
       }
 
       currentLabel = label;
       notifyListeners();
 
-      if (_debounceTimer == null) {
-        _debounceTimer = Timer(Duration(milliseconds: 500), () {
-          _getSuggestedTags(label);
-        });
-      } else {
-        _debounceTimer!.cancel();
-        _debounceTimer = Timer(Duration(milliseconds: 500), () {
-          _getSuggestedTags(label);
-        });
-      }
+      if (_debounceTimer != null) _debounceTimer!.cancel();
+      _debounceTimer = Timer(
+        Duration(milliseconds: 400),
+        () {
+          _suggestedTagsSub =
+              _getSuggestedTags(label).asStream().listen((List<Tag> tags) {
+            screenState = TagScreenState.showingResults;
+            suggestedTags = tags;
+            notifyListeners();
+          });
+        },
+      );
     }
   }
 
@@ -152,9 +163,11 @@ class TagSuggestionsNotifier extends ChangeNotifier {
     }
   }
 
-  void _getSuggestedTags(String label) async {
+  Future<List<Tag>> _getSuggestedTags(String label) async {
     try {
-      if (label.isEmpty) return;
+      List<Tag> tags = [];
+
+      if (label.isEmpty) return tags;
 
       screenState = TagScreenState.loadingTags;
 
@@ -172,11 +185,11 @@ class TagSuggestionsNotifier extends ChangeNotifier {
           .where((t) => t.isActive == true)
           .toList();
 
-      suggestedTags = data.map((e) => Tag.fromMap(e)).toList();
-      suggestedTags.removeWhere((element) => selectedTags.contains(element));
+      tags = data.map((e) => Tag.fromMap(e)).toList();
+      tags.removeWhere((element) => selectedTags.contains(element));
 
       // If tag is new allow adding it
-      if (!suggestedTags
+      if (!tags
           .map((e) => e.label.toLowerCase().trim())
           .contains(label.toLowerCase().trim())) {
         newTagToAdd = Tag(
@@ -186,9 +199,7 @@ class TagSuggestionsNotifier extends ChangeNotifier {
         );
       }
 
-      screenState = TagScreenState.showingResults;
-
-      notifyListeners();
+      return tags;
     } on Exception catch (e, s) {
       _errorNotifier.setError(
         exception: e,
@@ -197,6 +208,7 @@ class TagSuggestionsNotifier extends ChangeNotifier {
       );
       screenState = null;
       notifyListeners();
+      return [];
     }
   }
 }
