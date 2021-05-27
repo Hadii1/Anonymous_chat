@@ -56,6 +56,7 @@ class ChatNotifier extends ChangeNotifier {
   final bool? isArchived;
   final bool isBlockedByOther;
 
+  Message? replyingOn;
   User get other => room.users!.firstWhere((User i) => i != _user);
 
   bool _isChatPageOpened = false;
@@ -133,8 +134,19 @@ class ChatNotifier extends ChangeNotifier {
     // notifyListeners();
   }
 
+  void onMessageLongPress(Message message) {
+    replyingOn = message;
+    notifyListeners();
+  }
+
+  void onCancelReply() {
+    replyingOn = null;
+    notifyListeners();
+  }
+
   Future<void> onSendPressed(String msg) async {
     try {
+      if (replyingOn != null) replyingOn = null;
       Message message = Message(
         isSenderBlocked: isBlockedByOther,
         sender: _user.id,

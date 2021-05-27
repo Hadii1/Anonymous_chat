@@ -15,5 +15,39 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final connectivityProvider =
-    StreamProvider((ref) => Connectivity().onConnectivityChanged);
+enum ConnectivityEvent {
+  connected,
+  disconnected,
+}
+
+final connectivityProvider = StateNotifierProvider(
+  (ref) => ConnectivityState(),
+);
+
+class ConnectivityState extends StateNotifier<ConnectivityEvent?> {
+  ConnectivityResult? lastState;
+
+  ConnectivityState() : super(null) {
+    Connectivity()
+        .onConnectivityChanged
+        .listen((ConnectivityResult currentState) {
+      // First time
+      if (lastState == null) {
+        lastState = currentState;
+        if (currentState == ConnectivityResult.none)
+          state = ConnectivityEvent.disconnected;
+        return;
+      }
+
+      if (lastState! == ConnectivityResult.none &&
+          currentState != ConnectivityResult.none) {
+        state = ConnectivityEvent.connected;
+      } else if (lastState! != ConnectivityResult.none &&
+          currentState == ConnectivityResult.none) {
+        state = ConnectivityEvent.disconnected;
+      }
+
+      lastState = currentState;
+    });
+  }
+}

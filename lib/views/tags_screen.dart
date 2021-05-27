@@ -385,91 +385,86 @@ class __SuggestedContactsState extends State<_SuggestedContacts>
                   .where((Tag tag) => tag.isActive);
           final allTags =
               watch(userTagsProvider(LocalStorage().user!.id).state);
-          return AnimatedSize(
-            vsync: this,
-            curve: Curves.easeOutCubic,
-            duration: Duration(milliseconds: 350),
-            child: watch(suggestedContactsProvider).when(
-              data: (List<Tuple2<User, List<Tag>>>? data) {
-                return data == null
-                    ? Padding(
-                        padding: const EdgeInsets.only(top: 100.0),
-                        child: SpinKitThreeBounce(
-                          size: 25,
-                          duration: Duration(milliseconds: 800),
-                          color: style.loadingBarColor,
-                        ),
-                      )
-                    : data.isEmpty
-                        ? Padding(
-                            padding: const EdgeInsets.only(top: 100.0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                SizedBox(
-                                  height: 50,
-                                ),
-                                Icon(
-                                  Linecons.search,
-                                  color: style.accentColor,
-                                  size: 50,
-                                ),
-                                SizedBox(height: 24),
-                                Text(
-                                  allTags.isEmpty
-                                      ? 'Search and activate \nnew tags to match up with\nother contacts.'
-                                      : activeTags.isEmpty
-                                          ? 'No current active tags.'
-                                          : 'No contacts are sharing\nyour active tags.\nTry changing or adding\nnew tags.',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    height: 1.4,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
+
+          return watch(suggestedContactsProvider).when(
+            data: (List<Tuple2<User, List<Tag>>>? data) {
+              return Fader(
+                duration: Duration(milliseconds: 300),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: data == null
+                      ? [
+                          SpinKitThreeBounce(
+                            size: 25,
+                            duration: Duration(milliseconds: 800),
+                            color: style.loadingBarColor,
                           )
-                        : Fader(
-                            duration: Duration(milliseconds: 300),
-                            child: Column(
-                              children: List.generate(
-                                data.length,
-                                (index) => SuggestedContact(
-                                  data: data[index],
+                        ]
+                      : data.isEmpty
+                          ? [
+                              SizedBox(
+                                height: 50,
+                              ),
+                              Icon(
+                                Linecons.search,
+                                color: style.accentColor,
+                                size: 50,
+                              ),
+                              SizedBox(height: 24),
+                              Text(
+                                allTags.isEmpty
+                                    ? 'Search and activate \nnew tags to match up with\nother contacts.'
+                                    : activeTags.isEmpty
+                                        ? 'No current active tags.'
+                                        : 'No contacts are sharing\nyour active tags.\nTry changing or adding\nnew tags.',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  height: 1.4,
                                 ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ]
+                          : List.generate(
+                              data.length,
+                              (index) => SuggestedContact(
+                                data: data[index],
                               ),
                             ),
-                          );
-              },
-              loading: () => Padding(
-                padding: const EdgeInsets.only(top: 100.0),
-                child: SpinKitThreeBounce(
-                  size: 25,
-                  duration: Duration(milliseconds: 800),
-                  color: style.accentColor,
                 ),
-              ),
-              error: (e, s) {
-                context.read(errorsProvider).setError(
-                      exception: e,
-                      stackTrace: s,
-                      hint:
-                          'Error in watching suggested contacts provider. Retrying.',
-                    );
-
-                context.refresh(suggestedContactsProvider);
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 48.0),
-                    child: SpinKitThreeBounce(
-                      size: 25,
-                      color: style.backgroundContrastColor,
-                    ),
+              );
+            },
+            loading: () => Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 100.0),
+                  child: SpinKitThreeBounce(
+                    size: 25,
+                    duration: Duration(milliseconds: 800),
+                    color: style.accentColor,
                   ),
-                );
-              },
+                ),
+              ],
             ),
+            error: (e, s) {
+              context.read(errorsProvider).setError(
+                    exception: e,
+                    stackTrace: s,
+                    hint:
+                        'Error in watching suggested contacts provider. Retrying.',
+                  );
+
+              context.refresh(suggestedContactsProvider);
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 48.0),
+                  child: SpinKitThreeBounce(
+                    size: 25,
+                    color: style.backgroundContrastColor,
+                  ),
+                ),
+              );
+            },
           );
         },
       ),

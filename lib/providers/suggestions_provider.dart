@@ -17,18 +17,21 @@ final suggestedContactsProvider =
     // This means loading state
     if (currentRooms == null) return null;
 
-    for (Room r in currentRooms) {
-      userContacts.addAll(r.participants);
-    }
-
-    List<Tuple2<User, List<Tag>>> suggestions = [];
-
     List<Tag> selectedTags = ref
         .watch(userTagsProvider(LocalStorage().user!.id).state)
         .where((t) => t.isActive)
         .toList();
 
-    if (selectedTags.isEmpty) return [];
+    if (selectedTags.isEmpty) {
+      // await Future.delayed(Duration(milliseconds: 200));
+      return [];
+    }
+
+    for (Room r in currentRooms) {
+      userContacts.addAll(r.participants);
+    }
+
+    List<Tuple2<User, List<Tag>>> suggestions = [];
 
     List<Map<String, dynamic>> data = await FirestoreService().getMatchingUsers(
       tagsIds: selectedTags.map((e) => e.id).toList(),

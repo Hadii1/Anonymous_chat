@@ -202,8 +202,7 @@ class FirestoreService implements IFirestoreService {
   }
 
   @override
-  Future<void> onUserActivatingTag(
-      {required Tag tag, required String userId}) async {
+  Future<void> activateTag({required Tag tag, required String userId}) async {
     await _db
         .collection('Users')
         .doc(userId)
@@ -226,8 +225,7 @@ class FirestoreService implements IFirestoreService {
   }
 
   @override
-  Future<void> onUserDiactivatingTag(
-      {required Tag tag, required String userId}) async {
+  Future<void> deactivateTag({required Tag tag, required String userId}) async {
     await _db
         .collection('Users')
         .doc(userId)

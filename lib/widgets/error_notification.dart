@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ErrorNotification extends StatelessWidget {
+class NotificationWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = InheritedAppTheme.of(context).style;

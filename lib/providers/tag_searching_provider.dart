@@ -55,6 +55,7 @@ class TagSuggestionsNotifier extends ChangeNotifier {
   TagScreenState? screenState;
   Timer? _debounceTimer;
   String? currentLabel;
+  // ignore: cancel_subscriptions
   StreamSubscription<void>? _suggestedTagsSub;
 
   @override
@@ -113,10 +114,10 @@ class TagSuggestionsNotifier extends ChangeNotifier {
       notifyListeners();
 
       if (selected) {
-        await firestore.onUserActivatingTag(
+        await firestore.activateTag(
             tag: tag.copyWith(isActive: selected), userId: storage.user!.id);
       } else {
-        await firestore.onUserDiactivatingTag(
+        await firestore.deactivateTag(
           tag: tag.copyWith(isActive: selected),
           userId: storage.user!.id,
         );

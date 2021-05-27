@@ -39,10 +39,10 @@ abstract class IFirestoreService {
   Stream<List<Map<String, dynamic>>> roomMessagesUpdates(
       {required String roomId});
 
-  Future<void> onUserDiactivatingTag(
+  Future<void> deactivateTag(
       {required Tag tag, required String userId});
 
-  Future<void> onUserActivatingTag({required Tag tag, required String userId});
+  Future<void> activateTag({required Tag tag, required String userId});
 
   String getRoomReference();
 

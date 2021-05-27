@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:anonymous_chat/models/user.dart';
 import 'package:anonymous_chat/providers/errors_provider.dart';
+import 'package:anonymous_chat/providers/loading_provider.dart';
 import 'package:anonymous_chat/services.dart/firestore.dart';
 import 'package:anonymous_chat/services.dart/local_storage.dart';
 
@@ -10,16 +11,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 const _kloadingTime = Duration(seconds: 2);
+
 final nameGeneratorProvider = ChangeNotifierProvider.autoDispose(
   (ref) => NameGeneratorNotifier(
     ref.read(errorsProvider),
+    ref.read(loadingProvider),
   ),
 );
 
 class NameGeneratorNotifier extends ChangeNotifier {
   final ErrorNotifier _errorNotifier;
+  final LoadingNotifer _loadingNotifier;
 
-  NameGeneratorNotifier(this._errorNotifier) {
+  NameGeneratorNotifier(
+    this._errorNotifier,
+    this._loadingNotifier,
+  ) {
     Future.delayed(_kloadingTime).then((value) {
       loading = false;
       notifyListeners();
@@ -49,6 +56,7 @@ class NameGeneratorNotifier extends ChangeNotifier {
 
   Future<bool> onProceedPressed() async {
     try {
+      _loadingNotifier.isLoading = true;
       final LocalStorage storage = LocalStorage();
       final User user = storage.user!;
 
@@ -56,9 +64,10 @@ class NameGeneratorNotifier extends ChangeNotifier {
         nickname: '$color$animal$number',
       );
 
-      await storage.setUser(newUser);
       await FirestoreService().saveUserData(user: newUser);
+      await storage.setUser(newUser);
 
+      _loadingNotifier.isLoading = false;
       return true;
     } on Exception catch (e, s) {
       _errorNotifier.setError(
@@ -66,6 +75,7 @@ class NameGeneratorNotifier extends ChangeNotifier {
         stackTrace: s,
         hint: 'Name Generator Error',
       );
+      _loadingNotifier.isLoading = false;
       return false;
     }
   }

@@ -1,31 +1,23 @@
 import 'dart:io';
 
 import 'package:anonymous_chat/providers/connectivity_provider.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sentry/sentry.dart';
 
 final errorsProvider = StateNotifierProvider(
-  (ref) => ErrorNotifier(
-    connectivityStream: ref.read(connectivityProvider.stream),
-  ),
+  (ref) => ErrorNotifier(ref.watch(connectivityProvider.state)),
 );
 
 class ErrorNotifier extends StateNotifier<String> {
-  ErrorNotifier({required Stream<ConnectivityResult> connectivityStream})
-      : super('') {
-    connectivityStream.skip(1).listen(
-      (event) {
-        print(event);
-        if (event == ConnectivityResult.none) {
-          setError(message: 'Connection Lost');
-        } else {
-          setError(message: 'Back On Track');
-        }
-      },
-    );
+  ErrorNotifier(ConnectivityEvent? event) : super('') {
+    if (event != null)
+      setError(
+        message: event == ConnectivityEvent.connected
+            ? 'Restored Internet Connection'
+            : 'No Internet Connection',
+      );
   }
 
   void setError({

@@ -98,6 +98,9 @@ class _ChatRoomState extends State<ChatRoom> {
                                             startOffset: Offset(0, 1),
                                             child: ChatBubble(
                                               message: message,
+                                              onHold: (Message m) =>
+                                                  chatNotifier
+                                                      .onMessageLongPress(m),
                                               isLatestMessage: chatNotifier
                                                   .isLatestMessage(message),
                                               isReceived: message.isReceived(),
@@ -134,6 +137,8 @@ class _ChatRoomState extends State<ChatRoom> {
                         onSendPressed: (String value) {
                           chatNotifier.onSendPressed(value);
                         },
+                        replyMessage: chatNotifier.replyingOn,
+                        onCancelReply: chatNotifier.onCancelReply,
                         isContactBlocked: blockedContacts.contains(other),
                         onTypingStateChange: (bool typing) {
                           context.read(userActivityStateProvider).set(

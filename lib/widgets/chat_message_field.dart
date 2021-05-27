@@ -14,7 +14,9 @@
 
 import 'dart:async';
 
+import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
+import 'package:anonymous_chat/widgets/message_reply.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -22,13 +24,16 @@ import 'package:flutter/material.dart';
 class MessageBox extends StatefulWidget {
   final Function(String) onSendPressed;
   final Function(bool) onTypingStateChange;
-
+  final Message? replyMessage;
+  final Function() onCancelReply;
   final bool isContactBlocked;
 
   const MessageBox({
     required this.onSendPressed,
     required this.onTypingStateChange,
     required this.isContactBlocked,
+    required this.onCancelReply,
+    this.replyMessage,
   });
 
   @override
@@ -114,7 +119,8 @@ class _MessageBoxState extends State<MessageBox> {
 
   @override
   void didUpdateWidget(MessageBox oldWidget) {
-    if (oldWidget.isContactBlocked != widget.isContactBlocked) {
+    if (oldWidget.isContactBlocked != widget.isContactBlocked ||
+        oldWidget.replyMessage != widget.replyMessage) {
       if (mounted) setState(() {});
     }
     super.didUpdateWidget(oldWidget);
@@ -132,75 +138,84 @@ class _MessageBoxState extends State<MessageBox> {
         top: false,
         left: false,
         right: false,
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(
-              child: TextField(
-                enabled: !widget.isContactBlocked,
-                autocorrect: false,
-                keyboardType: TextInputType.text,
-                textCapitalization: TextCapitalization.sentences,
-                cursorColor: style.accentColor,
-                style: style.bodyText,
-                controller: _controller,
-                decoration: InputDecoration(
-                  hintText: 'Message',
-                  hintStyle: style.bodyText
-                      .copyWith(color: ApplicationStyle.secondaryTextColor),
-                  filled: true,
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 10,
-                    horizontal: 8,
-                  ),
-                  fillColor: style.backgroundColor,
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(
-                      width: 0.15,
-                      color: style.borderColor,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(
-                      width: 0.15,
-                      color: style.accentColor,
-                    ),
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(
-                      width: 0.2,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
+            MessageReplyPreview(
+              message: widget.replyMessage,
+              onCancelPressed: widget.onCancelReply,
             ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: AnimatedSwitcher(
-                duration: Duration(milliseconds: 250),
-                child: _controller.text.isEmpty
-                    ? Icon(
-                        Icons.send,
-                        color: Colors.grey,
-                      )
-                    : InkWell(
-                        onTap: () {
-                          setState(() {
-                            widget.onSendPressed(_controller.text);
-                            _controller.clear();
-                          });
-                        },
-                        child: Icon(
-                          Icons.send,
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    enabled: !widget.isContactBlocked,
+                    autocorrect: false,
+                    keyboardType: TextInputType.text,
+                    textCapitalization: TextCapitalization.sentences,
+                    cursorColor: style.accentColor,
+                    style: style.bodyText,
+                    controller: _controller,
+                    decoration: InputDecoration(
+                      hintText: 'Message',
+                      hintStyle: style.bodyText
+                          .copyWith(color: ApplicationStyle.secondaryTextColor),
+                      filled: true,
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 10,
+                        horizontal: 8,
+                      ),
+                      fillColor: style.backgroundColor,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          width: 0.15,
+                          color: style.borderColor,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          width: 0.15,
                           color: style.accentColor,
                         ),
                       ),
-              ),
-            )
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          width: 0.2,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: AnimatedSwitcher(
+                    duration: Duration(milliseconds: 250),
+                    child: _controller.text.isEmpty
+                        ? Icon(
+                            Icons.send,
+                            color: Colors.grey,
+                          )
+                        : InkWell(
+                            onTap: () {
+                              setState(() {
+                                widget.onSendPressed(_controller.text);
+                                _controller.clear();
+                              });
+                            },
+                            child: Icon(
+                              Icons.send,
+                              color: style.accentColor,
+                            ),
+                          ),
+                  ),
+                )
+              ],
+            ),
           ],
         ),
       ),

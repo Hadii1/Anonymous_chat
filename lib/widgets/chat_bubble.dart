@@ -18,17 +18,20 @@ import 'package:anonymous_chat/utilities/extrentions.dart';
 import 'package:bubble/bubble.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class ChatBubble extends StatelessWidget {
   final bool isLatestMessage;
   final bool isReceived;
   final Message message;
   final bool isSuccesful;
+  final Function(Message) onHold;
 
   const ChatBubble({
     required this.isLatestMessage,
     required this.message,
     required this.isSuccesful,
+    required this.onHold,
     required this.isReceived,
   });
 
@@ -52,65 +55,73 @@ class ChatBubble extends StatelessWidget {
               : 0,
           bottom: 2,
         ),
-        child: Bubble(
-          nip: !isLatestMessage
-              ? null
-              : isReceived
-                  ? BubbleNip.leftBottom
-                  : BubbleNip.rightBottom,
-          nipRadius: 1,
-          radius: Radius.circular(8),
-          nipHeight: 8,
-          nipWidth: 6,
-          elevation: 8,
-          borderColor: isReceived || !isSuccesful
-              ? style.borderColor
-              : style.accentColor,
-          borderWidth: 0.3,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                message.content,
-                style: style.bodyText.copyWith(
-                  color: style.chatBubbleTextColor,
-                  backgroundColor: style.backgroundColor,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: 4, left: 4),
-                child: Text(
-                  message.time.formatDate(),
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 9,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          highlightColor: style.accentColor,
+          onLongPress: () {
+            HapticFeedback.lightImpact();
+            onHold(message);
+          },
+          child: Bubble(
+            nip: !isLatestMessage
+                ? null
+                : isReceived
+                    ? BubbleNip.leftBottom
+                    : BubbleNip.rightBottom,
+            nipRadius: 1,
+            radius: Radius.circular(8),
+            nipHeight: 8,
+            nipWidth: 6,
+            elevation: 8,
+            borderColor: isReceived || !isSuccesful
+                ? style.borderColor
+                : style.accentColor,
+            borderWidth: 0.3,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  message.content,
+                  style: style.bodyText.copyWith(
+                    color: style.chatBubbleTextColor,
+                    backgroundColor: style.backgroundColor,
                   ),
                 ),
-              ),
-              isReceived
-                  ? SizedBox.shrink()
-                  : Padding(
-                      padding: const EdgeInsets.only(left: 4.0, top: 4),
-                      child: AnimatedSwitcher(
-                        duration: Duration(seconds: 1),
-                        child: isSuccesful
-                            ? Icon(
-                                CupertinoIcons.check_mark,
-                                color: message.isRead
-                                    ? style.accentColor
-                                    : Colors.white,
-                                size: 12,
-                              )
-                            : Icon(
-                                CupertinoIcons.clock,
-                                color: Colors.white,
-                                size: 12,
-                              ),
-                      ),
-                    )
-            ],
+                Padding(
+                  padding: const EdgeInsets.only(top: 4, left: 4),
+                  child: Text(
+                    message.time.formatDate(),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                    ),
+                  ),
+                ),
+                isReceived
+                    ? SizedBox.shrink()
+                    : Padding(
+                        padding: const EdgeInsets.only(left: 4.0, top: 4),
+                        child: AnimatedSwitcher(
+                          duration: Duration(seconds: 1),
+                          child: isSuccesful
+                              ? Icon(
+                                  CupertinoIcons.check_mark,
+                                  color: message.isRead
+                                      ? style.accentColor
+                                      : Colors.white,
+                                  size: 12,
+                                )
+                              : Icon(
+                                  CupertinoIcons.clock,
+                                  color: Colors.white,
+                                  size: 12,
+                                ),
+                        ),
+                      )
+              ],
+            ),
+            color: style.backgroundColor,
           ),
-          color: style.backgroundColor,
         ),
       ),
     );

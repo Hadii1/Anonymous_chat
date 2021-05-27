@@ -19,20 +19,25 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
+import 'package:sentry_flutter/sentry_flutter.dart';
+
 final appInitialzationProvider =
     FutureProvider.autoDispose<UserState>((ref) async {
   await Firebase.initializeApp();
   await LocalStorage.init();
   await AlgoliaSearch.init();
   await NotificationsService.init();
-
-// await AuthService().signOut();
-
-  SystemChrome.setSystemUIOverlayStyle(
-    LocalStorage().preferedTheme == ThemeState.dark
-        ? SystemUiOverlayStyle.light
-        : SystemUiOverlayStyle.dark,
+  await SentryFlutter.init(
+    (options) {
+      options.dsn =
+          'https://0f054bcf09524b3781154f1c3daab510@o538575.ingest.sentry.io/5786123';
+    },
   );
+
+//  await AuthService().signOut();
+
+  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
   final bool _isAuthenticated = AuthService().isAuthenticated();
   late bool _isNicknamed;
@@ -66,7 +71,7 @@ class InitializaitonScreen extends StatelessWidget {
       home: Consumer(
         builder: (context, watch, _) {
           return watch(appInitialzationProvider).when(
-            data: (state) {
+            data: (UserState state) {
               return AppTheme(
                 child: Stack(
                   children: [
@@ -75,7 +80,7 @@ class InitializaitonScreen extends StatelessWidget {
                       isNicknamed:
                           state == UserState.userAuthenticatedAndNicknamed,
                     ),
-                    ErrorNotification(),
+                    NotificationWidget(),
                     LoadingWidget(),
                   ],
                 ),
@@ -96,7 +101,9 @@ class InitializaitonScreen extends StatelessWidget {
                     stackTrace: s,
                     hint: 'Error in app initializing',
                   );
-              context.refresh(appInitialzationProvider);
+
+              Future.delayed(Duration(seconds: 2))
+                  .then((_) => context.refresh(appInitialzationProvider));
 
               return Container(
                 color: Colors.white,

@@ -45,6 +45,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 lastSeen: DateTime.now().millisecondsSinceEpoch,
               ),
             );
+
         break;
 
       default:
@@ -53,12 +54,19 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   }
 
   @override
+  void dispose() {
+    super.dispose();
+    WidgetsBinding.instance!.removeObserver(this);
+  }
+
+  @override
   void deactivate() {
-    context.read(userActivityStateProvider).set(
-          activityStatus: ActivityStatus.offline(
-            lastSeen: DateTime.now().millisecondsSinceEpoch,
-          ),
-        );
+    if (mounted)
+      context.read(userActivityStateProvider).set(
+            activityStatus: ActivityStatus.offline(
+              lastSeen: DateTime.now().millisecondsSinceEpoch,
+            ),
+          );
     super.deactivate();
   }
 
