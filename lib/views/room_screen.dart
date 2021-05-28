@@ -91,6 +91,14 @@ class _ChatRoomState extends State<ChatRoom> {
                                         (index) {
                                           Message message =
                                               chatNotifier.allMessages[index];
+                                          Message? replyOn;
+
+                                          if (message.replyingOn != null) {
+                                            replyOn = chatNotifier.allMessages
+                                                .firstWhere(
+                                              (m) => m.id == message.replyingOn,
+                                            );
+                                          }
 
                                           return CustomSlide(
                                             duration:
@@ -98,9 +106,11 @@ class _ChatRoomState extends State<ChatRoom> {
                                             startOffset: Offset(0, 1),
                                             child: ChatBubble(
                                               message: message,
+                                              other: chatNotifier.other,
                                               onHold: (Message m) =>
                                                   chatNotifier
                                                       .onMessageLongPress(m),
+                                              replyOn: replyOn,
                                               isLatestMessage: chatNotifier
                                                   .isLatestMessage(message),
                                               isReceived: message.isReceived(),
@@ -117,7 +127,7 @@ class _ChatRoomState extends State<ChatRoom> {
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.only(left: 2),
+                      padding: const EdgeInsets.only(left: 2, top: 2),
                       child: Consumer(
                         builder: (context, watch, _) {
                           ActivityStatus status = watch(

@@ -146,7 +146,6 @@ class ChatNotifier extends ChangeNotifier {
 
   Future<void> onSendPressed(String msg) async {
     try {
-      if (replyingOn != null) replyingOn = null;
       Message message = Message(
         isSenderBlocked: isBlockedByOther,
         sender: _user.id,
@@ -154,8 +153,11 @@ class ChatNotifier extends ChangeNotifier {
         content: msg,
         isRead: false,
         time: DateTime.now().millisecondsSinceEpoch,
+        replyingOn: replyingOn?.id,
         id: _firestore.getMessageReference(roomId: room.id),
       );
+
+      if (replyingOn != null) replyingOn = null;
 
       allMessages.add(message);
       notifyListeners();

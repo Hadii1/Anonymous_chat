@@ -13,6 +13,8 @@
 // limitations under the License.
 
 import 'package:anonymous_chat/models/message.dart';
+import 'package:anonymous_chat/models/user.dart';
+import 'package:anonymous_chat/services.dart/local_storage.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/utilities/extrentions.dart';
 import 'package:bubble/bubble.dart';
@@ -24,6 +26,8 @@ class ChatBubble extends StatelessWidget {
   final bool isLatestMessage;
   final bool isReceived;
   final Message message;
+  final Message? replyOn;
+  final User other;
   final bool isSuccesful;
   final Function(Message) onHold;
 
@@ -33,6 +37,8 @@ class ChatBubble extends StatelessWidget {
     required this.isSuccesful,
     required this.onHold,
     required this.isReceived,
+    required this.other,
+    this.replyOn,
   });
 
   @override
@@ -77,47 +83,95 @@ class ChatBubble extends StatelessWidget {
                 ? style.borderColor
                 : style.accentColor,
             borderWidth: 0.3,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  message.content,
-                  style: style.bodyText.copyWith(
-                    color: style.chatBubbleTextColor,
-                    backgroundColor: style.backgroundColor,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 4, left: 4),
-                  child: Text(
-                    message.time.formatDate(),
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 9,
-                    ),
-                  ),
-                ),
-                isReceived
+                replyOn == null
                     ? SizedBox.shrink()
-                    : Padding(
-                        padding: const EdgeInsets.only(left: 4.0, top: 4),
-                        child: AnimatedSwitcher(
-                          duration: Duration(seconds: 1),
-                          child: isSuccesful
-                              ? Icon(
-                                  CupertinoIcons.check_mark,
-                                  color: message.isRead
-                                      ? style.accentColor
-                                      : Colors.white,
-                                  size: 12,
-                                )
-                              : Icon(
-                                  CupertinoIcons.clock,
-                                  color: Colors.white,
-                                  size: 12,
-                                ),
+                    : Container(
+                        padding: const EdgeInsets.only(
+                          bottom: 2,
+                          top: 2,
+                          left: 6,
                         ),
-                      )
+                        decoration: BoxDecoration(
+                          border: Border(
+                            left: BorderSide(
+                              color: style.accentColor,
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              replyOn!.sender == LocalStorage().user!.id
+                                  ? 'You'
+                                  : other.nickname,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.6),
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(
+                              height: 2,
+                            ),
+                            Text(
+                              replyOn!.content,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                replyOn == null ? SizedBox.shrink() : SizedBox(height: 8),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      message.content,
+                      style: style.bodyText.copyWith(
+                        color: style.chatBubbleTextColor,
+                        backgroundColor: style.backgroundColor,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4, left: 4),
+                      child: Text(
+                        message.time.formatDate(),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                        ),
+                      ),
+                    ),
+                    isReceived
+                        ? SizedBox.shrink()
+                        : Padding(
+                            padding: const EdgeInsets.only(left: 4.0, top: 4),
+                            child: AnimatedSwitcher(
+                              duration: Duration(seconds: 1),
+                              child: isSuccesful
+                                  ? Icon(
+                                      CupertinoIcons.check_mark,
+                                      color: message.isRead
+                                          ? style.accentColor
+                                          : Colors.white,
+                                      size: 12,
+                                    )
+                                  : Icon(
+                                      CupertinoIcons.clock,
+                                      color: Colors.white,
+                                      size: 12,
+                                    ),
+                            ),
+                          )
+                  ],
+                ),
               ],
             ),
             color: style.backgroundColor,

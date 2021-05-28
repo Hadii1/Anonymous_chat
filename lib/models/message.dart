@@ -1,4 +1,3 @@
-import 'dart:convert';
 
 class Message {
   final String sender;
@@ -6,6 +5,9 @@ class Message {
   final String content;
   final String id;
   final bool isSenderBlocked;
+
+  // The replied on message id if exists
+  final String? replyingOn;
   // Milliseconds since epoch
   final int time;
   bool isRead;
@@ -18,6 +20,7 @@ class Message {
     required this.time,
     required this.id,
     this.isRead = false,
+    this.replyingOn,
   });
 
   Map<String, dynamic> toMap() {
@@ -27,6 +30,7 @@ class Message {
       'content': content,
       'time': time,
       'id': id,
+      'replyingOn': replyingOn,
       'isSenderBlocked': isSenderBlocked,
       'isRead': isRead,
     };
@@ -37,6 +41,7 @@ class Message {
       sender: map['sender'],
       id: map['id'],
       recipient: map['recipient'],
+      replyingOn: map['replyingOn'],
       content: map['content'],
       time: map['time'],
       isSenderBlocked: map['isSenderBlocked'],
@@ -44,10 +49,6 @@ class Message {
     );
   }
 
-  String toJson() => json.encode(toMap());
-
-  factory Message.fromJson(String source) =>
-      Message.fromMap(json.decode(source));
 
   @override
   bool operator ==(Object other) {

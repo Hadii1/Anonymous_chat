@@ -86,7 +86,7 @@ class _MessageReplyPreviewState extends State<MessageReplyPreview>
 
   void _hideIndicator() {
     _appearanceController
-      ..duration = const Duration(milliseconds: 300)
+      ..duration = const Duration(milliseconds: 350)
       ..reverse();
   }
 
@@ -94,11 +94,17 @@ class _MessageReplyPreviewState extends State<MessageReplyPreview>
   Widget build(BuildContext context) {
     ApplicationStyle style = InheritedAppTheme.of(context).style;
     return SizeTransition(
-      sizeFactor: _appearanceController,
+      sizeFactor: CurvedAnimation(
+        parent: _appearanceController,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      ),
       child: AnimatedSwitcher(
-        duration: Duration(milliseconds: 200),
+        duration: Duration(milliseconds: 350),
         child: widget.message == null
-            ? SizedBox.shrink()
+            ? SizedBox(
+                height: _appearanceController.upperBound,
+              )
             : Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
