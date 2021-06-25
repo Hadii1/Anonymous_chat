@@ -9,7 +9,7 @@ class LoadingWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = InheritedAppTheme.of(context).style;
     return Consumer(builder: (_, watch, __) {
-      bool isLoading = watch(loadingProvider.state);
+      bool isLoading = watch(loadingProvider);
       return isLoading
           ? Container(
               width: MediaQuery.of(context).size.width,

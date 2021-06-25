@@ -42,8 +42,7 @@ class BlockedContactsScreen extends StatelessWidget {
               Expanded(
                 child: Consumer(
                   builder: (context, watch, _) {
-                    List<User>? blockedUsers =
-                        watch(blockedContactsProvider.state);
+                    List<User>? blockedUsers = watch(blockedContactsProvider);
 
                     return AnimatedSwitcher(
                       duration: Duration(milliseconds: 250),
@@ -132,7 +131,8 @@ class BlockedContactsScreen extends StatelessWidget {
                                                   onRemove: (User user) {
                                                     context
                                                         .read(
-                                                            blockedContactsProvider)
+                                                            blockedContactsProvider
+                                                                .notifier)
                                                         .toggleBlock(
                                                           other: user,
                                                           block: !blockedUsers

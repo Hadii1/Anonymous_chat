@@ -39,7 +39,7 @@ class TagSuggestionsNotifier extends ChangeNotifier {
   TagSuggestionsNotifier(
     this.read,
   ) {
-    _errorNotifier = read(errorsProvider);
+    _errorNotifier = read(errorsProvider.notifier);
   }
 
   final FirestoreService firestore = FirestoreService();
@@ -182,7 +182,7 @@ class TagSuggestionsNotifier extends ChangeNotifier {
             .toList(),
       );
 
-      List selectedTags = read(userTagsProvider(storage.user!.id).state)
+      List selectedTags = read(userTagsProvider(storage.user!.id))
           .where((t) => t.isActive == true)
           .toList();
 

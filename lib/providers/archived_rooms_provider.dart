@@ -21,10 +21,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:anonymous_chat/models/room.dart';
 import 'package:anonymous_chat/services.dart/firestore.dart';
 
-final archivedRoomsProvider = StateNotifierProvider.autoDispose(
+final archivedRoomsProvider =
+    StateNotifierProvider.autoDispose<ArchivedRoomsNotifier, List<Room>?>(
   (ref) => ArchivedRoomsNotifier(
-    errorNotifier: ref.read(errorsProvider),
-    userRooms: ref.watch(userRoomsProvider.state),
+    errorNotifier: ref.read(errorsProvider.notifier),
+    userRooms: ref.watch(userRoomsProvider),
   ),
 );
 

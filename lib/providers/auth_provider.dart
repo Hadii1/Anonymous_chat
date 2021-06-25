@@ -30,8 +30,8 @@ class _AuthProcessNotifier extends ChangeNotifier {
   _AuthProcessNotifier(
     this.read,
   ) {
-    _errorNotifier = read(errorsProvider);
-    _loadingNotifer = read(loadingProvider);
+    _errorNotifier = read(errorsProvider.notifier);
+    _loadingNotifer = read(loadingProvider.notifier);
   }
 
   void onForgetPasswordPressed() async {
@@ -64,7 +64,7 @@ class _AuthProcessNotifier extends ChangeNotifier {
     try {
       _loadingNotifer.isLoading = true;
 
-      await read(userActivityStateProvider).set(
+      await read(userActivityStateProvider.notifier).set(
         activityStatus: ActivityStatus.offline(
             lastSeen: DateTime.now().millisecondsSinceEpoch),
       );
@@ -164,7 +164,7 @@ class _AuthProcessNotifier extends ChangeNotifier {
     try {
       _loadingNotifer.isLoading = true;
 
-      await read(userActivityStateProvider).set(
+      await read(userActivityStateProvider.notifier).set(
         activityStatus: ActivityStatus.offline(
             lastSeen: DateTime.now().millisecondsSinceEpoch),
       );

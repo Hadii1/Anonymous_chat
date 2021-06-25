@@ -13,12 +13,12 @@ final suggestedContactsProvider =
     FutureProvider.autoDispose<List<Tuple2<User, List<Tag>>>?>(
   (ref) async {
     List<String> userContacts = [];
-    List<Room>? currentRooms = ref.watch(userRoomsProvider.state);
+    List<Room>? currentRooms = ref.watch(userRoomsProvider);
     // This means loading state
     if (currentRooms == null) return null;
 
     List<Tag> selectedTags = ref
-        .watch(userTagsProvider(LocalStorage().user!.id).state)
+        .watch(userTagsProvider(LocalStorage().user!.id))
         .where((t) => t.isActive)
         .toList();
 

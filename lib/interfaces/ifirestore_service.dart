@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:anonymous_chat/interfaces/irooms_persistance_service.dart';
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/room.dart';
 import 'package:anonymous_chat/models/tag.dart';
@@ -7,7 +8,7 @@ import 'package:anonymous_chat/models/user.dart';
 import 'package:anonymous_chat/utilities/enums.dart';
 import 'package:tuple/tuple.dart';
 
-abstract class IFirestoreService {
+abstract class IFirestoreService extends IRoomsPersistance {
   Future<void> saveUserData({required User user});
 
   Future<void> saveNewRoom({required Room room});
@@ -39,8 +40,7 @@ abstract class IFirestoreService {
   Stream<List<Map<String, dynamic>>> roomMessagesUpdates(
       {required String roomId});
 
-  Future<void> deactivateTag(
-      {required Tag tag, required String userId});
+  Future<void> deactivateTag({required Tag tag, required String userId});
 
   Future<void> activateTag({required Tag tag, required String userId});
 
@@ -51,8 +51,6 @@ abstract class IFirestoreService {
   String getMessageReference({
     required String roomId,
   });
-
-  void markMessageAsRead({required String roomId, required String messageId});
 
   Future<void> deleteChat({required String roomId});
 

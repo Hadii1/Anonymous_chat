@@ -42,7 +42,7 @@ class ArchivedContactsList extends StatelessWidget {
                 child: Consumer(
                   builder: (context, watch, _) {
                     List<Room>? archivedRooms =
-                        watch(archivedRoomsProvider.state);
+                        watch(archivedRoomsProvider);
                     return AnimatedSwitcher(
                       duration: Duration(milliseconds: 250),
                       child: archivedRooms == null

@@ -13,7 +13,7 @@ class NotificationWidget extends StatelessWidget {
       data: MediaQueryData(),
       child: Consumer(
         builder: (_, watch, __) {
-          String errorMsg = watch(errorsProvider.state);
+          String errorMsg = watch(errorsProvider);
           double opacity = errorMsg.isEmpty ? 0.0 : 1.0;
 
           return errorMsg.isEmpty

@@ -14,8 +14,8 @@ const _kloadingTime = Duration(seconds: 2);
 
 final nameGeneratorProvider = ChangeNotifierProvider.autoDispose(
   (ref) => NameGeneratorNotifier(
-    ref.read(errorsProvider),
-    ref.read(loadingProvider),
+    ref.read(errorsProvider.notifier),
+    ref.read(loadingProvider.notifier),
   ),
 );
 

@@ -3,8 +3,9 @@ import 'package:anonymous_chat/services.dart/firestore.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final userTagsProvider = StateNotifierProvider.family<TagsState, String>(
-    (ref, id) => TagsState(userId: id));
+final userTagsProvider =
+    StateNotifierProvider.family<TagsState, List<Tag>, String>(
+        (ref, id) => TagsState(userId: id));
 
 class TagsState extends StateNotifier<List<Tag>> {
   final String userId;

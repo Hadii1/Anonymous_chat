@@ -76,7 +76,7 @@ class _TagsSearchResponseState extends State<_TagsSearchResponse>
     ApplicationStyle style = InheritedAppTheme.of(context).style;
     return Consumer(
       builder: (context, watch, child) {
-        final userTags = watch(userTagsProvider(LocalStorage().user!.id).state);
+        final userTags = watch(userTagsProvider(LocalStorage().user!.id));
         final tagsNotifier = watch(suggestedTagsProvider);
         return AnimatedSize(
           vsync: this,
@@ -381,10 +381,10 @@ class __SuggestedContactsState extends State<_SuggestedContacts>
       child: Consumer(
         builder: (context, watch, child) {
           final activeTags =
-              watch(userTagsProvider(LocalStorage().user!.id).state)
+              watch(userTagsProvider(LocalStorage().user!.id))
                   .where((Tag tag) => tag.isActive);
           final allTags =
-              watch(userTagsProvider(LocalStorage().user!.id).state);
+              watch(userTagsProvider(LocalStorage().user!.id));
 
           return watch(suggestedContactsProvider).when(
             data: (List<Tuple2<User, List<Tag>>>? data) {
@@ -447,7 +447,7 @@ class __SuggestedContactsState extends State<_SuggestedContacts>
               ],
             ),
             error: (e, s) {
-              context.read(errorsProvider).setError(
+              context.read(errorsProvider.notifier).setError(
                     exception: e,
                     stackTrace: s,
                     hint:

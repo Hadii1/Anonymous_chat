@@ -35,7 +35,7 @@ class ChatHeader extends StatelessWidget {
     Message lastMessage = room.messages.last;
 
     return Consumer(builder: (context, watch, _) {
-      List<User> blockedContacts = watch(blockedContactsProvider.state)!;
+      List<User> blockedContacts = watch(blockedContactsProvider)!;
       return InkWell(
         splashColor: Colors.transparent,
         highlightColor: Colors.transparent,
@@ -56,8 +56,9 @@ class ChatHeader extends StatelessWidget {
           fastThreshold: 1800,
           actions: [
             SlideAction(
-              onTap: () =>
-                  context.read(chatsListProvider).deleteChat(roomId: room.id),
+              onTap: () => context
+                  .read(chatsListProvider.notifier)
+                  .deleteChat(roomId: room.id),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -76,10 +77,11 @@ class ChatHeader extends StatelessWidget {
               ),
             ),
             SlideAction(
-              onTap: () => context.read(blockedContactsProvider).toggleBlock(
-                    other: other,
-                    block: !blockedContacts.contains(other),
-                  ),
+              onTap: () =>
+                  context.read(blockedContactsProvider.notifier).toggleBlock(
+                        other: other,
+                        block: !blockedContacts.contains(other),
+                      ),
               child: AnimatedSwitcher(
                 duration: Duration(milliseconds: 250),
                 child: blockedContacts.contains(other)
@@ -121,7 +123,7 @@ class ChatHeader extends StatelessWidget {
             ),
             SlideAction(
               onTap: () => context
-                  .read(archivedRoomsProvider)
+                  .read(archivedRoomsProvider.notifier)
                   .editArchives(room: room, archive: archivable),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -207,7 +209,9 @@ class ChatHeader extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          lastMessage.content,
+                          lastMessage.content == null
+                              ? 'Media'
+                              : lastMessage.content!,
                           style: style.bodyText,
                         )
                       ],

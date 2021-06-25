@@ -9,6 +9,7 @@ import 'package:anonymous_chat/views/room_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:observable_ish/observable_ish.dart';
 import 'package:tuple/tuple.dart';
 
 class SuggestedContact extends StatelessWidget {
@@ -27,7 +28,7 @@ class SuggestedContact extends StatelessWidget {
     String id = FirestoreService().getRoomReference();
     Room defaultRoom = Room(
       id: id,
-      messages: [],
+      messages: RxList(),
       participants: [
         LocalStorage().user!.id,
         suggestedUser.id,

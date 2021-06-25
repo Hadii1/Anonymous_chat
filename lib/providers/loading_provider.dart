@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final loadingProvider = StateNotifierProvider(
+final loadingProvider = StateNotifierProvider<LoadingNotifer, bool>(
   (_) => LoadingNotifer(),
 );
 

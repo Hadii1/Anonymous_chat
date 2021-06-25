@@ -21,8 +21,8 @@ import 'package:anonymous_chat/services.dart/local_storage.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final contactActivityStateProvider =
-    StateNotifierProvider.autoDispose.family<ContactActivityState, String>(
+final contactActivityStateProvider = StateNotifierProvider.autoDispose
+    .family<ContactActivityState, ActivityStatus, String>(
   (ref, otherUserId) => ContactActivityState(
     otherId: otherUserId,
   ),
@@ -61,9 +61,9 @@ class ContactActivityState extends StateNotifier<ActivityStatus> {
   }
 }
 
-final userActivityStateProvider = StateNotifierProvider.autoDispose(
+final userActivityStateProvider = StateNotifierProvider.autoDispose<UserActivityState,ActivityStatus>(
   (ref) => UserActivityState(
-    errorNotifier: ref.read(errorsProvider),
+    errorNotifier: ref.read(errorsProvider.notifier),
   ),
 );
 

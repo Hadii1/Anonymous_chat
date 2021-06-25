@@ -20,7 +20,8 @@ enum ConnectivityEvent {
   disconnected,
 }
 
-final connectivityProvider = StateNotifierProvider(
+final connectivityProvider =
+    StateNotifierProvider<ConnectivityState, ConnectivityEvent?>(
   (ref) => ConnectivityState(),
 );
 

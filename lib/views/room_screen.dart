@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:anonymous_chat/models/activity_status.dart';
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/room.dart';
@@ -14,6 +16,7 @@ import 'package:anonymous_chat/widgets/keyboard_hider.dart';
 import 'package:anonymous_chat/utilities/extrentions.dart';
 import 'package:anonymous_chat/widgets/shaded_container.dart';
 import 'package:anonymous_chat/widgets/typing_indicator.dart';
+import 'package:anonymous_chat/providers/media_sending_provider.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -56,7 +59,7 @@ class _ChatRoomState extends State<ChatRoom> {
       backgroundColor: style.backgroundColor,
       body: Consumer(builder: (context, watch, _) {
         final chatNotifier = watch(chattingProvider(widget.room));
-        List<User> blockedContacts = watch(blockedContactsProvider.state)!;
+        List<User> blockedContacts = watch(blockedContactsProvider)!;
 
         return SizedBox(
           height: MediaQuery.of(context).size.height,
@@ -130,8 +133,8 @@ class _ChatRoomState extends State<ChatRoom> {
                       padding: const EdgeInsets.only(left: 2, top: 2),
                       child: Consumer(
                         builder: (context, watch, _) {
-                          ActivityStatus status = watch(
-                              contactActivityStateProvider(other.id).state);
+                          ActivityStatus status =
+                              watch(contactActivityStateProvider(other.id));
                           return TypingIndicator(
                             showIndicator:
                                 status.state == ActivityStatus.TYPING,
@@ -145,13 +148,21 @@ class _ChatRoomState extends State<ChatRoom> {
                       startOffset: Offset(0, 1),
                       child: MessageBox(
                         onSendPressed: (String value) {
-                          chatNotifier.onSendPressed(value);
+                          chatNotifier.onSendPressed(text: value);
+                        },
+                        onMediaSelectPressed: () async {
+                          List<File> files =
+                              await context.refresh(mediaChoosingProvider);
+
+                          if (files.isNotEmpty) {
+                            chatNotifier.onSendPressed(mediafiles: files);
+                          }
                         },
                         replyMessage: chatNotifier.replyingOn,
                         onCancelReply: chatNotifier.onCancelReply,
                         isContactBlocked: blockedContacts.contains(other),
                         onTypingStateChange: (bool typing) {
-                          context.read(userActivityStateProvider).set(
+                          context.read(userActivityStateProvider.notifier).set(
                                 activityStatus: typing
                                     ? ActivityStatus.chatting(otherId: other.id)
                                     : ActivityStatus.online(),
@@ -211,8 +222,8 @@ class _ChatRoomState extends State<ChatRoom> {
                                   child: Consumer(
                                     builder: (context, watch, _) {
                                       ActivityStatus status = watch(
-                                          contactActivityStateProvider(other.id)
-                                              .state);
+                                          contactActivityStateProvider(
+                                              other.id));
                                       switch (status.state) {
                                         case ActivityStatus.LOADING:
                                           return SizedBox.shrink();
@@ -249,7 +260,7 @@ class _ChatRoomState extends State<ChatRoom> {
                           child: blockedContacts.contains(other)
                               ? InkWell(
                                   onTap: () => context
-                                      .read(blockedContactsProvider)
+                                      .read(blockedContactsProvider.notifier)
                                       .toggleBlock(
                                         other: other,
                                         block: !blockedContacts.contains(other),

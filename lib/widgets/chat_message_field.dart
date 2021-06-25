@@ -21,8 +21,10 @@ import 'package:anonymous_chat/widgets/message_reply.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+
 class MessageBox extends StatefulWidget {
   final Function(String) onSendPressed;
+  final Function() onMediaSelectPressed;
   final Function(bool) onTypingStateChange;
   final Message? replyMessage;
   final Function() onCancelReply;
@@ -32,6 +34,7 @@ class MessageBox extends StatefulWidget {
     required this.onSendPressed,
     required this.onTypingStateChange,
     required this.isContactBlocked,
+    required this.onMediaSelectPressed,
     required this.onCancelReply,
     this.replyMessage,
   });
@@ -193,25 +196,36 @@ class _MessageBoxState extends State<MessageBox> {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: AnimatedSwitcher(
-                    duration: Duration(milliseconds: 250),
-                    child: _controller.text.isEmpty
-                        ? Icon(
-                            Icons.send,
-                            color: Colors.grey,
-                          )
-                        : InkWell(
-                            onTap: () {
-                              setState(() {
-                                widget.onSendPressed(_controller.text);
-                                _controller.clear();
-                              });
-                            },
-                            child: Icon(
-                              Icons.send,
-                              color: style.accentColor,
-                            ),
-                          ),
+                  child: Row(
+                    children: [
+                      AnimatedSwitcher(
+                        duration: Duration(milliseconds: 250),
+                        child: _controller.text.isEmpty
+                            ? Icon(
+                                Icons.send,
+                                color: Colors.grey,
+                              )
+                            : InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    widget.onSendPressed(_controller.text);
+                                    _controller.clear();
+                                  });
+                                },
+                                child: Icon(
+                                  Icons.send,
+                                  color: style.accentColor,
+                                ),
+                              ),
+                      ),
+                      InkWell(
+                        onTap: widget.onMediaSelectPressed,
+                        child: Icon(
+                          Icons.image_outlined,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
                   ),
                 )
               ],

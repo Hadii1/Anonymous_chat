@@ -6,8 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sentry/sentry.dart';
 
-final errorsProvider = StateNotifierProvider(
-  (ref) => ErrorNotifier(ref.watch(connectivityProvider.state)),
+final errorsProvider = StateNotifierProvider<ErrorNotifier, String>(
+  (ref) => ErrorNotifier(ref.watch(connectivityProvider)),
 );
 
 class ErrorNotifier extends StateNotifier<String> {

@@ -10,13 +10,14 @@ import 'package:anonymous_chat/services.dart/local_storage.dart';
 import 'package:anonymous_chat/utilities/enums.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:observable_ish/observable_ish.dart';
 import 'package:tuple/tuple.dart';
 
-final chatsListProvider = StateNotifierProvider.autoDispose(
+final chatsListProvider = StateNotifierProvider.autoDispose<ChatsListNotifier,List<Room>?>(
   (ref) => ChatsListNotifier(
-    rooms: ref.watch(userRoomsProvider.state),
-    archivedRooms: ref.watch(archivedRoomsProvider.state),
-    errorNotifier: ref.read(errorsProvider),
+    rooms: ref.watch(userRoomsProvider),
+    archivedRooms: ref.watch(archivedRoomsProvider),
+    errorNotifier: ref.read(errorsProvider.notifier),
   ),
 );
 
@@ -138,7 +139,7 @@ class UserRoomsNotifier extends StateNotifier<List<Room>?> {
       );
 
       User other = User.fromMap(contactData);
-      List<Message> roomMessages = [];
+      RxList<Message> roomMessages = RxList();
 
       List<Map<String, dynamic>> messagesData =
           await _firestore.getAllMessages(roomId: room.id);
@@ -169,5 +170,7 @@ class UserRoomsNotifier extends StateNotifier<List<Room>?> {
   }
 }
 
-final userRoomsProvider = StateNotifierProvider.autoDispose(
-    (ref) => UserRoomsNotifier(ref.read(errorsProvider)));
+final userRoomsProvider =
+    StateNotifierProvider.autoDispose<UserRoomsNotifier, List<Room>?>(
+  (ref) => UserRoomsNotifier(ref.read(errorsProvider.notifier)),
+);

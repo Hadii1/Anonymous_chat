@@ -28,11 +28,11 @@ class _ChatsScreenState extends State<ChatsScreen> {
     ApplicationStyle style = InheritedAppTheme.of(context).style;
     return Consumer(
       builder: (context, watch, _) {
-        List<Room>? chatRooms = watch(chatsListProvider.state);
+        List<Room>? chatRooms = watch(chatsListProvider);
 
-        List<User>? blockedBy = watch(blockedByProvider.state);
+        List<User>? blockedBy = watch(blockedByProvider);
 
-        List<User>? blockedContacts = watch(blockedContactsProvider.state);
+        List<User>? blockedContacts = watch(blockedContactsProvider);
         return AnimatedSwitcher(
           duration: Duration(milliseconds: 350),
           child: () {

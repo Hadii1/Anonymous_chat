@@ -25,7 +25,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance!.addObserver(this);
     context
-        .read(userActivityStateProvider)
+        .read(userActivityStateProvider.notifier)
         .set(activityStatus: ActivityStatus.online());
   }
 
@@ -35,12 +35,12 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     switch (state) {
       case AppLifecycleState.resumed:
         context
-            .read(userActivityStateProvider)
+            .read(userActivityStateProvider.notifier)
             .set(activityStatus: ActivityStatus.online());
         break;
 
       case AppLifecycleState.paused:
-        context.read(userActivityStateProvider).set(
+        context.read(userActivityStateProvider.notifier).set(
               activityStatus: ActivityStatus.offline(
                 lastSeen: DateTime.now().millisecondsSinceEpoch,
               ),
@@ -62,7 +62,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   void deactivate() {
     if (mounted)
-      context.read(userActivityStateProvider).set(
+      context.read(userActivityStateProvider.notifier).set(
             activityStatus: ActivityStatus.offline(
               lastSeen: DateTime.now().millisecondsSinceEpoch,
             ),

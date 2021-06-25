@@ -34,7 +34,7 @@ final appInitialzationProvider =
     },
   );
 
-//  await AuthService().signOut();
+  // await AuthService().signOut();
 
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
@@ -96,7 +96,7 @@ class InitializaitonScreen extends StatelessWidget {
               ),
             ),
             error: (e, s) {
-              context.read(errorsProvider).setError(
+              context.read(errorsProvider.notifier).setError(
                     exception: e,
                     stackTrace: s,
                     hint: 'Error in app initializing',

@@ -20,7 +20,8 @@ import 'package:anonymous_chat/services.dart/firestore.dart';
 import 'package:anonymous_chat/services.dart/local_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final blockedContactsProvider = StateNotifierProvider.autoDispose(
+final blockedContactsProvider =
+    StateNotifierProvider.autoDispose<BlockedContactsNotifier, List<User>?>(
   (_) => BlockedContactsNotifier(),
 );
 
@@ -105,8 +106,9 @@ class BlockedByContactsNotifier extends StateNotifier<List<User>?> {
   }
 }
 
-final blockedByProvider = StateNotifierProvider.autoDispose(
+final blockedByProvider =
+    StateNotifierProvider.autoDispose<BlockedByContactsNotifier, List<User>?>(
   (ref) => BlockedByContactsNotifier(
-    ref.read(errorsProvider),
+    ref.read(errorsProvider.notifier),
   ),
 );
