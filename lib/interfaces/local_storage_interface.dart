@@ -12,8 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'dart:io';
+import 'package:anonymous_chat/models/user.dart';
+import 'package:anonymous_chat/utilities/theme_widget.dart';
 
-abstract class IOnlineStorageService {
-  Future<String?> saveImage({required File file, required String name});
+abstract class ILocalStorasge {
+  User? get user;
+  Future<void> setUser(User? user);
+
+  ThemeState get preferedTheme;
+  set preferedTheme(ThemeState theme);
 }

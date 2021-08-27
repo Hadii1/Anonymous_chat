@@ -1,14 +1,14 @@
 import 'dart:async';
 
-import 'package:anonymous_chat/interfaces/irooms_persistance_service.dart';
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/room.dart';
 import 'package:anonymous_chat/models/tag.dart';
 import 'package:anonymous_chat/models/user.dart';
 import 'package:anonymous_chat/utilities/enums.dart';
+
 import 'package:tuple/tuple.dart';
 
-abstract class IFirestoreService extends IRoomsPersistance {
+abstract class IDatabase {
   Future<void> saveUserData({required User user});
 
   Future<void> saveNewRoom({required Room room});

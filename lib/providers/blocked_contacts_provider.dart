@@ -14,6 +14,7 @@
 
 import 'dart:async';
 
+import 'package:anonymous_chat/interfaces/database_interface.dart';
 import 'package:anonymous_chat/models/user.dart';
 import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/services.dart/firestore.dart';
@@ -71,12 +72,13 @@ class BlockedByContactsNotifier extends StateNotifier<List<User>?> {
   BlockedByContactsNotifier(this._errorNotifier) : super(null) {
     init();
   }
-  late StreamSubscription<List<String>> _subscription;
+  late final StreamSubscription<List<String>> _subscription;
+  final IDatabase _db = FirestoreService();
   final ErrorNotifier _errorNotifier;
-  List<User> users = [];
+  List<User> _users = [];
 
   void init() {
-    _subscription = FirestoreService()
+    _subscription = _db
         .blockedByStream(userId: LocalStorage().user!.id)
         .listen((List<String> ids) async {
       try {
@@ -89,14 +91,14 @@ class BlockedByContactsNotifier extends StateNotifier<List<User>?> {
   }
 
   void _handleChange(List<String> ids) async {
-    users.clear();
+    _users.clear();
     for (String id in ids) {
       Map<String, dynamic> userData =
           await FirestoreService().getUserData(id: id);
       User user = User.fromMap(userData);
-      users.add(user);
+      _users.add(user);
     }
-    state = List.from(users);
+    state = List.from(_users);
   }
 
   @override

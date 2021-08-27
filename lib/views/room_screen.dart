@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:anonymous_chat/models/activity_status.dart';
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/room.dart';
@@ -16,7 +14,7 @@ import 'package:anonymous_chat/widgets/keyboard_hider.dart';
 import 'package:anonymous_chat/utilities/extrentions.dart';
 import 'package:anonymous_chat/widgets/shaded_container.dart';
 import 'package:anonymous_chat/widgets/typing_indicator.dart';
-import 'package:anonymous_chat/providers/media_sending_provider.dart';
+
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -150,14 +148,7 @@ class _ChatRoomState extends State<ChatRoom> {
                         onSendPressed: (String value) {
                           chatNotifier.onSendPressed(text: value);
                         },
-                        onMediaSelectPressed: () async {
-                          List<File> files =
-                              await context.refresh(mediaChoosingProvider);
-
-                          if (files.isNotEmpty) {
-                            chatNotifier.onSendPressed(mediafiles: files);
-                          }
-                        },
+                    
                         replyMessage: chatNotifier.replyingOn,
                         onCancelReply: chatNotifier.onCancelReply,
                         isContactBlocked: blockedContacts.contains(other),

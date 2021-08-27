@@ -115,30 +115,26 @@ class _MessageReplyPreviewState extends State<MessageReplyPreview>
                       ),
                     ),
                     color: style.accentColor.withOpacity(0.15)),
-                child: widget.message!.type == MessageType.TEXT_ONLY ||
-                        widget.message!.type == MessageType.TEXT_ON_MEDIA ||
-                        widget.message!.type == MessageType.TEXT_ON_TEXT
-                    ? Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            widget.message!.content!,
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          InkWell(
-                            highlightColor: Colors.transparent,
-                            splashColor: style.accentColor,
-                            onTap: () {
-                              widget.onCancelPressed();
-                            },
-                            child: Icon(
-                              Icons.close,
-                              color: Colors.white.withOpacity(0.8),
-                            ),
-                          )
-                        ],
-                      )
-                    : SizedBox.shrink(),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      widget.message!.content,
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    InkWell(
+                      highlightColor: Colors.transparent,
+                      splashColor: style.accentColor,
+                      onTap: () {
+                        widget.onCancelPressed();
+                      },
+                      child: Icon(
+                        Icons.close,
+                        color: Colors.white.withOpacity(0.8),
+                      ),
+                    )
+                  ],
+                ),
               ),
       ),
     );

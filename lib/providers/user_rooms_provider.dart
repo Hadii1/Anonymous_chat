@@ -13,7 +13,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:observable_ish/observable_ish.dart';
 import 'package:tuple/tuple.dart';
 
-final chatsListProvider = StateNotifierProvider.autoDispose<ChatsListNotifier,List<Room>?>(
+final chatsListProvider =
+    StateNotifierProvider.autoDispose<ChatsListNotifier, List<Room>?>(
   (ref) => ChatsListNotifier(
     rooms: ref.watch(userRoomsProvider),
     archivedRooms: ref.watch(archivedRoomsProvider),
@@ -74,14 +75,17 @@ class ChatsListNotifier extends StateNotifier<List<Room>?> {
   }
 }
 
-// Notifies the sender when a message is received by the recipient
-// or when the recipient gets a message
+// New messages added to this room.
+// Either recieving new messages or
+// verifying sent messages are saved
+// on the server successfuly.
+
 final roomMessagesUpdatesChannel =
-    StreamProvider.family<Message?, String>((ref, id) {
+    StreamProvider.family<Message?, String>((ref, roomId) {
   final _firestore = FirestoreService();
 
   return _firestore
-      .roomMessagesUpdates(roomId: id)
+      .roomMessagesUpdates(roomId: roomId)
       .skip(1)
       .map((List<Map<String, dynamic>> data) {
     assert(data.length <= 1);
@@ -97,9 +101,9 @@ class UserRoomsNotifier extends StateNotifier<List<Room>?> {
     init();
   }
 
-  final _firestore = FirestoreService();
+  final _db = FirestoreService();
   final _user = LocalStorage().user!;
-  final ErrorNotifier _errorNotifier;
+  final _errorNotifier;
 
   List<Room> _rooms = [];
 
@@ -108,7 +112,7 @@ class UserRoomsNotifier extends StateNotifier<List<Room>?> {
 
   void init() {
     roomChangesStreamSubscription =
-        _firestore.userRooms(userId: _user.id).listen((data) async {
+        _db.userRooms(userId: _user.id).listen((data) async {
       for (Tuple2<Map<String, dynamic>, RoomChangeType> m in data) {
         try {
           await _handleRoomsChange(m);
@@ -132,7 +136,7 @@ class UserRoomsNotifier extends StateNotifier<List<Room>?> {
     } else {
       Room room = Room.fromFirestoreMap(change.item1);
 
-      Map<String, dynamic> contactData = await _firestore.getUserData(
+      Map<String, dynamic> contactData = await _db.getUserData(
         id: room.participants.firstWhere(
           (String id) => id != _user.id,
         ),
@@ -142,10 +146,11 @@ class UserRoomsNotifier extends StateNotifier<List<Room>?> {
       RxList<Message> roomMessages = RxList();
 
       List<Map<String, dynamic>> messagesData =
-          await _firestore.getAllMessages(roomId: room.id);
+          await _db.getAllMessages(roomId: room.id);
 
       for (Map<String, dynamic> m in messagesData) {
         Message message = Message.fromMap(m);
+
         if (!message.isSenderBlocked) {
           roomMessages.add(message);
         }

@@ -1,8 +1,8 @@
 import 'package:algolia/algolia.dart';
-import 'package:anonymous_chat/interfaces/iSearch_service.dart';
+import 'package:anonymous_chat/interfaces/search_service_interface.dart';
 import 'package:anonymous_chat/models/tag.dart';
 
-class AlgoliaSearch implements IAlgoliaSearch {
+class AlgoliaSearch implements ISearchService {
   static final AlgoliaSearch _instance = AlgoliaSearch._internal();
 
   factory AlgoliaSearch() => _instance;

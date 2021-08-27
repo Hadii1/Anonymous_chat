@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:anonymous_chat/widgets/custom_image.dart';
-import 'package:anonymous_chat/widgets/progress_indicator.dart';
 import 'package:bubble/bubble.dart';
-import 'package:flutter/cupertino.dart';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+
 
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/user.dart';
@@ -86,60 +86,18 @@ class ChatBubble extends StatelessWidget {
                 ? style.borderColor
                 : style.accentColor,
             borderWidth: 0.3,
-            child: () {
-              switch (message.type) {
-                case MessageType.MEDIA_ONLY:
-                  return MediaMessageBody(
-                    message: message,
-                    replyOn: replyOn,
-                    isReceived: isReceived,
-                    isSuccesful: isSuccesful,
-                  );
-
-                case MessageType.MEDIA_ON_MEDIA:
-                  return _buildMediaOnMediaBubble(style);
-
-                case MessageType.MEDIA_ON_TEXT:
-                  return _buildMediaOnTextBubble(style);
-
-                case MessageType.TEXT_ON_MEDIA:
-                  return _buildTextOnMediaBubble(style);
-
-                case MessageType.TEXT_ONLY:
-
-                case MessageType.TEXT_ON_TEXT:
-                  return TextMessageBody(
-                    message: message,
-                    replyOn: replyOn,
-                    isReceived: isReceived,
-                    isSuccesful: isSuccesful,
-                    other: other,
-                  );
-
-                default:
-                  throw PlatformException(code: 'Invalid Message Type');
-              }
-            }(),
+            child: TextMessageBody(
+              message: message,
+              replyOn: replyOn,
+              isReceived: isReceived,
+              isSuccesful: isSuccesful,
+              other: other,
+            ),
             color: style.backgroundColor,
           ),
         ),
       ),
     );
-  }
-
-  Widget _buildTextOnMediaBubble(ApplicationStyle style) {
-    assert(replyOn != null);
-    return Container();
-  }
-
-  Widget _buildMediaOnTextBubble(ApplicationStyle style) {
-    assert(replyOn != null);
-    return Container();
-  }
-
-  Widget _buildMediaOnMediaBubble(ApplicationStyle style) {
-    assert(replyOn != null);
-    return Container();
   }
 }
 
@@ -198,7 +156,7 @@ class TextMessageBody extends StatelessWidget {
                       height: 2,
                     ),
                     Text(
-                      replyOn!.content!,
+                      replyOn!.content,
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 12,
@@ -212,7 +170,7 @@ class TextMessageBody extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              message.content!,
+              message.content,
               style: style.bodyText.copyWith(
                 color: style.chatBubbleTextColor,
                 backgroundColor: style.backgroundColor,
@@ -225,92 +183,6 @@ class TextMessageBody extends StatelessWidget {
               isRead: message.isRead,
             )
           ],
-        ),
-      ],
-    );
-  }
-}
-
-class MediaMessageBody extends StatefulWidget {
-  final Message message;
-  final Message? replyOn;
-  final bool isReceived;
-  final bool isSuccesful;
-
-  const MediaMessageBody({
-    required this.message,
-    required this.replyOn,
-    required this.isReceived,
-    required this.isSuccesful,
-  });
-
-  @override
-  _MediaMessageBodyState createState() => _MediaMessageBodyState();
-}
-
-class _MediaMessageBodyState extends State<MediaMessageBody> {
-  late int mediaNumber;
-  late bool isLocal;
-
-  int _activeImage = 0;
-
-  @override
-  void initState() {
-    super.initState();
-
-    mediaNumber = message.mediaFiles?.length ?? message.mediaUrls!.length;
-    isLocal = message.mediaFiles != null && message.mediaFiles!.isNotEmpty;
-  }
-
-  Message get message => widget.message;
-
-  @override
-  Widget build(BuildContext context) {
-    Size size = MediaQuery.of(context).size;
-    return Stack(
-      alignment: Alignment.bottomRight,
-      children: [
-        mediaNumber == 1
-            ? CustomImage(
-                file: message.mediaFiles?.first,
-                url: message.mediaUrls?.first,
-                height: size.height * 0.25,
-              )
-            : SizedBox(
-                height: size.height * 0.25,
-                child: PageView(
-                  onPageChanged: (page) {
-                    if (mounted)
-                      setState(() {
-                        _activeImage = page;
-                      });
-                  },
-                  scrollDirection: Axis.horizontal,
-                  children: List.generate(
-                    mediaNumber,
-                    (index) => isLocal
-                        ? Image.file(
-                            message.mediaFiles![index],
-                            height: size.height * 0.25,
-                          )
-                        : Image.network(
-                            message.mediaUrls![index],
-                            height: size.height * 0.25,
-                          ),
-                  ),
-                ),
-              ),
-        mediaNumber == 1
-            ? SizedBox.shrink()
-            : DotIndicator(
-                activeIndex: _activeImage,
-                count: mediaNumber,
-              ),
-        MessageTimeAndStatus(
-          isSuccesful: widget.isSuccesful,
-          isReceived: widget.isReceived,
-          time: message.time,
-          isRead: message.isRead,
         ),
       ],
     );

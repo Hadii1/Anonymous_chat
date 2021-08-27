@@ -19,7 +19,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
-import 'package:sentry_flutter/sentry_flutter.dart';
 
 final appInitialzationProvider =
     FutureProvider.autoDispose<UserState>((ref) async {
@@ -27,12 +26,6 @@ final appInitialzationProvider =
   await LocalStorage.init();
   await AlgoliaSearch.init();
   await NotificationsService.init();
-  await SentryFlutter.init(
-    (options) {
-      options.dsn =
-          'https://0f054bcf09524b3781154f1c3daab510@o538575.ingest.sentry.io/5786123';
-    },
-  );
 
   // await AuthService().signOut();
 

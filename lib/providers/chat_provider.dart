@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:path/path.dart';
-
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/room.dart';
 import 'package:anonymous_chat/models/user.dart';
@@ -12,13 +10,13 @@ import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/providers/user_rooms_provider.dart';
 import 'package:anonymous_chat/services.dart/firestore.dart';
 import 'package:anonymous_chat/services.dart/local_storage.dart';
-import 'package:anonymous_chat/services.dart/storage.dart';
 import 'package:anonymous_chat/utilities/extrentions.dart';
 
-import 'package:flutter/foundation.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:observable_ish/observable_ish.dart';
+
+import 'package:flutter/foundation.dart';
 
 final chattingProvider =
     ChangeNotifierProvider.autoDispose.family<ChatNotifier, Room>(
@@ -51,7 +49,6 @@ class ChatNotifier extends ChangeNotifier {
 
   final User _user = LocalStorage().user!;
   final _firestore = FirestoreService();
-  final _firebaseStorage = FirebaseStorageService();
 
   late StreamSubscription<Message?> serverMessagesUpdates;
   late StreamSubscription<ListChangeNotification<Message>?>
@@ -95,22 +92,6 @@ class ChatNotifier extends ChangeNotifier {
         read(chatsListProvider.notifier).latestActiveChat = room;
 
         try {
-          if (message.mediaFiles != null && message.mediaFiles!.isNotEmpty) {
-            List<String> mediaUrls = [];
-
-            for (File file in message.mediaFiles!) {
-              String? downloadUrl = await _firebaseStorage.saveImage(
-                file: file,
-                name: basename(file.path),
-              );
-              if (downloadUrl != null) {
-                mediaUrls.add(downloadUrl);
-              }
-            }
-
-            message.mediaUrls = mediaUrls;
-          }
-
           await _firestore.writeMessage(roomId: room.id, message: message);
 
           successfullySent.add(message);
@@ -135,7 +116,7 @@ class ChatNotifier extends ChangeNotifier {
 
     serverMessagesUpdates =
         read(roomMessagesUpdatesChannel(room.id).stream).listen(
-      (Message? update) {
+      (Message? update) async {
         if (update == null) return;
 
         if (update.isReceived()) {
@@ -147,13 +128,16 @@ class ChatNotifier extends ChangeNotifier {
                 .editArchives(room: room, archive: false);
           }
 
-          if (!allMessages.contains(update)) allMessages.add(update);
+          if (!allMessages.contains(update)) {
+            allMessages.add(update);
 
-          read(chatsListProvider.notifier).latestActiveChat = room;
+            read(chatsListProvider.notifier).latestActiveChat = room;
 
-          if (_isChatPageOpened) {
-            update.isRead = true;
-            _firestore.markMessageAsRead(roomId: room.id, messageId: update.id);
+            if (_isChatPageOpened) {
+              update.isRead = true;
+              _firestore.markMessageAsRead(
+                  roomId: room.id, messageId: update.id);
+            }
           }
         } else {
           // A sent message is read
@@ -202,19 +186,15 @@ class ChatNotifier extends ChangeNotifier {
   }
 
   Future<void> onSendPressed({String? text, List<File>? mediafiles}) async {
-    String type = _getMessageType(text: text, mediafiles: mediafiles);
-
     Message message = Message(
       isSenderBlocked: isBlockedByOther,
       sender: _user.id,
       recipient: recipient,
-      type: type,
-      content: text,
+      content: text!,
       isRead: false,
       time: DateTime.now().millisecondsSinceEpoch,
       replyingOn: replyingOn?.id,
       id: _firestore.getMessageReference(roomId: room.id),
-      mediaFiles: mediafiles,
     );
 
     allMessages.add(message);
@@ -236,35 +216,4 @@ class ChatNotifier extends ChangeNotifier {
           .last
           .id ==
       message.id;
-
-  String _getMessageType({String? text, List<File>? mediafiles}) {
-    if (text != null) {
-      assert(mediafiles == null);
-
-      if (replyingOn != null) {
-        if (replyingOn!.type == MessageType.TEXT_ONLY ||
-            replyingOn!.type == MessageType.TEXT_ON_MEDIA ||
-            replyingOn!.type == MessageType.TEXT_ON_TEXT) {
-          return MessageType.TEXT_ON_TEXT;
-        } else {
-          return MessageType.TEXT_ON_MEDIA;
-        }
-      } else {
-        return MessageType.TEXT_ONLY;
-      }
-    } else {
-      assert(mediafiles != null);
-      if (replyingOn != null) {
-        if (replyingOn!.type == MessageType.TEXT_ONLY ||
-            replyingOn!.type == MessageType.TEXT_ON_MEDIA ||
-            replyingOn!.type == MessageType.TEXT_ON_TEXT) {
-          return MessageType.MEDIA_ON_TEXT;
-        } else {
-          return MessageType.MEDIA_ON_MEDIA;
-        }
-      } else {
-        return MessageType.MEDIA_ONLY;
-      }
-    }
-  }
 }

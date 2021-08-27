@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:anonymous_chat/interfaces/ifirestore_service.dart';
+import 'package:anonymous_chat/interfaces/database_interface.dart';
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/room.dart';
 import 'package:anonymous_chat/models/tag.dart';
@@ -10,7 +10,7 @@ import 'package:anonymous_chat/utilities/enums.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tuple/tuple.dart';
 
-class FirestoreService implements IFirestoreService {
+class FirestoreService implements IDatabase {
   static final FirestoreService _instance = FirestoreService._internal();
 
   factory FirestoreService() => _instance;
@@ -83,8 +83,9 @@ class FirestoreService implements IFirestoreService {
         .where('participants', arrayContains: userId)
         .snapshots()
         .map(
-          (QuerySnapshot snapshot) => snapshot.docChanges.map(
-            (DocumentChange c) {
+          (QuerySnapshot<Map<String, dynamic>> snapshot) =>
+              snapshot.docChanges.map(
+            (DocumentChange<Map<String, dynamic>> c) {
               late RoomChangeType type;
               switch (c.type) {
                 case DocumentChangeType.added:
@@ -110,8 +111,10 @@ class FirestoreService implements IFirestoreService {
         .where('blockedUsers', arrayContains: userId)
         .snapshots()
         .map(
-          (QuerySnapshot querySnapshot) => querySnapshot.docs
-              .map((QueryDocumentSnapshot s) => (s.data()!['id']) as String)
+          (QuerySnapshot<Map<String, dynamic>> querySnapshot) => querySnapshot
+              .docs
+              .map((QueryDocumentSnapshot<Map<String, dynamic>> s) =>
+                  (s.data()['id']) as String)
               .toList(),
         );
   }
@@ -123,13 +126,13 @@ class FirestoreService implements IFirestoreService {
         .collection('Rooms')
         .where('participants', arrayContains: userId)
         .get();
-    return a.docs.map((e) => e.data()!).toList();
+    return a.docs.map((e) => e.data()).toList();
   }
 
   @override
   Future<List<Map<String, dynamic>>> getMatchingUsers(
       {required List<String> tagsIds}) async {
-    QuerySnapshot querySnapshot = await _db
+    QuerySnapshot<Map<String, dynamic>> querySnapshot = await _db
         .collection('Users')
         .where('activeTags', arrayContainsAny: tagsIds)
         .get(GetOptions(
@@ -138,8 +141,9 @@ class FirestoreService implements IFirestoreService {
 
     List<Map<String, dynamic>> usersData = [];
 
-    for (QueryDocumentSnapshot doc in querySnapshot.docs) {
-      usersData.add(doc.data()!);
+    for (QueryDocumentSnapshot<Map<String, dynamic>> doc
+        in querySnapshot.docs) {
+      usersData.add(doc.data());
     }
 
     return usersData;
@@ -147,7 +151,8 @@ class FirestoreService implements IFirestoreService {
 
   @override
   Future<Map<String, dynamic>> getUserData({required String id}) async {
-    DocumentSnapshot doc = await _db.collection('Users').doc(id).get();
+    DocumentSnapshot<Map<String, dynamic>> doc =
+        await _db.collection('Users').doc(id).get();
     return doc.data()!;
   }
 
@@ -156,14 +161,15 @@ class FirestoreService implements IFirestoreService {
       {required List<String> ids}) async {
     List<Map<String, dynamic>> data = [];
     for (String id in ids) {
-      var query = await _db
+      QuerySnapshot<Map<String, dynamic>> query = await _db
           .collectionGroup('Tags')
           .where('id', isEqualTo: id)
           .limit(1)
           .get();
 
       data.addAll(
-        query.docs.map((QueryDocumentSnapshot e) => e.data()!),
+        query.docs
+            .map((QueryDocumentSnapshot<Map<String, dynamic>> e) => e.data()),
       );
     }
 
@@ -196,7 +202,7 @@ class FirestoreService implements IFirestoreService {
         .collection('Tags')
         .snapshots()
         .map(
-          (QuerySnapshot event) =>
+          (QuerySnapshot<Map<String, dynamic>> event) =>
               event.docChanges.map((e) => e.doc.data()!).toList(),
         );
   }
@@ -250,17 +256,20 @@ class FirestoreService implements IFirestoreService {
   }
 
   @override
-  Stream<List<Map<String, dynamic>>> roomMessagesUpdates(
-      {required String roomId}) {
+  Stream<List<Map<String, dynamic>>> roomMessagesUpdates({
+    required String roomId,
+  }) {
     return _db
         .collection('Rooms')
         .doc(roomId)
         .collection('Messages')
         .snapshots()
         .map(
-          (QuerySnapshot event) => event.docChanges
+          (QuerySnapshot<Map<String, dynamic>> event) => event.docChanges
               .where((element) => !element.doc.metadata.isFromCache)
-              .map((DocumentChange e) => e.doc.data()!)
+              .map(
+                (DocumentChange<Map<String, dynamic>> e) => e.doc.data()!,
+              )
               .toList(),
         );
   }
@@ -271,7 +280,7 @@ class FirestoreService implements IFirestoreService {
     var a =
         await _db.collection('Rooms').doc(roomId).collection('Messages').get();
 
-    return a.docs.map((e) => e.data()!).toList();
+    return a.docs.map((e) => e.data()).toList();
   }
 
   @override
@@ -293,7 +302,6 @@ class FirestoreService implements IFirestoreService {
   @override
   String getTagReference() => _db.collection('Tags').doc().id;
 
-  @override
   void markMessageAsRead({required String roomId, required String messageId}) {
     _db
         .collection('Rooms')
@@ -361,11 +369,10 @@ class FirestoreService implements IFirestoreService {
 
   @override
   Stream<Map<String, dynamic>> activityStatusStream({required String id}) {
-    return _db
-        .collection('Users')
-        .doc(id)
-        .snapshots()
-        .map((DocumentSnapshot event) => event.data()!['activityStatus']);
+    return _db.collection('Users').doc(id).snapshots().map(
+          (DocumentSnapshot<Map<String, dynamic>> event) =>
+              event.data()!['activityStatus'],
+        );
   }
 
   @override

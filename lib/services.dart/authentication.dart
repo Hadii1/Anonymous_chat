@@ -1,4 +1,4 @@
-import 'package:anonymous_chat/interfaces/iAuth_service.dart';
+import 'package:anonymous_chat/interfaces/auth_interface.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthService implements IAuthenticationServive {

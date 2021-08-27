@@ -4,7 +4,6 @@ import 'package:anonymous_chat/providers/connectivity_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sentry/sentry.dart';
 
 final errorsProvider = StateNotifierProvider<ErrorNotifier, String>(
   (ref) => ErrorNotifier(ref.watch(connectivityProvider)),
@@ -90,19 +89,12 @@ class ErrorNotifier extends StateNotifier<String> {
       }
     }
 
-    if (exception != null && stackTrace != null) {
-      Sentry.captureException(
-        exception,
-        stackTrace: stackTrace,
-        hint: hint,
-      );
-    }
-
     await Future.delayed(Duration(seconds: seconds));
 
     state = '';
   }
 
+  // TODO: refactor into error tracking service
   void submitError({
     required Object exception,
     required StackTrace? stackTrace,
@@ -120,11 +112,5 @@ class ErrorNotifier extends StateNotifier<String> {
       print(exception.plugin);
       print(exception.message);
     }
-
-    Sentry.captureException(
-      exception,
-      stackTrace: stackTrace,
-      hint: hint,
-    );
   }
 }

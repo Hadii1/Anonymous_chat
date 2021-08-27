@@ -34,8 +34,7 @@
             "name": "All",
             "configurations": [
                 "iPhone",
-                // "iPhone 12 simulator",
-                "Pixel 3a",
+                "iPhone 12 simulator",
             ]
         }
     ]

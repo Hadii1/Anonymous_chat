@@ -209,9 +209,7 @@ class ChatHeader extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          lastMessage.content == null
-                              ? 'Media'
-                              : lastMessage.content!,
+                          lastMessage.content,
                           style: style.bodyText,
                         )
                       ],
