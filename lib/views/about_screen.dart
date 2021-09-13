@@ -23,7 +23,7 @@ class AboutScreen extends StatelessWidget {
   // TODO: Launching Links
   @override
   Widget build(BuildContext context) {
-    ApplicationStyle style = InheritedAppTheme.of(context).style;
+    AppStyle style = AppTheming.of(context).style;
     return Scaffold(
       backgroundColor: Colors.black,
       body: Column(

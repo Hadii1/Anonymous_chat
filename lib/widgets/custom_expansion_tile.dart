@@ -213,7 +213,7 @@ class _CustomExpansionTileState extends State<CustomExpansionTile>
   }
 
   Widget _buildChildren(BuildContext context, Widget? child) {
-    final ApplicationStyle style = InheritedAppTheme.of(context).style;
+    final AppStyle style = AppTheming.of(context).style;
     return Container(
       decoration: BoxDecoration(
         color: _backgroundColor.value ?? Colors.transparent,

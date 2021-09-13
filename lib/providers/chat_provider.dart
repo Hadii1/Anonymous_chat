@@ -1,33 +1,34 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:anonymous_chat/database_entities/room_entity.dart';
+import 'package:anonymous_chat/interfaces/database_interface.dart';
+import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/room.dart';
-import 'package:anonymous_chat/models/user.dart';
+import 'package:anonymous_chat/database_entities/user_entity.dart';
 import 'package:anonymous_chat/providers/archived_rooms_provider.dart';
 import 'package:anonymous_chat/providers/blocked_contacts_provider.dart';
 import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/providers/user_rooms_provider.dart';
-import 'package:anonymous_chat/services.dart/firestore.dart';
 import 'package:anonymous_chat/services.dart/local_storage.dart';
 import 'package:anonymous_chat/utilities/extrentions.dart';
-
+import 'package:anonymous_chat/utilities/general_functions.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:observable_ish/observable_ish.dart';
 
 import 'package:flutter/foundation.dart';
 
-final chattingProvider =
-    ChangeNotifierProvider.autoDispose.family<ChatNotifier, Room>(
+final chattingProvider = ChangeNotifierProvider.family<ChatNotifier, Room>(
   (ref, room) {
     return ChatNotifier(
       ref.read,
       room: room,
-      isArchived: ref.watch(archivedRoomsProvider)?.contains(room),
+      isArchived: ref.watch(archivedRoomsProvider)!.contains(room),
       isBlockedByOther: ref.watch(blockedByProvider)!.contains(
-            room.users!.firstWhere(
-              (User i) => i != LocalStorage().user,
+            room.users.firstWhere(
+              (User i) => i != ILocalStorage.storage.user!,
             ),
           ),
     );
@@ -47,8 +48,8 @@ class ChatNotifier extends ChangeNotifier {
   final Room room;
   final Reader read;
 
-  final User _user = LocalStorage().user!;
-  final _firestore = FirestoreService();
+  final User _user = ILocalStorage.storage.user!;
+  final IDatabase _db = IDatabase.databseService;
 
   late StreamSubscription<Message?> serverMessagesUpdates;
   late StreamSubscription<ListChangeNotification<Message>?>
@@ -57,11 +58,11 @@ class ChatNotifier extends ChangeNotifier {
   late RxList<Message> allMessages;
   late List<Message> successfullySent;
 
-  final bool? isArchived;
+  final bool isArchived;
   final bool isBlockedByOther;
 
   Message? replyingOn;
-  User get other => room.users!.firstWhere((User i) => i != _user);
+  User get other => room.users.firstWhere((User i) => i != _user);
 
   bool _isChatPageOpened = false;
 
@@ -84,7 +85,7 @@ class ChatNotifier extends ChangeNotifier {
       if (change.element != null && change.element!.isSent()) {
         Message message = change.element!;
         if (replyingOn != null) replyingOn = null;
-        if (isArchived != null && isArchived!) {
+        if (isArchived) {
           read(archivedRoomsProvider.notifier)
               .editArchives(room: room, archive: false);
         }
@@ -92,7 +93,8 @@ class ChatNotifier extends ChangeNotifier {
         read(chatsListProvider.notifier).latestActiveChat = room;
 
         try {
-          await _firestore.writeMessage(roomId: room.id, message: message);
+          await retry(
+              f: () => _db.writeMessage(roomId: room.id, message: message));
 
           successfullySent.add(message);
 
@@ -100,54 +102,58 @@ class ChatNotifier extends ChangeNotifier {
 
           if (allMessages.length == 1) {
             // Room is new
-            await _firestore.saveNewRoom(
-              room: room,
+            await retry(
+              f: () => _db.saveNewRoom(
+                roomEntity: RoomEntity(
+                  id: room.id,
+                  users: room.users.map((e) => e.id).toList(),
+                ),
+              ),
             );
           }
-        } on Exception catch (e, s) {
-          read(errorsProvider.notifier).submitError(
-            exception: e,
-            stackTrace: s,
-            hint: 'Error saving msg: ${message.toString()}',
-          );
+        } on Exception catch (e, _) {
+          read(errorsStateProvider.notifier).set(e is SocketException
+              ? 'Bad internet connection.'
+              : 'Unknown error');
         }
       }
     });
 
     serverMessagesUpdates =
         read(roomMessagesUpdatesChannel(room.id).stream).listen(
-      (Message? update) async {
-        if (update == null) return;
+      (Message? message) async {
+        if (message == null) return;
 
-        if (update.isReceived()) {
+        if (message.isReceived()) {
           // A new message is received
-          if (update.isSenderBlocked) return;
+          if (message.isSenderBlocked) return;
 
-          if (isArchived != null && isArchived!) {
+          if (isArchived) {
             read(archivedRoomsProvider.notifier)
                 .editArchives(room: room, archive: false);
           }
 
-          if (!allMessages.contains(update)) {
-            allMessages.add(update);
+          assert(!allMessages.contains(message));
 
-            read(chatsListProvider.notifier).latestActiveChat = room;
+          allMessages.add(message);
 
-            if (_isChatPageOpened) {
-              update.isRead = true;
-              _firestore.markMessageAsRead(
-                  roomId: room.id, messageId: update.id);
-            }
+          read(chatsListProvider.notifier).latestActiveChat = room;
+
+          if (_isChatPageOpened) {
+            message.isRead = true;
+            _db.markMessageAsRead(
+              roomId: room.id,
+              messageId: message.id,
+            );
           }
         } else {
           // A sent message is read
-          if (successfullySent.contains(update)) {
-            if (update.isRead &&
-                !successfullySent.firstWhere((m) => m == update).isRead) {
-              allMessages.firstWhere((element) => element == update).isRead =
-                  true;
-            }
-          }
+          int index = successfullySent.indexWhere((e) => e == message);
+          assert(index != -1);
+          assert(successfullySent[index].isRead == false);
+          assert(message.isRead == true);
+
+          allMessages.firstWhere((m) => m == message).isRead = true;
         }
         notifyListeners();
       },
@@ -161,9 +167,9 @@ class ChatNotifier extends ChangeNotifier {
       room.messages
           .where((m) => m.isReceived() && !m.isRead)
           .toList()
-          .forEach((e) {
+          .forEach((Message e) {
         e.isRead = true;
-        _firestore.markMessageAsRead(roomId: room.id, messageId: e.id);
+        _db.markMessageAsRead(roomId: room.id, messageId: e.id);
       });
 
       notifyListeners();
@@ -172,7 +178,6 @@ class ChatNotifier extends ChangeNotifier {
 
   void onChatClosed() {
     _isChatPageOpened = false;
-    // notifyListeners();
   }
 
   void onMessageLongPress(Message message) {
@@ -194,7 +199,7 @@ class ChatNotifier extends ChangeNotifier {
       isRead: false,
       time: DateTime.now().millisecondsSinceEpoch,
       replyingOn: replyingOn?.id,
-      id: _firestore.getMessageReference(roomId: room.id),
+      id: generateUid(),
     );
 
     allMessages.add(message);
@@ -202,7 +207,7 @@ class ChatNotifier extends ChangeNotifier {
   }
 
   String get recipient =>
-      room.participants.firstWhere((String id) => id != _user.id);
+      room.users.firstWhere((User user) => user.id != _user.id).id;
 
   bool isSuccessful(Message message) => successfullySent.contains(message);
 
@@ -210,8 +215,8 @@ class ChatNotifier extends ChangeNotifier {
       allMessages
           .where(
             (Message m) => message.isReceived()
-                ? m.recipient == LocalStorage().user!.id
-                : m.recipient != LocalStorage().user!.id,
+                ? m.recipient == SharedPrefs().user!.id
+                : m.recipient != SharedPrefs().user!.id,
           )
           .last
           .id ==

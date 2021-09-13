@@ -1,187 +1,179 @@
-import 'package:anonymous_chat/models/activity_status.dart';
+import 'dart:io';
+
+import 'package:anonymous_chat/interfaces/auth_interface.dart';
+import 'package:anonymous_chat/interfaces/database_interface.dart';
+import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
+import 'package:anonymous_chat/database_entities/user_entity.dart' as _local;
 import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/providers/loading_provider.dart';
 import 'package:anonymous_chat/services.dart/authentication.dart';
-import 'package:anonymous_chat/services.dart/firestore.dart';
-import 'package:anonymous_chat/models/user.dart' as model;
-import 'package:anonymous_chat/services.dart/local_storage.dart';
-import 'package:anonymous_chat/providers/activity_status_provider.dart';
-
+import 'package:anonymous_chat/utilities/general_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
-import 'package:flutter/material.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final authProvider = ChangeNotifierProvider(
-  (ref) => _AuthProcessNotifier(
-    ref.read,
+import 'package:flutter/foundation.dart';
+
+// 76868011
+enum DestinationAfterSuccessfulAuth {
+  NameGeneratorScreen,
+  HomeScreen,
+}
+
+final destinationScreenProvider = StateNotifierProvider.autoDispose<
+    DesitnationState, DestinationAfterSuccessfulAuth?>(
+  (_) => DesitnationState(),
+);
+
+class DesitnationState extends StateNotifier<DestinationAfterSuccessfulAuth?> {
+  DesitnationState() : super(null);
+
+  void set(DestinationAfterSuccessfulAuth destination) => state = destination;
+}
+
+final phoneVerificationProvider = ChangeNotifierProvider.autoDispose(
+  (ref) => PhoneVerificationNotifier(
+    ref.read(errorsStateProvider.notifier),
+    ref.read(loadingProvider.notifier),
+    ref.read(destinationScreenProvider.notifier),
   ),
 );
 
-class _AuthProcessNotifier extends ChangeNotifier {
-  late ErrorNotifier _errorNotifier;
-  late LoadingNotifer _loadingNotifer;
-  final Reader read;
+class PhoneVerificationNotifier extends ChangeNotifier {
+  final ErrorsNotifier _errorNotifier;
+  final LoadingNotifier _loadingNotifier;
+  final DesitnationState _desitnationNotifier;
 
-  String email = '';
-  String password = '';
+  final FirebaseAuthService _auth = (IAuth.auth as FirebaseAuthService);
+  final IDatabase _db = IDatabase.databseService;
+  final ILocalStorage _storage = ILocalStorage.storage;
 
-  _AuthProcessNotifier(
-    this.read,
-  ) {
-    _errorNotifier = read(errorsProvider.notifier);
-    _loadingNotifer = read(loadingProvider.notifier);
-  }
+  String number = '';
 
-  void onForgetPasswordPressed() async {
-    if (email.isEmpty) {
-      _errorNotifier.setError(
-        message: 'Please enter email address',
-      );
+  bool isCodeSent = false;
+
+  String? _verificationId;
+
+  PhoneVerificationNotifier(
+    this._errorNotifier,
+    this._loadingNotifier,
+    this._desitnationNotifier,
+  );
+
+  void onSendCodePressed() {
+    _loadingNotifier.loading = true;
+    if (number.isEmpty) {
+      _errorNotifier.set('Number field required');
+      _loadingNotifier.loading = false;
       return;
     }
-    try {
-      _loadingNotifer.isLoading = true;
 
-      await AuthService().resetPassword(email: email.trim());
+    number = '+1' + number;
+    number.trim();
 
-      _errorNotifier.setError(
-        message: 'An email was sent to $email',
-      );
-    } on Exception catch (e, s) {
-      _errorNotifier.setError(
-        exception: e,
-        stackTrace: s,
-        hint: 'onForgetPasswordPressed',
-      );
-    }
-
-    _loadingNotifer.isLoading = false;
+    _auth.verifyPhoneNumber(
+      number: number,
+      onVerificaitonFailed: (FirebaseAuthException e) {
+        print(e.code);
+        print(e.message);
+        _errorNotifier.set(
+          e.code == 'invalid-phone-number'
+              ? 'Invalid phone number.\nPlease make sure the number you entered is correct.'
+              : e.code == 'too-many-requests'
+                  ? ('Too many requests!\nTry again in a while.')
+                  : 'Something went wrong.\nTry again please.',
+        );
+        _verificationId = null;
+        isCodeSent = false;
+        notifyListeners();
+        _loadingNotifier.loading = false;
+      },
+      onCodeSent: (String verificationId, int? resendingToken) {
+        print('code sent');
+        _loadingNotifier.loading = false;
+        _verificationId = verificationId;
+        isCodeSent = true;
+        notifyListeners();
+      },
+      onVerificationCompleted: (PhoneAuthCredential phoneAuthCredential) async {
+        // ANDROID ONLY! Automatic handling of the received code.
+        print('verificaiton complete');
+        onCodeSubmitted(phoneAuthCredential: phoneAuthCredential);
+      },
+    );
   }
 
-  Future<bool> onSignOutPressed() async {
-    try {
-      _loadingNotifer.isLoading = true;
-
-      await read(userActivityStateProvider.notifier).set(
-        activityStatus: ActivityStatus.offline(
-            lastSeen: DateTime.now().millisecondsSinceEpoch),
-      );
-
-      await AuthService().signOut();
-
-      await LocalStorage().setUser(null);
-
-      _loadingNotifer.isLoading = false;
-
-      return true;
-    } on Exception catch (e, s) {
-      _errorNotifier.setError(
-        exception: e,
-        stackTrace: s,
-      );
-      _loadingNotifer.isLoading = false;
-      return false;
-    }
-  }
-
-  Future<bool> onLoginPressed() async {
-    if (email.trim().isEmpty || password.trim().isEmpty) {
-      _errorNotifier.setError(
-        message: 'Please fill in both fields',
-      );
-      return false;
-    }
+  void onCodeSubmitted({
+    String? code,
+    PhoneAuthCredential? phoneAuthCredential,
+  }) async {
+    _loadingNotifier.loading = true;
 
     try {
-      _loadingNotifer.isLoading = true;
+      assert((code == null && phoneAuthCredential == null) == false);
+      late UserCredential credential;
 
-      UserCredential credential =
-          await AuthService().signInWithEmail(email: email, password: password);
+      credential = phoneAuthCredential != null
+          ? await _auth.signInWithPhoneCredential(
+              credential: phoneAuthCredential)
+          : await _auth.signInWithPhoneCredential(
+              verificationId: _verificationId!,
+              code: code!,
+            );
 
-      Map<String, dynamic>? userData =
-          await FirestoreService().getUserData(id: credential.user!.uid);
+      Map<String, dynamic>? userData;
+      bool isNewUser = credential.additionalUserInfo!.isNewUser;
 
-      model.User user = model.User.fromMap(userData);
+      if (!isNewUser)
+        userData = await _db.getUserData(id: credential.user!.uid);
 
-      await LocalStorage().setUser(user);
+      if (isNewUser || userData == null) {
+        // _local.User user = _local.User(
+        //   phoneNumber: number,
+        //   id: credential.user!.uid,
+        // );
 
-      _loadingNotifer.isLoading = false;
+        // await retry(
+        //   f: () async {
+        //     _db.saveUserData(
+        //       user: user,
+        //     );
+        //   },
+        // );
 
-      return true;
-    } on Exception catch (e, s) {
-      _errorNotifier.setError(
-        exception: e,
-        stackTrace: s,
-      );
-      _loadingNotifer.isLoading = false;
-      return false;
-    }
-  }
+        // await _storage.setUser(user);
 
-  Future<bool> onRegisterPressed() async {
-    if (email.trim().isEmpty || password.isEmpty) {
-      _errorNotifier.setError(
-        message: 'Please fill in both fields',
-      );
-      return false;
-    }
+        _desitnationNotifier
+            .set(DestinationAfterSuccessfulAuth.NameGeneratorScreen);
+      } else {
+        _local.User user = _local.User.fromMap(userData);
 
-    try {
-      _loadingNotifer.isLoading = true;
+        await _storage.setUser(user);
 
-      UserCredential credential = await AuthService()
-          .registerWithEmail(email: email.trim(), password: password);
+        _desitnationNotifier.set(DestinationAfterSuccessfulAuth.HomeScreen);
+      }
 
-      model.User user = model.User(
-        id: credential.user!.uid,
-        blockedUsers: [],
-        activeTags: [],
-        archivedRooms: [],
-        email: email.trim(),
-        nickname: '',
-      );
+      notifyListeners();
+    } on Exception catch (e) {
+      if (e is FirebaseAuthException && e.code == 'invalid-verification-code')
+        _errorNotifier.set('Invalid code.');
+      else if (e is FirebaseAuthException && e.code == 'too-many-requests')
+        _errorNotifier.set('Too many requests!\nTry again in a while.');
+      else if (e is SocketException)
+        _errorNotifier
+            .set('Bad Internet Connection.\nTry resubmitting the code.');
+      else
+        _errorNotifier.set('Unknown error occured.');
 
-      await FirestoreService().saveUserData(user: user);
-
-      await LocalStorage().setUser(user);
-
-      _loadingNotifer.isLoading = false;
-
-      return true;
-    } on Exception catch (e, s) {
-      _errorNotifier.setError(
-        exception: e,
-        stackTrace: s,
-      );
-      _loadingNotifer.isLoading = false;
-      return false;
+      await _auth.signOut();
+    } finally {
+      _loadingNotifier.loading = false;
     }
   }
 
-  Future<bool> onDeleteAccountPressed() async {
-    try {
-      _loadingNotifer.isLoading = true;
-
-      await read(userActivityStateProvider.notifier).set(
-        activityStatus: ActivityStatus.offline(
-            lastSeen: DateTime.now().millisecondsSinceEpoch),
-      );
-      await FirestoreService().deleteAccount(userId: LocalStorage().user!.id);
-      await AuthService().signOut();
-      await LocalStorage().setUser(null);
-
-      _loadingNotifer.isLoading = false;
-
-      return true;
-    } on Exception catch (e, s) {
-      _errorNotifier.setError(
-        exception: e,
-        stackTrace: s,
-      );
-      _loadingNotifer.isLoading = false;
-      return false;
-    }
+  void onEditNumberPressed() {
+    isCodeSent = false;
+    _verificationId = null;
+    notifyListeners();
   }
 }

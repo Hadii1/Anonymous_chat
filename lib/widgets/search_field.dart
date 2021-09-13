@@ -27,7 +27,7 @@ class _SearchFieldState extends State<SearchField> {
 
   @override
   Widget build(BuildContext context) {
-    ApplicationStyle style = InheritedAppTheme.of(context).style;
+    AppStyle style = AppTheming.of(context).style;
     return TextField(
       onChanged: widget.onChanged,
       autocorrect: false,

@@ -28,7 +28,7 @@ import 'package:implicitly_animated_reorderable_list/transitions.dart';
 class ArchivedContactsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    ApplicationStyle style = InheritedAppTheme.of(context).style;
+    AppStyle style = AppTheming.of(context).style;
     return Scaffold(
         backgroundColor: Colors.black,
         body: SafeArea(

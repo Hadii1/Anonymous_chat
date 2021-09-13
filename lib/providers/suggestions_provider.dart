@@ -1,39 +1,72 @@
+import 'package:anonymous_chat/interfaces/database_interface.dart';
+import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
 import 'package:anonymous_chat/models/room.dart';
 import 'package:anonymous_chat/models/tag.dart';
-import 'package:anonymous_chat/models/user.dart';
+import 'package:anonymous_chat/database_entities/user_entity.dart';
 import 'package:anonymous_chat/providers/tags_provider.dart';
 import 'package:anonymous_chat/providers/user_rooms_provider.dart';
-import 'package:anonymous_chat/services.dart/firestore.dart';
-import 'package:anonymous_chat/services.dart/local_storage.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tuple/tuple.dart';
 
+final userContactsProvider =
+    StateNotifierProvider<UserContactsNotifer, List<User>?>(
+  (ref) => UserContactsNotifer(
+    userRooms: ref.watch(userRoomsProvider),
+  ),
+);
+
+class UserContactsNotifer extends StateNotifier<List<User>?> {
+  final List<Room>? userRooms;
+
+  UserContactsNotifer({required this.userRooms})
+      : super(
+          userRooms == null
+              ? null
+              : userRooms
+                  .map((r) => r.users.firstWhere(
+                      (u) => u.id != ILocalStorage.storage.user!.id))
+                  .toList(),
+        );
+
+  void removeContact(User user) {
+    if (state != null) {
+      state!.remove(user);
+      state = state;
+    }
+  }
+
+  void addContact(User user) {
+    if (state != null) {
+      state!.add(user);
+      state = state;
+    }
+  }
+}
+
 final suggestedContactsProvider =
     FutureProvider.autoDispose<List<Tuple2<User, List<Tag>>>?>(
   (ref) async {
-    List<String> userContacts = [];
-    List<Room>? currentRooms = ref.watch(userRoomsProvider);
-    // This means loading state
-    if (currentRooms == null) return null;
+    List<String>? userContacts =
+        ref.watch(userContactsProvider)?.map((e) => e.id).toList();
+
+    if (userContacts == null) return null;
+
+    final String userId = ILocalStorage.storage.user!.id;
 
     List<Tag> selectedTags = ref
-        .watch(userTagsProvider(LocalStorage().user!.id))
-        .where((t) => t.isActive)
+        .watch(userTagsProvider(userId))
+        .where((Tag t) => t.isActive)
         .toList();
 
     if (selectedTags.isEmpty) {
-      // await Future.delayed(Duration(milliseconds: 200));
       return [];
-    }
-
-    for (Room r in currentRooms) {
-      userContacts.addAll(r.participants);
     }
 
     List<Tuple2<User, List<Tag>>> suggestions = [];
 
-    List<Map<String, dynamic>> data = await FirestoreService().getMatchingUsers(
+    List<Map<String, dynamic>> data =
+        await IDatabase.databseService.getMatchingUsers(
       tagsIds: selectedTags.map((e) => e.id).toList(),
     );
 
@@ -42,17 +75,14 @@ final suggestedContactsProvider =
       suggestions.add(
         Tuple2(
           user,
-          selectedTags
-              .where((Tag t) => user.activeTags.contains(t.id))
-              .toList(),
+          selectedTags.where((Tag t) => selectedTags.contains(t.id)).toList(),
         ),
       );
     }
 
     suggestions.removeWhere(
       (Tuple2<User, List<Tag>> t) =>
-          t.item1.id == LocalStorage().user!.id ||
-          userContacts.contains(t.item1.id),
+          t.item1.id == userId || userContacts.contains(t.item1.id),
     );
 
     return suggestions;

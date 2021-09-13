@@ -72,7 +72,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    ApplicationStyle style = InheritedAppTheme.of(context).style;
+    AppStyle style = AppTheming.of(context).style;
     return Scaffold(
       backgroundColor: style.backgroundColor,
       appBar: TitledAppBar(
@@ -101,7 +101,10 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           ChatsScreen(),
           TagsScreen(),
         ],
-        headers: ['Chats', 'Tags'],
+        headers: [
+          'Chats',
+          'Tags',
+        ],
       ),
     );
   }

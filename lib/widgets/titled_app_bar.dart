@@ -18,7 +18,7 @@ class TitledAppBar extends PreferredSize {
 
   @override
   Widget build(BuildContext context) {
-    final style = InheritedAppTheme.of(context).style;
+    final style = AppTheming.of(context).style;
 
     return CupertinoNavigationBar(
       automaticallyImplyLeading: false,
@@ -31,7 +31,7 @@ class TitledAppBar extends PreferredSize {
           fontSize: 24,
           letterSpacing: 4,
           fontWeight: FontWeight.bold,
-          fontFamily: 'Montserat',
+          fontFamily: 'Playfair',
         ),
       ),
       trailing: trailing,

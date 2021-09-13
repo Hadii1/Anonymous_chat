@@ -15,13 +15,13 @@ class CtaButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = InheritedAppTheme.of(context).style;
+    final style = AppTheming.of(context).style;
     return SizedBox(
       height: 50,
       width: double.maxFinite,
       child: TextButton(
         child: Text(
-          text,
+          text.toUpperCase(),
           style: style.bodyText.copyWith(
             color: isPrimary ? style.accentColor : style.borderColor,
           ),

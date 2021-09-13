@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
-
 // class AllRetriesFailException implements Exception {}
+
+import 'dart:math';
 
 Future<T> retry<T>({
   required Future<T> Function() f,
@@ -47,5 +47,24 @@ Future<T> retry<T>({
 
       attempts++;
     }
+  }
+}
+
+String generateUid() {
+  const CHARS =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  String id = '';
+
+  for (int i = 0; i < 28; i++) {
+    id += CHARS[Random().nextInt(28)];
+  }
+  return id;
+}
+
+extension CapitalizeFirstLetter on String {
+  String capitalizeFirst() {
+    return this.length == 1
+        ? this.toUpperCase()
+        : this.substring(0, 1).toUpperCase() + this.substring(1);
   }
 }

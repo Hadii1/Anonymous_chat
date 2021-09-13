@@ -1,19 +1,20 @@
 import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/widgets/animated_widgets.dart';
-import 'package:flutter/material.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:flutter/material.dart';
 
 class NotificationWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final style = InheritedAppTheme.of(context).style;
+    final style = AppTheming.of(context).style;
     return MediaQuery(
       data: MediaQueryData(),
       child: Consumer(
         builder: (_, watch, __) {
-          String errorMsg = watch(errorsProvider);
+          String errorMsg = watch(errorsStateProvider).item1;
           double opacity = errorMsg.isEmpty ? 0.0 : 1.0;
 
           return errorMsg.isEmpty

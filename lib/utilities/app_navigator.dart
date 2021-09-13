@@ -1,5 +1,5 @@
 import 'package:anonymous_chat/views/home_screen.dart';
-import 'package:anonymous_chat/views/login.dart';
+import 'package:anonymous_chat/views/info_collecting_screen.dart';
 import 'package:anonymous_chat/views/name_generator_screen.dart';
 
 import 'package:flutter/cupertino.dart';
@@ -28,7 +28,7 @@ class AppNavigator extends StatelessWidget {
                     ? isNicknamed
                         ? Home()
                         : NameGenerator()
-                    : LoginScreen();
+                    : InfoCollectionScreen();
             }
           },
         );

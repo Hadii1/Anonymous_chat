@@ -67,7 +67,7 @@ class _CustomTextFieldState extends State<CustomTextField>
 
   @override
   Widget build(BuildContext context) {
-    final style = InheritedAppTheme.of(context).style;
+    final style = AppTheming.of(context).style;
     return CupertinoTextField(
       keyboardAppearance: Brightness.dark,
       keyboardType: widget.keyboardTpe,

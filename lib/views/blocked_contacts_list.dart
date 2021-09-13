@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:anonymous_chat/models/user.dart';
+import 'package:anonymous_chat/database_entities/user_entity.dart';
 import 'package:anonymous_chat/providers/blocked_contacts_provider.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/widgets/animated_widgets.dart';
@@ -29,7 +29,7 @@ import 'package:implicitly_animated_reorderable_list/transitions.dart';
 class BlockedContactsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    ApplicationStyle style = InheritedAppTheme.of(context).style;
+    AppStyle style = AppTheming.of(context).style;
     return Scaffold(
         backgroundColor: Colors.black,
         body: SafeArea(
@@ -184,7 +184,7 @@ class _BlockedUserHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    ApplicationStyle style = InheritedAppTheme.of(context).style;
+    AppStyle style = AppTheming.of(context).style;
     return Row(
       children: [
         AnimatedContainer(

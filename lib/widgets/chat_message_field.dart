@@ -128,7 +128,7 @@ class _MessageBoxState extends State<MessageBox> {
 
   @override
   Widget build(BuildContext context) {
-    ApplicationStyle style = InheritedAppTheme.of(context).style;
+    AppStyle style = AppTheming.of(context).style;
 
     return Container(
       alignment: Alignment.bottomCenter,
@@ -159,7 +159,7 @@ class _MessageBoxState extends State<MessageBox> {
                     decoration: InputDecoration(
                       hintText: 'Message',
                       hintStyle: style.bodyText
-                          .copyWith(color: ApplicationStyle.secondaryTextColor),
+                          .copyWith(color: AppStyle.secondaryTextColor),
                       filled: true,
                       isDense: true,
                       contentPadding: const EdgeInsets.symmetric(

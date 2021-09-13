@@ -1,24 +1,23 @@
-import 'package:anonymous_chat/providers/auth_provider.dart';
-import 'package:anonymous_chat/services.dart/local_storage.dart';
+import 'package:anonymous_chat/interfaces/auth_interface.dart';
+import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/views/about_screen.dart';
 import 'package:anonymous_chat/views/archived_contacts_list.dart';
 import 'package:anonymous_chat/views/blocked_contacts_list.dart';
-import 'package:anonymous_chat/views/login.dart';
+import 'package:anonymous_chat/views/login_screen.dart';
 import 'package:anonymous_chat/widgets/custom_route.dart';
 import 'package:anonymous_chat/widgets/settings_tile.dart';
 import 'package:anonymous_chat/widgets/titled_app_bar.dart';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluttericon/linearicons_free_icons.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttericon/linearicons_free_icons.dart';
 
 class Settings extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    ApplicationStyle style = InheritedAppTheme.of(context).style;
+    AppStyle style = AppTheming.of(context).style;
     return Scaffold(
       backgroundColor: style.backgroundColor,
       appBar: TitledAppBar(
@@ -48,9 +47,7 @@ class Settings extends StatelessWidget {
                         ),
                         child: Center(
                           child: Text(
-                            LocalStorage()
-                                .user!
-                                .nickname
+                            ILocalStorage.storage.user!.nickname
                                 .substring(0, 1)
                                 .toUpperCase(),
                             style: style.chatHeaderLetter,
@@ -66,17 +63,11 @@ class Settings extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           Text(
-                            LocalStorage().user!.nickname,
+                            ILocalStorage.storage.user!.nickname,
                             style: style.title3Style,
                           ),
                           SizedBox(
                             height: 4,
-                          ),
-                          Text(
-                            LocalStorage().user!.email,
-                            style: style.bodyText.copyWith(
-                              color: style.searchBarHintColor,
-                            ),
                           ),
                         ],
                       ),
@@ -126,16 +117,14 @@ class Settings extends StatelessWidget {
                   SettingTile(
                     title: 'Sign Out',
                     onTap: () async {
-                      bool success =
-                          await context.read(authProvider).onSignOutPressed();
-
-                      if (success)
-                        Navigator.of(context).pushAndRemoveUntil(
-                          FadingRoute(
-                            builder: (_) => LoginScreen(),
-                          ),
-                          (route) => false,
-                        );
+                      // TODO: error handle
+                      await IAuth.auth.signOut();
+                      Navigator.of(context).pushAndRemoveUntil(
+                        FadingRoute(
+                          builder: (_) => LoginScreen(),
+                        ),
+                        (route) => false,
+                      );
                     },
                     icon: LineariconsFree.exit,
                   ),
@@ -149,17 +138,14 @@ class Settings extends StatelessWidget {
                   SettingTile(
                     title: 'Delete Account',
                     onTap: () async {
-                      bool success = await context
-                          .read(authProvider)
-                          .onDeleteAccountPressed();
+                      // TODO: delete account
 
-                      if (success)
-                        Navigator.of(context).pushAndRemoveUntil(
-                          FadingRoute(
-                            builder: (_) => LoginScreen(),
-                          ),
-                          (route) => false,
-                        );
+                      Navigator.of(context).pushAndRemoveUntil(
+                        FadingRoute(
+                          builder: (_) => LoginScreen(),
+                        ),
+                        (route) => false,
+                      );
                     },
                     icon: LineariconsFree.trash,
                   ),

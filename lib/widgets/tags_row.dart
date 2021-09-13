@@ -16,7 +16,7 @@ class TagsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    ApplicationStyle style = InheritedAppTheme.of(context).style;
+    AppStyle style = AppTheming.of(context).style;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -92,7 +92,7 @@ class __ChipState extends State<_Chip> {
 
   @override
   Widget build(BuildContext context) {
-    ApplicationStyle style = InheritedAppTheme.of(context).style;
+    AppStyle style = AppTheming.of(context).style;
     return Padding(
       padding: EdgeInsets.only(
         left: widget.isFirstElement ? 24 : 0,

@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final loadingProvider = StateNotifierProvider<LoadingNotifer, bool>(
-  (_) => LoadingNotifer(),
+final loadingProvider = StateNotifierProvider<LoadingNotifier, bool>(
+  (_) => LoadingNotifier(),
 );
 
-class LoadingNotifer extends StateNotifier<bool> {
-  LoadingNotifer() : super(false);
+class LoadingNotifier extends StateNotifier<bool> {
+  LoadingNotifier() : super(false);
 
-  set isLoading(bool value) => state = value;
+  set loading(bool value) => state = value;
 }

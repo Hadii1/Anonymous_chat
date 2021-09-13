@@ -18,9 +18,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 
-
 import 'package:anonymous_chat/models/message.dart';
-import 'package:anonymous_chat/models/user.dart';
+import 'package:anonymous_chat/database_entities/user_entity.dart';
 import 'package:anonymous_chat/services.dart/local_storage.dart';
 import 'package:anonymous_chat/utilities/extrentions.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
@@ -46,7 +45,7 @@ class ChatBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    ApplicationStyle style = InheritedAppTheme.of(context).style;
+    AppStyle style = AppTheming.of(context).style;
     return Align(
       alignment: isReceived ? Alignment.centerLeft : Alignment.centerRight,
       child: Padding(
@@ -119,7 +118,7 @@ class TextMessageBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    ApplicationStyle style = InheritedAppTheme.of(context).style;
+    AppStyle style = AppTheming.of(context).style;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -143,7 +142,7 @@ class TextMessageBody extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      replyOn!.sender == LocalStorage().user!.id
+                      replyOn!.sender == SharedPrefs().user!.id
                           ? 'You'
                           : other.nickname,
                       style: TextStyle(
@@ -204,7 +203,7 @@ class MessageTimeAndStatus extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    ApplicationStyle style = InheritedAppTheme.of(context).style;
+    AppStyle style = AppTheming.of(context).style;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [

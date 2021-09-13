@@ -1,6 +1,6 @@
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/room.dart';
-import 'package:anonymous_chat/models/user.dart';
+import 'package:anonymous_chat/database_entities/user_entity.dart';
 import 'package:anonymous_chat/providers/archived_rooms_provider.dart';
 import 'package:anonymous_chat/providers/blocked_contacts_provider.dart';
 import 'package:anonymous_chat/providers/user_rooms_provider.dart';
@@ -26,11 +26,11 @@ class ChatHeader extends StatelessWidget {
   });
 
   User get other =>
-      room.users!.firstWhere((User user) => user != LocalStorage().user);
+      room.users.firstWhere((User user) => user != SharedPrefs().user);
 
   @override
   Widget build(BuildContext context) {
-    ApplicationStyle style = InheritedAppTheme.of(context).style;
+    AppStyle style = AppTheming.of(context).style;
 
     Message lastMessage = room.messages.last;
 
@@ -43,7 +43,7 @@ class ChatHeader extends StatelessWidget {
           Navigator.of(context).push(
             FadingRoute(
               builder: (c) {
-                return ChatRoom(
+                return ChatRoomScreen(
                   room: room,
                 );
               },

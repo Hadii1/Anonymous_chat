@@ -1,5 +1,7 @@
+import 'dart:io';
+
 import 'package:anonymous_chat/models/tag.dart';
-import 'package:anonymous_chat/models/user.dart';
+import 'package:anonymous_chat/database_entities/user_entity.dart';
 import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/providers/suggestions_provider.dart';
 import 'package:anonymous_chat/providers/tag_searching_provider.dart';
@@ -12,18 +14,19 @@ import 'package:anonymous_chat/widgets/search_field.dart';
 import 'package:anonymous_chat/widgets/suggestion_header.dart';
 import 'package:anonymous_chat/widgets/tags_row.dart';
 
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:fluttericon/linecons_icons.dart';
 import 'package:tuple/tuple.dart';
 
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+
 class TagsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    ApplicationStyle style = InheritedAppTheme.of(context).style;
+    AppStyle style = AppTheming.of(context).style;
 
     return Scaffold(
       backgroundColor: style.backgroundColor,
@@ -73,10 +76,10 @@ class _TagsSearchResponseState extends State<_TagsSearchResponse>
     with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
-    ApplicationStyle style = InheritedAppTheme.of(context).style;
+    AppStyle style = AppTheming.of(context).style;
     return Consumer(
       builder: (context, watch, child) {
-        final userTags = watch(userTagsProvider(LocalStorage().user!.id));
+        final userTags = watch(userTagsProvider(SharedPrefs().user!.id));
         final tagsNotifier = watch(suggestedTagsProvider);
         return AnimatedSize(
           vsync: this,
@@ -156,7 +159,7 @@ class _NewTagTile extends StatelessWidget {
   final Function() onAddedPressed;
   @override
   Widget build(BuildContext context) {
-    final style = InheritedAppTheme.of(context).style;
+    final style = AppTheming.of(context).style;
     return Padding(
       padding: const EdgeInsets.only(
         left: 24,
@@ -262,7 +265,7 @@ class _SuggestedTagsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = InheritedAppTheme.of(context).style;
+    final style = AppTheming.of(context).style;
     return tags.isEmpty
         ? SizedBox.shrink()
         : Padding(
@@ -375,16 +378,14 @@ class __SuggestedContactsState extends State<_SuggestedContacts>
     with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
-    ApplicationStyle style = InheritedAppTheme.of(context).style;
+    AppStyle style = AppTheming.of(context).style;
     return Padding(
       padding: const EdgeInsets.only(left: 24.0, right: 24),
       child: Consumer(
         builder: (context, watch, child) {
-          final activeTags =
-              watch(userTagsProvider(LocalStorage().user!.id))
-                  .where((Tag tag) => tag.isActive);
-          final allTags =
-              watch(userTagsProvider(LocalStorage().user!.id));
+          final activeTags = watch(userTagsProvider(SharedPrefs().user!.id))
+              .where((Tag tag) => tag.isActive);
+          final allTags = watch(userTagsProvider(SharedPrefs().user!.id));
 
           return watch(suggestedContactsProvider).when(
             data: (List<Tuple2<User, List<Tag>>>? data) {
@@ -447,14 +448,14 @@ class __SuggestedContactsState extends State<_SuggestedContacts>
               ],
             ),
             error: (e, s) {
-              context.read(errorsProvider.notifier).setError(
-                    exception: e,
-                    stackTrace: s,
-                    hint:
-                        'Error in watching suggested contacts provider. Retrying.',
-                  );
+              context.read(errorsStateProvider.notifier).set(
+                  e is SocketException
+                      ? 'Bad internet connection'
+                      : 'An Error occured');
 
-              context.refresh(suggestedContactsProvider);
+              Future.delayed(Duration(seconds: 2))
+                  .then((_) => context.refresh(suggestedContactsProvider));
+
               return Center(
                 child: Padding(
                   padding: const EdgeInsets.only(top: 48.0),

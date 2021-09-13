@@ -61,7 +61,7 @@ class _PasswordFieldState extends State<PasswordField>
 
   @override
   Widget build(BuildContext context) {
-    final style = InheritedAppTheme.of(context).style;
+    final style = AppTheming.of(context).style;
     return CupertinoTextField(
       focusNode: _focusNode,
       keyboardAppearance: Brightness.dark,

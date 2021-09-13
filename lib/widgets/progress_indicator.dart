@@ -25,7 +25,7 @@ class DotIndicator extends StatelessWidget {
   final int count;
   @override
   Widget build(BuildContext context) {
-    ApplicationStyle style = InheritedAppTheme.of(context).style;
+    AppStyle style = AppTheming.of(context).style;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(

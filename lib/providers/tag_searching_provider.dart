@@ -14,13 +14,16 @@
 //
 //
 import 'dart:async';
+import 'dart:io';
 
+import 'package:anonymous_chat/interfaces/database_interface.dart';
 import 'package:anonymous_chat/models/tag.dart';
 import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/providers/tags_provider.dart';
 import 'package:anonymous_chat/services.dart/algolia.dart';
 import 'package:anonymous_chat/services.dart/firestore.dart';
 import 'package:anonymous_chat/services.dart/local_storage.dart';
+import 'package:anonymous_chat/utilities/general_functions.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,15 +42,15 @@ class TagSuggestionsNotifier extends ChangeNotifier {
   TagSuggestionsNotifier(
     this.read,
   ) {
-    _errorNotifier = read(errorsProvider.notifier);
+    _errorNotifier = read(errorsStateProvider.notifier);
   }
 
   final FirestoreService firestore = FirestoreService();
-  final LocalStorage storage = LocalStorage();
+  final SharedPrefs storage = SharedPrefs();
   final AlgoliaSearch algolia = AlgoliaSearch();
   final Reader read;
 
-  late ErrorNotifier _errorNotifier;
+  late ErrorsNotifier _errorNotifier;
 
   List<Tag> suggestedTags = [];
 
@@ -107,29 +110,22 @@ class TagSuggestionsNotifier extends ChangeNotifier {
   }
 
   void onExistingTagPressed({required Tag tag, required bool selected}) async {
-    try {
-      screenState = null;
-      currentLabel = null;
-      suggestedTags = [];
-      notifyListeners();
-
-      if (selected) {
-        await firestore.activateTag(
-            tag: tag.copyWith(isActive: selected), userId: storage.user!.id);
-      } else {
-        await firestore.deactivateTag(
-          tag: tag.copyWith(isActive: selected),
-          userId: storage.user!.id,
-        );
-      }
-    } on Exception catch (e, s) {
-      _errorNotifier.setError(
-        exception: e,
-        stackTrace: s,
-        hint: 'on tag pressed in suggestions notifier',
-      );
-    }
+    screenState = null;
+    currentLabel = null;
+    suggestedTags = [];
     notifyListeners();
+
+    if (selected) {
+      await retry(
+          f: () => firestore.activateTag(
+              tag: tag.copyWith(isActive: selected), userId: storage.user!.id));
+    } else {
+      await retry(
+          f: () => firestore.deactivateTag(
+                tag: tag.copyWith(isActive: selected),
+                userId: storage.user!.id,
+              ));
+    }
   }
 
   void onTagAdditionPressed() async {
@@ -141,22 +137,23 @@ class TagSuggestionsNotifier extends ChangeNotifier {
       currentLabel = null;
       notifyListeners();
 
-      await algolia.addSearchableTag(tag: newTagToAdd!);
+      await retry(f: () => algolia.addSearchableTag(tag: newTagToAdd!));
 
-      await firestore.addNewTag(
-        tag: newTagToAdd!,
-        userId: storage.user!.id,
-      );
+      await retry(
+          f: () => firestore.addNewTag(
+                tag: newTagToAdd!,
+                userId: storage.user!.id,
+              ));
 
       screenState = null;
       newTagToAdd = null;
 
       notifyListeners();
-    } on Exception catch (e, s) {
-      _errorNotifier.setError(
-        exception: e,
-        stackTrace: s,
-        hint: 'Get suggested tags in suggestions notifier',
+    } on Exception catch (e, _) {
+      _errorNotifier.set(
+        e is SocketException
+            ? 'Bad internet connection. Try again.'
+            : 'Something went wrong. Try agian.',
       );
 
       screenState = null;
@@ -173,14 +170,14 @@ class TagSuggestionsNotifier extends ChangeNotifier {
       screenState = TagScreenState.loadingTags;
 
       List<Map<String, dynamic>> algoliaData =
-          await algolia.getTagSuggestions(label: currentLabel!);
+          await retry(f: () => algolia.getTagSuggestions(label: currentLabel!));
 
-      List<Map<String, dynamic>> data =
-          await FirestoreService().getSuggestedTags(
-        ids: algoliaData
-            .map((Map<String, dynamic> e) => e['id'] as String)
-            .toList(),
-      );
+      List<Map<String, dynamic>> data = await retry(
+          f: () => IDatabase.databseService.getSuggestedTags(
+                ids: algoliaData
+                    .map((Map<String, dynamic> e) => e['id'] as String)
+                    .toList(),
+              ));
 
       List selectedTags = read(userTagsProvider(storage.user!.id))
           .where((t) => t.isActive == true)
@@ -194,19 +191,20 @@ class TagSuggestionsNotifier extends ChangeNotifier {
           .map((e) => e.label.toLowerCase().trim())
           .contains(label.toLowerCase().trim())) {
         newTagToAdd = Tag(
-          id: firestore.getTagReference(),
+          id: generateUid(),
           isActive: true,
           label: label,
         );
       }
 
       return tags;
-    } on Exception catch (e, s) {
-      _errorNotifier.setError(
-        exception: e,
-        stackTrace: s,
-        hint: 'Get suggested tags in suggestions notifier',
+    } on Exception catch (e, _) {
+      _errorNotifier.set(
+        e is SocketException
+            ? 'Bad internet connection. Try again.'
+            : 'Something went wrong. Try agian.',
       );
+
       screenState = null;
       notifyListeners();
       return [];

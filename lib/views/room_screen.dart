@@ -1,7 +1,7 @@
 import 'package:anonymous_chat/models/activity_status.dart';
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/room.dart';
-import 'package:anonymous_chat/models/user.dart';
+import 'package:anonymous_chat/database_entities/user_entity.dart';
 import 'package:anonymous_chat/providers/activity_status_provider.dart';
 import 'package:anonymous_chat/providers/blocked_contacts_provider.dart';
 import 'package:anonymous_chat/providers/chat_provider.dart';
@@ -15,25 +15,24 @@ import 'package:anonymous_chat/utilities/extrentions.dart';
 import 'package:anonymous_chat/widgets/shaded_container.dart';
 import 'package:anonymous_chat/widgets/typing_indicator.dart';
 
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ChatRoom extends StatefulWidget {
+class ChatRoomScreen extends StatefulWidget {
   final Room room;
 
-  const ChatRoom({
+  const ChatRoomScreen({
     required this.room,
   });
 
   @override
-  _ChatRoomState createState() => _ChatRoomState();
+  _ChatRoomScreenState createState() => _ChatRoomScreenState();
 }
 
-class _ChatRoomState extends State<ChatRoom> {
+class _ChatRoomScreenState extends State<ChatRoomScreen> {
   User get other =>
-      widget.room.users!.firstWhere((u) => u.id != LocalStorage().user!.id);
+      widget.room.users.firstWhere((u) => u.id != SharedPrefs().user!.id);
 
   @override
   void initState() {
@@ -52,7 +51,7 @@ class _ChatRoomState extends State<ChatRoom> {
 
   @override
   Widget build(BuildContext context) {
-    ApplicationStyle style = InheritedAppTheme.of(context).style;
+    AppStyle style = AppTheming.of(context).style;
     return Scaffold(
       backgroundColor: style.backgroundColor,
       body: Consumer(builder: (context, watch, _) {
@@ -148,7 +147,6 @@ class _ChatRoomState extends State<ChatRoom> {
                         onSendPressed: (String value) {
                           chatNotifier.onSendPressed(text: value);
                         },
-                    
                         replyMessage: chatNotifier.replyingOn,
                         onCancelReply: chatNotifier.onCancelReply,
                         isContactBlocked: blockedContacts.contains(other),

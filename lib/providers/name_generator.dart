@@ -1,27 +1,28 @@
+import 'dart:io';
 import 'dart:math';
 
-import 'package:anonymous_chat/models/user.dart';
+import 'package:anonymous_chat/database_entities/user_entity.dart';
+import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
 import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/providers/loading_provider.dart';
 import 'package:anonymous_chat/services.dart/firestore.dart';
-import 'package:anonymous_chat/services.dart/local_storage.dart';
-
-import 'package:flutter/material.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:flutter/material.dart';
 
 const _kloadingTime = Duration(seconds: 2);
 
 final nameGeneratorProvider = ChangeNotifierProvider.autoDispose(
   (ref) => NameGeneratorNotifier(
-    ref.read(errorsProvider.notifier),
+    ref.read(errorsStateProvider.notifier),
     ref.read(loadingProvider.notifier),
   ),
 );
 
 class NameGeneratorNotifier extends ChangeNotifier {
-  final ErrorNotifier _errorNotifier;
-  final LoadingNotifer _loadingNotifier;
+  final ErrorsNotifier _errorNotifier;
+  final LoadingNotifier _loadingNotifier;
 
   NameGeneratorNotifier(
     this._errorNotifier,
@@ -56,26 +57,25 @@ class NameGeneratorNotifier extends ChangeNotifier {
 
   Future<bool> onProceedPressed() async {
     try {
-      _loadingNotifier.isLoading = true;
-      final LocalStorage storage = LocalStorage();
+      _loadingNotifier.loading = true;
+      final storage = ILocalStorage.storage;
       final User user = storage.user!;
+// TODO: handle
+      // User newUser = user.updateNickname(
+      //   nickname: '$color$animal$number',
+      // );
 
-      User newUser = user.copyWith(
-        nickname: '$color$animal$number',
-      );
+      await FirestoreService().saveUserData(user: user);
+      await storage.setUser(user);
 
-      await FirestoreService().saveUserData(user: newUser);
-      await storage.setUser(newUser);
-
-      _loadingNotifier.isLoading = false;
+      _loadingNotifier.loading = false;
       return true;
-    } on Exception catch (e, s) {
-      _errorNotifier.setError(
-        exception: e,
-        stackTrace: s,
-        hint: 'Name Generator Error',
-      );
-      _loadingNotifier.isLoading = false;
+    } on Exception catch (e, _) {
+      _errorNotifier.set(e is SocketException
+          ? 'Bad internet connection. Try again.'
+          : 'An error occured. Try again please');
+
+      _loadingNotifier.loading = false;
       return false;
     }
   }

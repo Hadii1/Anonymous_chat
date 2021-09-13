@@ -85,7 +85,7 @@ class _TypingIndicatorState extends State<TypingIndicator>
 
   @override
   Widget build(BuildContext context) {
-    ApplicationStyle style = InheritedAppTheme.of(context).style;
+    AppStyle style = AppTheming.of(context).style;
     return AnimatedBuilder(
       animation: _indicatorSpaceAnimation,
       builder: (context, _) {

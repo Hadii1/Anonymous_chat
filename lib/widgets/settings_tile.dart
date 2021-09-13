@@ -29,7 +29,7 @@ class SettingTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    ApplicationStyle style = InheritedAppTheme.of(context).style;
+    AppStyle style = AppTheming.of(context).style;
     return InkWell(
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,

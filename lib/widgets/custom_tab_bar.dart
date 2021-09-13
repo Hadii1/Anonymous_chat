@@ -39,7 +39,7 @@ class _CustomTabBarState extends State<CustomTabBar> {
 
   @override
   Widget build(BuildContext context) {
-    final style = InheritedAppTheme.of(context).style;
+    final style = AppTheming.of(context).style;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

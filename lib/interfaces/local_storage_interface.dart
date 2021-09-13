@@ -12,10 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:anonymous_chat/models/user.dart';
+import 'package:anonymous_chat/database_entities/user_entity.dart';
+import 'package:anonymous_chat/services.dart/local_storage.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 
-abstract class ILocalStorasge {
+abstract class ILocalStorage {
+  static ILocalStorage get storage => SharedPrefs();
+  
   User? get user;
   Future<void> setUser(User? user);
 

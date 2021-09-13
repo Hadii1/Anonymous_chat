@@ -12,19 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:anonymous_chat/models/user.dart';
-import 'package:anonymous_chat/providers/errors_provider.dart';
+import 'package:anonymous_chat/interfaces/database_interface.dart';
+import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
 import 'package:anonymous_chat/providers/user_rooms_provider.dart';
-import 'package:anonymous_chat/services.dart/local_storage.dart';
+import 'package:anonymous_chat/utilities/general_functions.dart';
+import 'package:anonymous_chat/models/room.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:anonymous_chat/models/room.dart';
-import 'package:anonymous_chat/services.dart/firestore.dart';
-
 final archivedRoomsProvider =
-    StateNotifierProvider.autoDispose<ArchivedRoomsNotifier, List<Room>?>(
+    StateNotifierProvider<ArchivedRoomsNotifier, List<Room>?>(
   (ref) => ArchivedRoomsNotifier(
-    errorNotifier: ref.read(errorsProvider.notifier),
     userRooms: ref.watch(userRoomsProvider),
   ),
 );
@@ -33,20 +31,18 @@ class ArchivedRoomsNotifier extends StateNotifier<List<Room>?> {
   final List<Room>? userRooms;
 
   ArchivedRoomsNotifier({
-    required this.errorNotifier,
     required this.userRooms,
   }) : super(null) {
     init();
   }
 
-  final ErrorNotifier errorNotifier;
-  final firestore = FirestoreService();
-  final storage = LocalStorage();
+  final db = IDatabase.databseService;
+  final storage = ILocalStorage.storage;
 
   List<Room>? archivedRooms = [];
 
   void init() async {
-    try {
+    retry(f: () async {
       if (userRooms == null) {
         state = null;
         return;
@@ -54,39 +50,28 @@ class ArchivedRoomsNotifier extends StateNotifier<List<Room>?> {
         state = [];
         return;
       } else {
-        Map<String, dynamic> data =
-            await firestore.getUserData(id: storage.user!.id);
-        User user = User.fromMap(data);
+        List<String> userArchivedRooms =
+            await db.getUserArchivedRooms(userId: storage.user!.id);
 
         archivedRooms = userRooms
-            ?.where((room) => user.archivedRooms.contains(room.id))
+            ?.where((room) => userArchivedRooms.contains(room.id))
             .toList();
 
         state = archivedRooms;
       }
-    } on Exception catch (e, s) {
-      Future.delayed(Duration(seconds: 2)).then((value) => init());
-
-      errorNotifier.submitError(exception: e, stackTrace: s);
-    }
+    });
   }
 
   void editArchives({required Room room, required bool archive}) {
-    try {
-      if (archive) {
-        firestore.archiveChat(userId: storage.user!.id, roomId: room.id);
-        archivedRooms!.add(room);
-        state = archivedRooms;
-      } else {
-        firestore.unArchiveChat(userId: storage.user!.id, roomId: room.id);
-        archivedRooms!.remove(room);
-        state = archivedRooms;
-      }
-    } on Exception catch (e, s) {
-      Future.delayed(Duration(seconds: 2))
-          .then((value) => editArchives(room: room, archive: archive));
-
-      errorNotifier.submitError(exception: e, stackTrace: s);
+    if (archive) {
+      retry(f: () => db.archiveChat(userId: storage.user!.id, roomId: room.id));
+      archivedRooms!.add(room);
+      state = archivedRooms;
+    } else {
+      retry(
+          f: () => db.unArchiveChat(userId: storage.user!.id, roomId: room.id));
+      archivedRooms!.remove(room);
+      state = archivedRooms;
     }
   }
 }

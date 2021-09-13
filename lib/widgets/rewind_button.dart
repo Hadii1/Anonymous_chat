@@ -7,7 +7,7 @@ class RewindButton extends StatelessWidget {
   const RewindButton({required this.onPressed});
   @override
   Widget build(BuildContext context) {
-    final style = InheritedAppTheme.of(context).style;
+    final style = AppTheming.of(context).style;
     return Container(
       width: 70,
       height: 70,

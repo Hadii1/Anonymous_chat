@@ -1,16 +1,15 @@
+import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
 import 'package:anonymous_chat/models/room.dart';
 import 'package:anonymous_chat/models/tag.dart';
-import 'package:anonymous_chat/models/user.dart';
-import 'package:anonymous_chat/services.dart/firestore.dart';
-import 'package:anonymous_chat/services.dart/local_storage.dart';
+import 'package:anonymous_chat/database_entities/user_entity.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/views/room_screen.dart';
 
+import 'package:tuple/tuple.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:observable_ish/observable_ish.dart';
-import 'package:tuple/tuple.dart';
 
 class SuggestedContact extends StatelessWidget {
   final Tuple2<User, List<Tag>> data;
@@ -24,20 +23,8 @@ class SuggestedContact extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    ApplicationStyle style = InheritedAppTheme.of(context).style;
-    String id = FirestoreService().getRoomReference();
-    Room defaultRoom = Room(
-      id: id,
-      messages: RxList(),
-      participants: [
-        LocalStorage().user!.id,
-        suggestedUser.id,
-      ],
-      users: [
-        LocalStorage().user!,
-        suggestedUser,
-      ],
-    );
+    AppStyle style = AppTheming.of(context).style;
+
     return Consumer(
       builder: (context, watch, _) {
         return InkWell(
@@ -47,8 +34,11 @@ class SuggestedContact extends StatelessWidget {
             Navigator.of(context).push(
               CupertinoPageRoute(
                 builder: (c) {
-                  return ChatRoom(
-                    room: defaultRoom,
+                  return ChatRoomScreen(
+                    room: Room.startNew([
+                      ILocalStorage.storage.user!,
+                      suggestedUser,
+                    ]),
                   );
                 },
               ),
@@ -107,7 +97,7 @@ class SuggestedContact extends StatelessWidget {
                           child: Text(
                             commonTags[index].label,
                             style: style.bodyText.copyWith(
-                              color: ApplicationStyle.secondaryTextColor,
+                              color: AppStyle.secondaryTextColor,
                             ),
                           ),
                         ),

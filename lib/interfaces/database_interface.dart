@@ -1,17 +1,20 @@
 import 'dart:async';
 
+import 'package:anonymous_chat/database_entities/room_entity.dart';
 import 'package:anonymous_chat/models/message.dart';
-import 'package:anonymous_chat/models/room.dart';
 import 'package:anonymous_chat/models/tag.dart';
-import 'package:anonymous_chat/models/user.dart';
+import 'package:anonymous_chat/database_entities/user_entity.dart';
+import 'package:anonymous_chat/services.dart/firestore.dart';
 import 'package:anonymous_chat/utilities/enums.dart';
 
 import 'package:tuple/tuple.dart';
 
 abstract class IDatabase {
+  static IDatabase get databseService => FirestoreService();
+
   Future<void> saveUserData({required User user});
 
-  Future<void> saveNewRoom({required Room room});
+  Future<void> saveNewRoom({required RoomEntity roomEntity});
 
   Future<Map<String, dynamic>> getUserData({required String id});
 
@@ -19,13 +22,19 @@ abstract class IDatabase {
 
   Future<List<Map<String, dynamic>>> getUserRooms({required String userId});
 
+  Future<List<String>> getUserArchivedRooms({required String userId});
+
+  Future<List<String>> getBlockedContacts({required String userId});
+
   Future<List<Map<String, dynamic>>> getAllMessages({required String roomId});
 
   Stream<List<Tuple2<Map<String, dynamic>, RoomChangeType>>> userRooms({
     required String userId,
   });
 
-  Future<List<Map<String, dynamic>?>> getMatchingUsers(
+  void markMessageAsRead({required String roomId, required String messageId});
+
+  Future<List<Map<String, dynamic>>> getMatchingUsers(
       {required List<String> tagsIds});
 
   Future<void> deleteAccount({required String userId});
@@ -43,14 +52,6 @@ abstract class IDatabase {
   Future<void> deactivateTag({required Tag tag, required String userId});
 
   Future<void> activateTag({required Tag tag, required String userId});
-
-  String getRoomReference();
-
-  String getTagReference();
-
-  String getMessageReference({
-    required String roomId,
-  });
 
   Future<void> deleteChat({required String roomId});
 

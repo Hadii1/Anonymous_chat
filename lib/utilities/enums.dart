@@ -15,7 +15,6 @@
 enum RoomChangeType {
   added,
   delete,
-  edited,
 }
 
 enum UserState {

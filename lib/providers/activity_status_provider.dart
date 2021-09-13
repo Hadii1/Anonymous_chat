@@ -14,8 +14,9 @@
 
 import 'dart:async';
 
+import 'package:anonymous_chat/interfaces/database_interface.dart';
+import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
 import 'package:anonymous_chat/models/activity_status.dart';
-import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/services.dart/firestore.dart';
 import 'package:anonymous_chat/services.dart/local_storage.dart';
 
@@ -36,7 +37,7 @@ class ContactActivityState extends StateNotifier<ActivityStatus> {
   }
 
   final String otherId;
-  final String userId = LocalStorage().user!.id;
+  final String userId = SharedPrefs().user!.id;
   late StreamSubscription subscription;
 
   void init() {
@@ -61,31 +62,23 @@ class ContactActivityState extends StateNotifier<ActivityStatus> {
   }
 }
 
-final userActivityStateProvider = StateNotifierProvider.autoDispose<UserActivityState,ActivityStatus>(
-  (ref) => UserActivityState(
-    errorNotifier: ref.read(errorsProvider.notifier),
-  ),
+final userActivityStateProvider =
+    StateNotifierProvider.autoDispose<UserActivityState, ActivityStatus>(
+  (ref) => UserActivityState(),
 );
 
 class UserActivityState extends StateNotifier<ActivityStatus> {
-  UserActivityState({
-    required this.errorNotifier,
-  }) : super(ActivityStatus.online());
+  UserActivityState() : super(ActivityStatus.online());
 
-  final ErrorNotifier errorNotifier;
-  final String? userId = LocalStorage().user?.id;
-  final FirestoreService _firestoreService = FirestoreService();
+  final String? userId = ILocalStorage.storage.user?.id;
+  final IDatabase db = IDatabase.databseService;
 
   Future<void> set({required ActivityStatus activityStatus}) async {
-    try {
-      if (userId != null) {
-        return _firestoreService.updateUserStatus(
-          userId: userId!,
-          status: activityStatus.toMap(),
-        );
-      }
-    } on Exception catch (e, s) {
-      errorNotifier.submitError(exception: e, stackTrace: s);
+    if (userId != null) {
+      return db.updateUserStatus(
+        userId: userId!,
+        status: activityStatus.toMap(),
+      );
     }
   }
 }

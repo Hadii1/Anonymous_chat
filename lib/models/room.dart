@@ -1,52 +1,25 @@
 import 'package:anonymous_chat/models/message.dart';
-import 'package:anonymous_chat/models/user.dart';
+import 'package:anonymous_chat/database_entities/user_entity.dart';
+import 'package:anonymous_chat/utilities/general_functions.dart';
 import 'package:observable_ish/observable_ish.dart';
 
 class Room {
   final RxList<Message> messages;
-  final List<String> participants;
-  final List<User>? users;
+  final List<User> users;
   final String id;
 
   Room({
-    this.users,
+    required this.users,
     required this.messages,
-    required this.participants,
     required this.id,
   });
 
-  // Room copyWith({
-  //   List<Message>? messages,
-  //   List<String>? participants,
-  //   String? id,
-  //   List<User>? users,
-  // }) {
-  //   return Room(
-  //     messages: messages ?? this.messages,
-  //     users: users ?? this.users,
-  //     participants: participants ?? this.participants,
-  //     id: id ?? this.id,
-  //   );
-  // }
-
-  Map<String, dynamic> toFirestoreMap() {
-    return {
-      'participants': participants,
-      'id': id,
-    };
-  }
-
-  factory Room.fromFirestoreMap(Map<String, dynamic> map) {
+  factory Room.startNew(List<User> users) {
     return Room(
-      participants: List<String>.from(map['participants']),
-      messages: RxList(),
-      id: map['id'],
+      messages: RxList<Message>(),
+      id: generateUid(),
+      users: users,
     );
-  }
-
-  @override
-  String toString() {
-    return 'Room(messages: $messages, participants: $participants, users: $users, id: $id)';
   }
 
   @override
@@ -58,9 +31,6 @@ class Room {
 
   @override
   int get hashCode {
-    return messages.hashCode ^
-        participants.hashCode ^
-        users.hashCode ^
-        id.hashCode;
+    return messages.hashCode ^ users.hashCode ^ id.hashCode;
   }
 }

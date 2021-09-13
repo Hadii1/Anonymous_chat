@@ -8,8 +8,8 @@ enum ThemeState {
   light,
 }
 
-class ApplicationStyle {
-  ApplicationStyle({
+class AppStyle {
+  AppStyle({
     required this.accentColor,
     required this.backgroundColor,
     required this.chipCheckColor,
@@ -33,6 +33,7 @@ class ApplicationStyle {
     required this.title3Style,
     required this.smallTextStyle,
     required this.appBarTextStyle,
+    required this.dimmedColorText,
     required this.backgroundContrastColor,
   });
 
@@ -41,8 +42,8 @@ class ApplicationStyle {
   static const foggy = Color(0xff767676);
   static const secondaryTextColor = Colors.white54;
 
-  // static const green = Color(0xff00bc48);
   static const ambientYellow = Color(0xff00FFC1);
+  // static const ambientYellow = Color(0xffffe600);
 
   final Color accentColor;
   final Color backgroundColor;
@@ -59,6 +60,7 @@ class ApplicationStyle {
   final Color borderColor;
   final Color iconColors;
   final Color loadingBarColor;
+  final Color dimmedColorText;
 
   final Color sentMessageBubbleColor;
   final Color receivedMessageBubbleColor;
@@ -73,7 +75,7 @@ class ApplicationStyle {
   final TextStyle appBarTextStyle;
   final TextStyle title3Style;
 
-  static final ApplicationStyle darkStyle = ApplicationStyle(
+  static final AppStyle darkStyle = AppStyle(
     appBarColor: lightBlack,
     chatBubbleTextColor: Colors.white,
     chatHeaderMsgTime: foggy,
@@ -94,36 +96,43 @@ class ApplicationStyle {
     smallTextStyle: TextStyle(
       color: foggy,
       fontSize: 13,
+      fontFamily: 'SourceSansPro',
     ),
     titleStyle: TextStyle(
       color: Colors.white,
-      fontSize: 28,
-      fontWeight: FontWeight.bold,
-      wordSpacing: 1.5,
+      fontSize: 32,
+      fontWeight: FontWeight.w800,
+      fontFamily: 'SourceSansPro',
+      wordSpacing: 1.2,
     ),
     appBarTextStyle: TextStyle(
       fontSize: 21,
+      fontFamily: 'Playfair',
       color: Colors.white,
     ),
     title2Style: TextStyle(
       color: Colors.white,
-      fontFamily: 'Montserat',
+      fontFamily: 'SourceSansPro',
       fontSize: 21,
       wordSpacing: 1.2,
-      fontWeight: FontWeight.bold,
+      fontWeight: FontWeight.w600,
     ),
     title3Style: TextStyle(
       color: Colors.white,
       fontSize: 16,
       wordSpacing: 1.2,
+      fontFamily: 'SourceSansPro',
     ),
     bodyText: TextStyle(
       color: Colors.white,
+      fontFamily: 'SourceSansPro',
       fontSize: 14,
     ),
+    dimmedColorText: Colors.white.withOpacity(0.6),
     chatHeaderLetter: TextStyle(
       color: Colors.white,
       fontSize: 24,
+      fontFamily: 'Playfair',
       fontWeight: FontWeight.bold,
     ),
   );
@@ -139,26 +148,26 @@ class AppTheme extends StatefulWidget {
 }
 
 class _AppThemeState extends State<AppTheme> {
-  ApplicationStyle _style = ApplicationStyle.darkStyle;
+  AppStyle _style = AppStyle.darkStyle;
 
   void toggleTheme() {
     setState(() {
-      ThemeState currentTheme = LocalStorage().preferedTheme;
+      ThemeState currentTheme = SharedPrefs().preferedTheme;
       if (currentTheme == ThemeState.dark) {
-        LocalStorage().preferedTheme = ThemeState.light;
+        SharedPrefs().preferedTheme = ThemeState.light;
         SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
-        _style = ApplicationStyle.darkStyle;
+        _style = AppStyle.darkStyle;
       } else {
-        LocalStorage().preferedTheme = ThemeState.dark;
+        SharedPrefs().preferedTheme = ThemeState.dark;
         SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
-        _style = ApplicationStyle.darkStyle;
+        _style = AppStyle.darkStyle;
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return InheritedAppTheme(
+    return AppTheming(
       child: widget.child,
       style: _style,
       state: this,
@@ -166,28 +175,28 @@ class _AppThemeState extends State<AppTheme> {
   }
 }
 
-class InheritedAppTheme extends InheritedWidget {
-  InheritedAppTheme({
+class AppTheming extends InheritedWidget {
+  AppTheming({
     required this.child,
     required this.style,
     required this.state,
   }) : super(child: child);
 
   final Widget child;
-  final ApplicationStyle style;
+  final AppStyle style;
   final _AppThemeState state;
 
-  static InheritedAppTheme of(BuildContext context) {
-    return context.dependOnInheritedWidgetOfExactType<InheritedAppTheme>() ??
-        InheritedAppTheme(
+  static AppTheming of(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<AppTheming>() ??
+        AppTheming(
           child: SizedBox.shrink(),
-          style: ApplicationStyle.darkStyle,
+          style: AppStyle.darkStyle,
           state: _AppThemeState(),
         );
   }
 
   @override
-  bool updateShouldNotify(InheritedAppTheme oldWidget) {
+  bool updateShouldNotify(AppTheming oldWidget) {
     return oldWidget.style != this.style;
   }
 }

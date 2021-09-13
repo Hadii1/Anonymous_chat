@@ -1,4 +1,5 @@
-import 'package:anonymous_chat/models/user.dart';
+import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
+import 'package:anonymous_chat/database_entities/user_entity.dart';
 import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/services.dart/algolia.dart';
 import 'package:anonymous_chat/services.dart/authentication.dart';
@@ -11,46 +12,44 @@ import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/widgets/error_notification.dart';
 import 'package:anonymous_chat/widgets/loading_widget.dart';
 
-import 'package:firebase_core/firebase_core.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-
 
 final appInitialzationProvider =
     FutureProvider.autoDispose<UserState>((ref) async {
   await Firebase.initializeApp();
-  await LocalStorage.init();
+  await SharedPrefs.init();
   await AlgoliaSearch.init();
   await NotificationsService.init();
 
-  // await AuthService().signOut();
+  // await FirebaseAuthService().signOut();
 
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
-  final bool _isAuthenticated = AuthService().isAuthenticated();
-  late bool _isNicknamed;
+  final storage = ILocalStorage.storage;
 
-  if (_isAuthenticated && LocalStorage().user == null) {
+  final bool isAuthenticated = FirebaseAuthService().getUser() != null;
+  bool isNicknamed = false;
+
+  if (isAuthenticated && storage.user == null) {
     Map<String, dynamic> data = await FirestoreService().getUserData(
-      id: AuthService().userId()!,
+      id: FirebaseAuthService().getUser()!.uid,
     );
     User user = User.fromMap(data);
-    await LocalStorage().setUser(user);
+    await storage.setUser(user);
   }
 
-  if (_isAuthenticated) {
-    _isNicknamed = LocalStorage().user!.nickname.isNotEmpty;
-  } else {
-    _isNicknamed = false;
+  if (isAuthenticated) {
+    isNicknamed = storage.user!.nickname != null;
   }
 
-  if (_isAuthenticated) {
-    return _isNicknamed
+  if (isAuthenticated) {
+    return isNicknamed
         ? UserState.userAuthenticatedAndNicknamed
         : UserState.userAuthenticated;
   } else {
@@ -89,11 +88,9 @@ class InitializaitonScreen extends StatelessWidget {
               ),
             ),
             error: (e, s) {
-              context.read(errorsProvider.notifier).setError(
-                    exception: e,
-                    stackTrace: s,
-                    hint: 'Error in app initializing',
-                  );
+              context
+                  .read(errorsStateProvider.notifier)
+                  .set('An error occured. Trying again.');
 
               Future.delayed(Duration(seconds: 2))
                   .then((_) => context.refresh(appInitialzationProvider));

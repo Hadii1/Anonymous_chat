@@ -1,5 +1,6 @@
 import 'package:anonymous_chat/models/room.dart';
-import 'package:anonymous_chat/models/user.dart';
+import 'package:anonymous_chat/database_entities/user_entity.dart';
+import 'package:anonymous_chat/providers/archived_rooms_provider.dart';
 import 'package:anonymous_chat/providers/blocked_contacts_provider.dart';
 import 'package:anonymous_chat/providers/chat_provider.dart';
 import 'package:anonymous_chat/providers/user_rooms_provider.dart';
@@ -25,7 +26,7 @@ class ChatsScreen extends StatefulWidget {
 class _ChatsScreenState extends State<ChatsScreen> {
   @override
   Widget build(BuildContext context) {
-    ApplicationStyle style = InheritedAppTheme.of(context).style;
+    AppStyle style = AppTheming.of(context).style;
     return Consumer(
       builder: (context, watch, _) {
         List<Room>? chatRooms = watch(chatsListProvider);
@@ -33,10 +34,14 @@ class _ChatsScreenState extends State<ChatsScreen> {
         List<User>? blockedBy = watch(blockedByProvider);
 
         List<User>? blockedContacts = watch(blockedContactsProvider);
+
+        List<Room>? archivedRooms = watch(archivedRoomsProvider);
+
         return AnimatedSwitcher(
           duration: Duration(milliseconds: 350),
           child: () {
             if (chatRooms == null ||
+                archivedRooms == null ||
                 blockedBy == null ||
                 blockedContacts == null) {
               return Center(

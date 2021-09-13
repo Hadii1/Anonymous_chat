@@ -1,13 +1,15 @@
 import 'dart:async';
 
+import 'package:anonymous_chat/database_entities/room_entity.dart';
 import 'package:anonymous_chat/interfaces/database_interface.dart';
 import 'package:anonymous_chat/models/message.dart';
-import 'package:anonymous_chat/models/room.dart';
 import 'package:anonymous_chat/models/tag.dart';
-import 'package:anonymous_chat/models/user.dart';
+import 'package:anonymous_chat/database_entities/user_entity.dart';
+import 'package:anonymous_chat/utilities/custom_exceptions.dart';
 import 'package:anonymous_chat/utilities/enums.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'package:tuple/tuple.dart';
 
 class FirestoreService implements IDatabase {
@@ -34,6 +36,11 @@ class FirestoreService implements IDatabase {
 
   @override
   Future<void> deleteChat({required String roomId}) async {
+    QuerySnapshot<Map<String, dynamic>> a =
+        await _db.collection('Rooms').doc(roomId).collection('Messages').get();
+    for (QueryDocumentSnapshot<Map<String, dynamic>> s in a.docs) {
+      await s.reference.delete();
+    }
     await _db.collection('Rooms').doc(roomId).delete();
   }
 
@@ -42,8 +49,14 @@ class FirestoreService implements IDatabase {
     required String client,
     required String other,
   }) async {
-    await _db.collection('Users').doc(client).update({
-      'blockedUsers': FieldValue.arrayUnion([other])
+    await _db
+        .collection('Users')
+        .doc(client)
+        .collection('Blocked Users')
+        .doc(other)
+        .set({
+      'blocking user': client,
+      'blocked user': other,
     });
   }
 
@@ -51,9 +64,12 @@ class FirestoreService implements IDatabase {
     required String client,
     required String other,
   }) async {
-    await _db.collection('Users').doc(client).update({
-      'blockedUsers': FieldValue.arrayRemove([other])
-    });
+    await _db
+        .collection('Users')
+        .doc(client)
+        .collection('Blocked Users')
+        .doc(other)
+        .delete();
   }
 
   @override
@@ -92,8 +108,11 @@ class FirestoreService implements IDatabase {
                   type = RoomChangeType.added;
                   break;
                 case DocumentChangeType.modified:
-                  type = RoomChangeType.edited;
-                  break;
+                  throw CustomException(
+                    INVALID_ROOM_CHANGE_TYPE,
+                    details:
+                        'User room change type was EDIT, only ADD and REMOVE are granted.',
+                  );
                 case DocumentChangeType.removed:
                   type = RoomChangeType.delete;
                   break;
@@ -107,8 +126,8 @@ class FirestoreService implements IDatabase {
   @override
   Stream<List<String>> blockedByStream({required String userId}) {
     return _db
-        .collection('Users')
-        .where('blockedUsers', arrayContains: userId)
+        .collection('Blocked Users')
+        .where('blocked user', isEqualTo: userId)
         .snapshots()
         .map(
           (QuerySnapshot<Map<String, dynamic>> querySnapshot) => querySnapshot
@@ -267,6 +286,7 @@ class FirestoreService implements IDatabase {
         .map(
           (QuerySnapshot<Map<String, dynamic>> event) => event.docChanges
               .where((element) => !element.doc.metadata.isFromCache)
+              .where((element) => element.type != DocumentChangeType.removed)
               .map(
                 (DocumentChange<Map<String, dynamic>> e) => e.doc.data()!,
               )
@@ -284,24 +304,13 @@ class FirestoreService implements IDatabase {
   }
 
   @override
-  Future<void> saveNewRoom({required Room room}) async {
-    await _db.collection('Rooms').doc(room.id).set(
-          room.toFirestoreMap(),
+  Future<void> saveNewRoom({required RoomEntity roomEntity}) async {
+    await _db.collection('Rooms').doc(roomEntity.id).set(
+          roomEntity.toMap(),
         );
   }
 
   @override
-  String getRoomReference() => _db.collection('Rooms').doc().id;
-
-  @override
-  String getMessageReference({
-    required String roomId,
-  }) =>
-      _db.collection('Rooms').doc(roomId).collection('Messages').doc().id;
-
-  @override
-  String getTagReference() => _db.collection('Tags').doc().id;
-
   void markMessageAsRead({required String roomId, required String messageId}) {
     _db
         .collection('Rooms')
@@ -348,24 +357,22 @@ class FirestoreService implements IDatabase {
   @override
   Future<void> archiveChat(
           {required String userId, required String roomId}) async =>
-      await _db.collection('Users').doc(userId).update(
-        {
-          'archivedRooms': FieldValue.arrayUnion(
-            [roomId],
-          )
-        },
-      );
+      await _db
+          .collection('Users')
+          .doc(userId)
+          .collection('Archived Rooms')
+          .doc(roomId)
+          .set({});
 
   @override
   Future<void> unArchiveChat(
           {required String userId, required String roomId}) async =>
-      await _db.collection('Users').doc(userId).update(
-        {
-          'archivedRooms': FieldValue.arrayRemove(
-            [roomId],
-          )
-        },
-      );
+      await _db
+          .collection('Users')
+          .doc(userId)
+          .collection('Archived Rooms')
+          .doc(roomId)
+          .delete();
 
   @override
   Stream<Map<String, dynamic>> activityStatusStream({required String id}) {
@@ -382,5 +389,25 @@ class FirestoreService implements IDatabase {
         .collection('Users')
         .doc(userId)
         .set({'activityStatus': status}, SetOptions(merge: true));
+  }
+
+  @override
+  Future<List<String>> getUserArchivedRooms({required String userId}) async {
+    QuerySnapshot<Map<String, dynamic>> querySnapshot = await _db
+        .collection('Users')
+        .doc(userId)
+        .collection('Archived Rooms')
+        .get();
+    return querySnapshot.docs.map((e) => e.id).toList();
+  }
+
+  @override
+  Future<List<String>> getBlockedContacts({required String userId}) async {
+    QuerySnapshot<Map<String, dynamic>> querySnapshot = await _db
+        .collection('Users')
+        .doc(userId)
+        .collection('Blocked Contacts')
+        .get();
+    return querySnapshot.docs.map((e) => e.id).toList();
   }
 }
