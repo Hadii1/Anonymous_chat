@@ -31,5 +31,7 @@ abstract class IAuth<AuthCredential, User, UserCredential> {
 
   User? getUser();
 
+  String? getId();
+
   Future<void> signOut();
 }

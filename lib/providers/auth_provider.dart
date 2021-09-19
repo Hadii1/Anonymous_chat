@@ -1,52 +1,42 @@
 import 'dart:io';
 
+import 'package:anonymous_chat/database_entities/user_entity.dart';
 import 'package:anonymous_chat/interfaces/auth_interface.dart';
 import 'package:anonymous_chat/interfaces/database_interface.dart';
-import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
-import 'package:anonymous_chat/database_entities/user_entity.dart' as _local;
 import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/providers/loading_provider.dart';
 import 'package:anonymous_chat/services.dart/authentication.dart';
-import 'package:anonymous_chat/utilities/general_functions.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:flutter/foundation.dart';
 
-// 76868011
-enum DestinationAfterSuccessfulAuth {
-  NameGeneratorScreen,
-  HomeScreen,
-}
-
-final destinationScreenProvider = StateNotifierProvider.autoDispose<
-    DesitnationState, DestinationAfterSuccessfulAuth?>(
-  (_) => DesitnationState(),
+final navigationSignal =
+    StateNotifierProvider.autoDispose<NavigationSignalNotifier, bool>(
+  (_) => NavigationSignalNotifier(),
 );
 
-class DesitnationState extends StateNotifier<DestinationAfterSuccessfulAuth?> {
-  DesitnationState() : super(null);
+class NavigationSignalNotifier extends StateNotifier<bool> {
+  NavigationSignalNotifier() : super(false);
 
-  void set(DestinationAfterSuccessfulAuth destination) => state = destination;
+  set navigate(bool navigate) => state = navigate;
 }
 
 final phoneVerificationProvider = ChangeNotifierProvider.autoDispose(
   (ref) => PhoneVerificationNotifier(
     ref.read(errorsStateProvider.notifier),
     ref.read(loadingProvider.notifier),
-    ref.read(destinationScreenProvider.notifier),
+    ref.read(navigationSignal.notifier),
   ),
 );
 
 class PhoneVerificationNotifier extends ChangeNotifier {
   final ErrorsNotifier _errorNotifier;
   final LoadingNotifier _loadingNotifier;
-  final DesitnationState _desitnationNotifier;
+  final NavigationSignalNotifier _navigationSignal;
 
   final FirebaseAuthService _auth = (IAuth.auth as FirebaseAuthService);
-  final IDatabase _db = IDatabase.databseService;
-  final ILocalStorage _storage = ILocalStorage.storage;
 
   String number = '';
 
@@ -57,7 +47,7 @@ class PhoneVerificationNotifier extends ChangeNotifier {
   PhoneVerificationNotifier(
     this._errorNotifier,
     this._loadingNotifier,
-    this._desitnationNotifier,
+    this._navigationSignal,
   );
 
   void onSendCodePressed() {
@@ -68,7 +58,6 @@ class PhoneVerificationNotifier extends ChangeNotifier {
       return;
     }
 
-    number = '+1' + number;
     number.trim();
 
     _auth.verifyPhoneNumber(
@@ -111,9 +100,7 @@ class PhoneVerificationNotifier extends ChangeNotifier {
 
     try {
       assert((code == null && phoneAuthCredential == null) == false);
-      late UserCredential credential;
-
-      credential = phoneAuthCredential != null
+      UserCredential credentail = phoneAuthCredential != null
           ? await _auth.signInWithPhoneCredential(
               credential: phoneAuthCredential)
           : await _auth.signInWithPhoneCredential(
@@ -121,39 +108,15 @@ class PhoneVerificationNotifier extends ChangeNotifier {
               code: code!,
             );
 
-      Map<String, dynamic>? userData;
-      bool isNewUser = credential.additionalUserInfo!.isNewUser;
+      IDatabase db = IDatabase.databseService;
+      await db.saveUserData(
+        user: LocalUser.newlyCreated(
+          id: credentail.user!.uid,
+          phoneNumber: number,
+        ),
+      );
 
-      if (!isNewUser)
-        userData = await _db.getUserData(id: credential.user!.uid);
-
-      if (isNewUser || userData == null) {
-        // _local.User user = _local.User(
-        //   phoneNumber: number,
-        //   id: credential.user!.uid,
-        // );
-
-        // await retry(
-        //   f: () async {
-        //     _db.saveUserData(
-        //       user: user,
-        //     );
-        //   },
-        // );
-
-        // await _storage.setUser(user);
-
-        _desitnationNotifier
-            .set(DestinationAfterSuccessfulAuth.NameGeneratorScreen);
-      } else {
-        _local.User user = _local.User.fromMap(userData);
-
-        await _storage.setUser(user);
-
-        _desitnationNotifier.set(DestinationAfterSuccessfulAuth.HomeScreen);
-      }
-
-      notifyListeners();
+      _navigationSignal.navigate = true;
     } on Exception catch (e) {
       if (e is FirebaseAuthException && e.code == 'invalid-verification-code')
         _errorNotifier.set('Invalid code.');

@@ -5,7 +5,7 @@ import 'package:observable_ish/observable_ish.dart';
 
 class Room {
   final RxList<Message> messages;
-  final List<User> users;
+  final List<LocalUser> users;
   final String id;
 
   Room({
@@ -14,7 +14,7 @@ class Room {
     required this.id,
   });
 
-  factory Room.startNew(List<User> users) {
+  factory Room.startNew(List<LocalUser> users) {
     return Room(
       messages: RxList<Message>(),
       id: generateUid(),

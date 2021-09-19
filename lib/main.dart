@@ -9,7 +9,7 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(
     ProviderScope(
-      child: InitializaitonScreen(),
+      child: SplashScreen(),
     ),
   );
 }

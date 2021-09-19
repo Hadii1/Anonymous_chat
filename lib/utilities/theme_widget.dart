@@ -113,13 +113,13 @@ class AppStyle {
     title2Style: TextStyle(
       color: Colors.white,
       fontFamily: 'SourceSansPro',
-      fontSize: 21,
+      fontSize: 23,
       wordSpacing: 1.2,
       fontWeight: FontWeight.w600,
     ),
     title3Style: TextStyle(
       color: Colors.white,
-      fontSize: 16,
+      fontSize: 17,
       wordSpacing: 1.2,
       fontFamily: 'SourceSansPro',
     ),

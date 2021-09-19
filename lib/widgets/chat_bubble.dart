@@ -29,7 +29,7 @@ class ChatBubble extends StatelessWidget {
   final bool isReceived;
   final Message message;
   final Message? replyOn;
-  final User other;
+  final LocalUser other;
   final bool isSuccesful;
   final Function(Message) onHold;
 
@@ -105,7 +105,7 @@ class TextMessageBody extends StatelessWidget {
   final Message? replyOn;
   final bool isReceived;
   final bool isSuccesful;
-  final User other;
+  final LocalUser other;
 
   const TextMessageBody({
     Key? key,

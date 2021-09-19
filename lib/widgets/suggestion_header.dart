@@ -12,13 +12,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class SuggestedContact extends StatelessWidget {
-  final Tuple2<User, List<Tag>> data;
+  final Tuple2<LocalUser, List<Tag>> data;
 
   const SuggestedContact({
     required this.data,
   });
 
-  User get suggestedUser => data.item1;
+  LocalUser get suggestedUser => data.item1;
   List<Tag> get commonTags => data.item2;
 
   @override

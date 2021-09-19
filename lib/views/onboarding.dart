@@ -12,11 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'package:anonymous_chat/database_entities/user_entity.dart';
+import 'package:anonymous_chat/interfaces/auth_interface.dart';
+import 'package:anonymous_chat/interfaces/database_interface.dart';
+import 'package:anonymous_chat/providers/errors_provider.dart';
+import 'package:anonymous_chat/providers/loading_provider.dart';
+import 'package:anonymous_chat/utilities/general_functions.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
+import 'package:anonymous_chat/views/home_screen.dart';
+import 'package:anonymous_chat/views/name_generator_screen.dart';
 import 'package:anonymous_chat/widgets/age.dart';
-import 'package:anonymous_chat/widgets/country_widget.dart';
 import 'package:anonymous_chat/widgets/cta_button.dart';
 import 'package:anonymous_chat/widgets/gender.dart';
+import 'package:anonymous_chat/widgets/shaded_container.dart';
 import 'package:anonymous_chat/widgets/step_counter_bar.dart';
 import 'package:anonymous_chat/widgets/top_padding.dart';
 
@@ -28,17 +36,18 @@ import 'package:flutter/material.dart';
 class OnboardingInfo {
   factory OnboardingInfo.defaultValue() => OnboardingInfo(
         gender: '',
+        nickname: '',
         age: 867618000000,
       );
 
   String? gender;
+  String nickname;
   int? age;
-  CountryInfo? country;
 
   OnboardingInfo({
     this.gender,
     this.age,
-    this.country,
+    this.nickname = '',
   });
 }
 
@@ -58,13 +67,13 @@ class OnboardingInfoNotifier extends StateNotifier<OnboardingInfo> {
     state = state;
   }
 
-  set age(int age) {
-    state.age = age;
+  set nickname(String nickname) {
+    state.nickname = nickname;
     state = state;
   }
 
-  set country(CountryInfo country) {
-    state.country = country;
+  set age(int age) {
+    state.age = age;
     state = state;
   }
 }
@@ -100,60 +109,82 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           final onboardingNotifier = watch(onboardingInfoProvider.notifier);
           final onboardingInfo = watch(onboardingInfoProvider);
 
-          return Column(
+          return Stack(
             children: [
-              StepCounterAppBar(
-                activeIndex: activeIndex + 1,
-                onBackPressed: () => pageController.previousPage(
-                  duration: Duration(milliseconds: 250),
-                  curve: Curves.easeOut,
-                ),
-                stepsNumber: 3,
-              ),
-              SizedBox(
-                height: 50,
-              ),
-              Expanded(
-                child: PageView(
-                  controller: pageController,
-                  onPageChanged: (index) {
-                    setState(() {
-                      activeIndex = index;
-                    });
-                  },
-                  children: [
-                    GenderWidget(
-                      initialData: onboardingInfo.gender,
-                      onChanged: (g) {
-                        onboardingNotifier.gender = g;
+              Column(
+                children: [
+                  StepCounterAppBar(
+                    activeIndex: activeIndex + 1,
+                    onBackPressed: () => pageController.previousPage(
+                      duration: Duration(milliseconds: 250),
+                      curve: Curves.easeOut,
+                    ),
+                    stepsNumber: 3,
+                  ),
+                  SizedBox(
+                    height: 50,
+                  ),
+                  Expanded(
+                    child: PageView(
+                      controller: pageController,
+                      physics: NeverScrollableScrollPhysics(),
+                      onPageChanged: (index) {
+                        setState(() {
+                          activeIndex = index;
+                        });
                       },
+                      children: [
+                        GenderWidget(
+                          initialData: onboardingInfo.gender,
+                          onChanged: (g) {
+                            onboardingNotifier.gender = g;
+                          },
+                        ),
+                        AgeWidget(
+                          initialData: DateTime.fromMillisecondsSinceEpoch(
+                            onboardingInfo.age!,
+                          ),
+                          onChanged: (a) {
+                            onboardingNotifier.age = a.millisecondsSinceEpoch;
+                          },
+                        ),
+                        NameGenerator(
+                          onChanged: (n) => onboardingNotifier.nickname = n,
+                        )
+                      ],
                     ),
-                    AgeWidget(
-                      initialData: DateTime.fromMillisecondsSinceEpoch(
-                        onboardingInfo.age!,
-                      ),
-                      onChanged: (a) {
-                        onboardingNotifier.age = a.millisecondsSinceEpoch;
-                      },
-                    ),
-                    CountryWidget(
-                      initialData: onboardingInfo.country,
-                      onChanged: (c) {},
-                    ),
+                  ),
+                ],
+              ),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: ShadedContainer(
+                  stops: [0.1, 0.4],
+                  colors: [
+                    Colors.transparent,
+                    Colors.black,
                   ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 48.0),
-                child: CtaButton(
-                  onPressed: () {
-                    if (pageController.page == 0) {
-                      if (onboardingInfo.gender != null) nextPage();
-                    } else {
-                      nextPage();
-                    }
-                  },
-                  text: 'NEXT',
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 36, top: 48),
+                    child: CtaButton(
+                      onPressed: () async {
+                        if (pageController.page == 0) {
+                          if (onboardingInfo.gender != null &&
+                              onboardingInfo.gender!.isNotEmpty) nextPage();
+                        } else if (pageController.page == 2) {
+                          bool success = await context
+                              .refresh(userInfoSavingProvider(onboardingInfo));
+                          if (success)
+                            Navigator.of(context).push(
+                              CupertinoPageRoute(builder: (_) => Home()),
+                            );
+                        } else {
+                          nextPage();
+                        }
+                      },
+                      text: 'NEXT',
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -169,3 +200,36 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void prevoiusPage() => pageController.previousPage(
       duration: Duration(milliseconds: 250), curve: Curves.easeOut);
 }
+
+final userInfoSavingProvider =
+    FutureProvider.family.autoDispose<bool, OnboardingInfo>(
+  (ref, info) async {
+    IDatabase db = IDatabase.databseService;
+    IAuth auth = IAuth.auth;
+
+    Map<String, dynamic> userData = await db.getUserData(id: auth.getId()!)!;
+    LocalUser currentUser = LocalUser.fromMap(userData);
+    try {
+      ref.read(loadingProvider.notifier).loading = true;
+      await retry(
+        f: () async => await db.saveUserData(
+          user: LocalUser(
+            id: currentUser.id,
+            phoneNumber: currentUser.phoneNumber,
+            dob: info.age!,
+            gender: info.gender!,
+            nickname: info.nickname,
+          ),
+        ),
+      );
+      return true;
+    } on Exception catch (_) {
+      ref
+          .read(errorsStateProvider.notifier)
+          .set('Something went wrong. Try again please');
+      return false;
+    } finally {
+      ref.read(loadingProvider.notifier).loading = false;
+    }
+  },
+);

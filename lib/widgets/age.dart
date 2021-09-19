@@ -1,9 +1,10 @@
 import 'package:anonymous_chat/utilities/constants.dart';
-import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/widgets/onboarding_title_text.dart';
+
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 class AgeWidget extends StatefulWidget {
   const AgeWidget({
@@ -213,7 +214,6 @@ class _DayAndMonthSpinnersState extends State<DayAndMonthSpinners> {
 
   @override
   Widget build(BuildContext context) {
-    AppStyle style = AppTheming.of(context).style;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [

@@ -388,7 +388,7 @@ class __SuggestedContactsState extends State<_SuggestedContacts>
           final allTags = watch(userTagsProvider(SharedPrefs().user!.id));
 
           return watch(suggestedContactsProvider).when(
-            data: (List<Tuple2<User, List<Tag>>>? data) {
+            data: (List<Tuple2<LocalUser, List<Tag>>>? data) {
               return Fader(
                 duration: Duration(milliseconds: 300),
                 child: Column(

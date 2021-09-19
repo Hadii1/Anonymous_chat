@@ -28,7 +28,8 @@ class TitleText extends StatelessWidget {
                   child: Text(
                     subtitle!,
                     textAlign: TextAlign.center,
-                    style: style.title3Style,
+                    style:
+                        style.bodyText.copyWith(color: style.dimmedColorText),
                   ),
                 ),
         ],

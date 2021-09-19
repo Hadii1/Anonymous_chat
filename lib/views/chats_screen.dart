@@ -29,21 +29,50 @@ class _ChatsScreenState extends State<ChatsScreen> {
     AppStyle style = AppTheming.of(context).style;
     return Consumer(
       builder: (context, watch, _) {
-        List<Room>? chatRooms = watch(chatsListProvider);
+        bool isLoading = false;
 
-        List<User>? blockedBy = watch(blockedByProvider);
+        AsyncValue<List<Room>> userRooms = watch(userRoomsFuture);
 
-        List<User>? blockedContacts = watch(blockedContactsProvider);
+        AsyncValue<List<LocalUser>> blockedBy = watch(blockingContactsFuture);
 
-        List<Room>? archivedRooms = watch(archivedRoomsProvider);
+        AsyncValue<List<LocalUser>> blockedContacts =
+            watch(blockedContactsFuture);
+
+        AsyncValue<List<Room>?> archivedRooms = watch(archivedRoomsFuture);
+
+        List<AsyncValue> values = [
+          userRooms,
+          blockedBy,
+          blockedContacts,
+          archivedRooms
+        ];
+
+        values.forEach((element) {
+          if (element is AsyncLoading) isLoading = true;
+        });
+
+        if (userRooms is AsyncError) {
+          context.refresh(userRoomsFuture);
+          isLoading = true;
+        }
+
+        if (blockedBy is AsyncError) {
+          context.refresh(blockingContactsFuture);
+          isLoading = true;
+        }
+        if (blockedContacts is AsyncError) {
+          context.refresh(blockedContactsFuture);
+          isLoading = true;
+        }
+        if (archivedRooms is AsyncError) {
+          context.refresh(archivedRoomsFuture);
+          isLoading = true;
+        }
 
         return AnimatedSwitcher(
           duration: Duration(milliseconds: 350),
           child: () {
-            if (chatRooms == null ||
-                archivedRooms == null ||
-                blockedBy == null ||
-                blockedContacts == null) {
+            if (isLoading) {
               return Center(
                 child: SpinKitThreeBounce(
                   color: style.loadingBarColor,
@@ -51,6 +80,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
                 ),
               );
             }
+            List<Room> chatRooms = watch(chatsListProvider)!;
 
             return chatRooms.isEmpty
                 ? Column(

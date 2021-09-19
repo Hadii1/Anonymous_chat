@@ -12,7 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-enum DataChangeType {
-  added,
-  delete,
+import 'package:flutter/cupertino.dart';
+
+class FadingRoute extends CupertinoPageRoute {
+  FadingRoute({required Widget newScreen})
+      : super(
+          builder: (_) => newScreen,
+          fullscreenDialog: true,
+          maintainState: false,
+        );
+
+  @override
+  Duration get transitionDuration => const Duration(milliseconds: 300);
+
+  @override
+  Widget buildTransitions(BuildContext context, Animation<double> animation,
+      Animation<double> secondaryAnimation, Widget child) {
+    return new FadeTransition(opacity: animation, child: child);
+  }
 }

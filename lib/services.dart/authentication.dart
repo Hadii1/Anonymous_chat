@@ -63,6 +63,9 @@ class FirebaseAuthService
   @override
   Future<void> signOut() => _authInstance.signOut();
 
+  @override
+  String? getId() => _authInstance.currentUser?.uid;
+
   // @override
   // Future<UserCredential> linkUserWithCredential(
   //     AuthCredential credential) async {

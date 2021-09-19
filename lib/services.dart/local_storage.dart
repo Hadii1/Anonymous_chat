@@ -18,14 +18,14 @@ class SharedPrefs implements ILocalStorage {
   static late SharedPreferences prefs;
 
   @override
-  User? get user {
+  LocalUser? get user {
     String? user = prefs.getString('user');
     if (user == null || user.isEmpty) return null;
-    return User.fromJson(user);
+    return LocalUser.fromJson(user);
   }
 
   @override
-  Future<void> setUser(User? user) async =>
+  Future<void> setUser(LocalUser? user) async =>
       await prefs.setString('user', user == null ? '' : user.toJson());
 
   @override

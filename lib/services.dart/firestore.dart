@@ -55,8 +55,8 @@ class FirestoreService implements IDatabase {
         .collection('Blocked Users')
         .doc(other)
         .set({
-      'blocking user': client,
-      'blocked user': other,
+      'blockingUser': client,
+      'blockedUser': other,
     });
   }
 
@@ -73,7 +73,7 @@ class FirestoreService implements IDatabase {
   }
 
   @override
-  Future<void> saveUserData({required User user, List<Tag>? tags}) async {
+  Future<void> saveUserData({required LocalUser user, List<Tag>? tags}) async {
     await _db.runTransaction((transaction) async {
       transaction.set(
         _db.collection('Users').doc(user.id),
@@ -91,21 +91,22 @@ class FirestoreService implements IDatabase {
   }
 
   @override
-  Stream<List<Tuple2<Map<String, dynamic>, RoomChangeType>>> userRooms({
+  Stream<List<Tuple2<Map<String, dynamic>, DataChangeType>>> userRooms({
     required String userId,
   }) {
     return _db
         .collection('Rooms')
         .where('participants', arrayContains: userId)
         .snapshots()
+        .skip(1)
         .map(
           (QuerySnapshot<Map<String, dynamic>> snapshot) =>
               snapshot.docChanges.map(
             (DocumentChange<Map<String, dynamic>> c) {
-              late RoomChangeType type;
+              late DataChangeType type;
               switch (c.type) {
                 case DocumentChangeType.added:
-                  type = RoomChangeType.added;
+                  type = DataChangeType.added;
                   break;
                 case DocumentChangeType.modified:
                   throw CustomException(
@@ -114,7 +115,7 @@ class FirestoreService implements IDatabase {
                         'User room change type was EDIT, only ADD and REMOVE are granted.',
                   );
                 case DocumentChangeType.removed:
-                  type = RoomChangeType.delete;
+                  type = DataChangeType.delete;
                   break;
               }
               return Tuple2(c.doc.data()!, type);
@@ -124,28 +125,42 @@ class FirestoreService implements IDatabase {
   }
 
   @override
-  Stream<List<String>> blockedByStream({required String userId}) {
+  Stream<List<Tuple2<String, DataChangeType>>> blockingContactsChanges(
+      {required String userId}) {
     return _db
-        .collection('Blocked Users')
-        .where('blocked user', isEqualTo: userId)
+        .collectionGroup('Blocked Users')
+        .where('blockedUser', isEqualTo: userId)
         .snapshots()
+        .skip(1)
         .map(
-          (QuerySnapshot<Map<String, dynamic>> querySnapshot) => querySnapshot
-              .docs
-              .map((QueryDocumentSnapshot<Map<String, dynamic>> s) =>
-                  (s.data()['id']) as String)
-              .toList(),
+      (QuerySnapshot<Map<String, dynamic>> querySnapshot) {
+        List<Tuple2<String, DataChangeType>> changes = [];
+
+        querySnapshot.docChanges.forEach(
+          (DocumentChange<Map<String, dynamic>> documentChange) {
+            if (documentChange.type == DocumentChangeType.added) {
+              changes.add(Tuple2(documentChange.doc.data()!['blockingUser'],
+                  DataChangeType.added));
+            } else if (documentChange.type == DocumentChangeType.removed) {
+              changes.add(Tuple2(documentChange.doc.data()!['blockingUser'],
+                  DataChangeType.delete));
+            }
+          },
         );
+
+        return changes;
+      },
+    );
   }
 
   @override
   Future<List<Map<String, dynamic>>> getUserRooms(
       {required String userId}) async {
-    var a = await _db
+    QuerySnapshot<Map<String, dynamic>> querySnapshot = await _db
         .collection('Rooms')
         .where('participants', arrayContains: userId)
         .get();
-    return a.docs.map((e) => e.data()).toList();
+    return querySnapshot.docs.map((e) => e.data()).toList();
   }
 
   @override
@@ -169,7 +184,7 @@ class FirestoreService implements IDatabase {
   }
 
   @override
-  Future<Map<String, dynamic>> getUserData({required String id}) async {
+  Future<Map<String, dynamic>>? getUserData({required String id}) async {
     DocumentSnapshot<Map<String, dynamic>> doc =
         await _db.collection('Users').doc(id).get();
     return doc.data()!;
@@ -329,25 +344,26 @@ class FirestoreService implements IDatabase {
         .collection('Rooms')
         .where('participants', arrayContains: userId)
         .get();
-
     for (QueryDocumentSnapshot a in d.docs) {
+      await a.reference.delete();
+    }
+
+    QuerySnapshot<Map<String, dynamic>> k = await _db
+        .collection('Users')
+        .doc(userId)
+        .collection('Blocked Users')
+        .get();
+    for (QueryDocumentSnapshot a in k.docs) {
       await a.reference.delete();
     }
 
     //  Delete references where the user is blocked
     QuerySnapshot s = await _db
-        .collection('Users')
-        .where('blockedContacts', arrayContains: userId)
+        .collectionGroup('Blocked Users')
+        .where('blocked by', isEqualTo: userId)
         .get();
-
     for (QueryDocumentSnapshot a in s.docs) {
-      await _db.collection('Users').doc(a.id).update(
-        {
-          'blockedUsers': FieldValue.arrayRemove(
-            [userId],
-          )
-        },
-      );
+      await a.reference.delete();
     }
 
     // Delete the user document
@@ -406,8 +422,21 @@ class FirestoreService implements IDatabase {
     QuerySnapshot<Map<String, dynamic>> querySnapshot = await _db
         .collection('Users')
         .doc(userId)
-        .collection('Blocked Contacts')
+        .collection('Blocked Users')
         .get();
     return querySnapshot.docs.map((e) => e.id).toList();
+  }
+
+  @override
+  Future<List<String>> getBlockingContacts({required String userId}) async {
+    QuerySnapshot<Map<String, dynamic>> querySnapshot = await _db
+        .collectionGroup('Blocked Users')
+        .where('blockedUser', isEqualTo: userId)
+        .get();
+
+    return querySnapshot.docs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> e) =>
+            e.data()['blockingUser'] as String)
+        .toList();
   }
 }

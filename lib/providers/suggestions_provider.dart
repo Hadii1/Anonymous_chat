@@ -10,13 +10,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tuple/tuple.dart';
 
 final userContactsProvider =
-    StateNotifierProvider<UserContactsNotifer, List<User>?>(
+    StateNotifierProvider<UserContactsNotifer, List<LocalUser>?>(
   (ref) => UserContactsNotifer(
     userRooms: ref.watch(userRoomsProvider),
   ),
 );
 
-class UserContactsNotifer extends StateNotifier<List<User>?> {
+class UserContactsNotifer extends StateNotifier<List<LocalUser>?> {
   final List<Room>? userRooms;
 
   UserContactsNotifer({required this.userRooms})
@@ -29,14 +29,14 @@ class UserContactsNotifer extends StateNotifier<List<User>?> {
                   .toList(),
         );
 
-  void removeContact(User user) {
+  void removeContact(LocalUser user) {
     if (state != null) {
       state!.remove(user);
       state = state;
     }
   }
 
-  void addContact(User user) {
+  void addContact(LocalUser user) {
     if (state != null) {
       state!.add(user);
       state = state;
@@ -45,7 +45,7 @@ class UserContactsNotifer extends StateNotifier<List<User>?> {
 }
 
 final suggestedContactsProvider =
-    FutureProvider.autoDispose<List<Tuple2<User, List<Tag>>>?>(
+    FutureProvider.autoDispose<List<Tuple2<LocalUser, List<Tag>>>?>(
   (ref) async {
     List<String>? userContacts =
         ref.watch(userContactsProvider)?.map((e) => e.id).toList();
@@ -63,7 +63,7 @@ final suggestedContactsProvider =
       return [];
     }
 
-    List<Tuple2<User, List<Tag>>> suggestions = [];
+    List<Tuple2<LocalUser, List<Tag>>> suggestions = [];
 
     List<Map<String, dynamic>> data =
         await IDatabase.databseService.getMatchingUsers(
@@ -71,7 +71,7 @@ final suggestedContactsProvider =
     );
 
     for (Map<String, dynamic> map in data) {
-      User user = User.fromMap(map);
+      LocalUser user = LocalUser.fromMap(map);
       suggestions.add(
         Tuple2(
           user,
@@ -81,7 +81,7 @@ final suggestedContactsProvider =
     }
 
     suggestions.removeWhere(
-      (Tuple2<User, List<Tag>> t) =>
+      (Tuple2<LocalUser, List<Tag>> t) =>
           t.item1.id == userId || userContacts.contains(t.item1.id),
     );
 

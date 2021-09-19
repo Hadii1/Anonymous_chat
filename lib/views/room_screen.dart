@@ -31,7 +31,7 @@ class ChatRoomScreen extends StatefulWidget {
 }
 
 class _ChatRoomScreenState extends State<ChatRoomScreen> {
-  User get other =>
+  LocalUser get other =>
       widget.room.users.firstWhere((u) => u.id != SharedPrefs().user!.id);
 
   @override
@@ -56,7 +56,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       backgroundColor: style.backgroundColor,
       body: Consumer(builder: (context, watch, _) {
         final chatNotifier = watch(chattingProvider(widget.room));
-        List<User> blockedContacts = watch(blockedContactsProvider)!;
+        List<LocalUser> blockedContacts = watch(blockedContactsProvider)!;
 
         return SizedBox(
           height: MediaQuery.of(context).size.height,

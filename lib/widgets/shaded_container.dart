@@ -20,11 +20,14 @@ class ShadedContainer extends StatelessWidget {
     required this.stops,
     this.height,
     this.width,
+    this.colors = const [Colors.black, Colors.transparent],
   });
   final Widget child;
   final double? width;
   final double? height;
+  // final bool forgorund;
   final List<double> stops;
+  final List<Color> colors;
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +39,7 @@ class ShadedContainer extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           stops: stops,
-          colors: [Colors.black, Colors.transparent],
+          colors: colors,
         ),
       ),
       child: child,

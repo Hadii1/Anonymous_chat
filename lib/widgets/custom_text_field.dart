@@ -6,13 +6,21 @@ class CustomTextField extends StatefulWidget {
   const CustomTextField({
     this.keyboardTpe = TextInputType.text,
     required this.hint,
+    this.onSubmitted,
     required this.onChanged,
     required this.borderColor,
+    this.textEditingAction,
+    this.prefix,
+    this.dimHint = false,
   });
 
   final Function(String) onChanged;
+  final Function(String)? onSubmitted;
+  final TextInputAction? textEditingAction;
   final TextInputType keyboardTpe;
+  final String? prefix;
   final String hint;
+  final bool dimHint;
   final Color borderColor;
 
   @override
@@ -24,11 +32,11 @@ class _CustomTextFieldState extends State<CustomTextField>
   final FocusNode _focusNode = FocusNode();
   late AnimationController _animationController;
 
-  late Color _labelColor;
+  late Color labelColor;
 
   @override
   void initState() {
-    _labelColor = widget.borderColor;
+    labelColor = widget.borderColor;
 
     _animationController = AnimationController(
       vsync: this,
@@ -40,8 +48,7 @@ class _CustomTextFieldState extends State<CustomTextField>
 
     _animationController.addListener(() {
       setState(() {
-        _labelColor =
-            widget.borderColor.withOpacity(_animationController.value);
+        labelColor = widget.borderColor.withOpacity(_animationController.value);
       });
     });
 
@@ -70,21 +77,36 @@ class _CustomTextFieldState extends State<CustomTextField>
     final style = AppTheming.of(context).style;
     return CupertinoTextField(
       keyboardAppearance: Brightness.dark,
+      prefix: widget.prefix == null
+          ? null
+          : Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: Text(
+                widget.prefix! + '  ',
+                style: TextStyle(
+                  color: labelColor,
+                ),
+              ),
+            ),
       keyboardType: widget.keyboardTpe,
       focusNode: _focusNode,
-      padding: EdgeInsets.only(bottom: 16),
+      onSubmitted: widget.onSubmitted,
+      padding: EdgeInsets.only(bottom: 12),
+      textInputAction: widget.textEditingAction,
       style: style.bodyText,
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: _labelColor,
+            color: labelColor,
             width: 0.35,
           ),
         ),
       ),
       placeholder: widget.hint,
       onChanged: widget.onChanged,
-      placeholderStyle: style.bodyText.copyWith(color: _labelColor),
+      placeholderStyle: style.bodyText.copyWith(
+        color: widget.dimHint ? style.dimmedColorText : labelColor,
+      ),
     );
   }
 }

@@ -28,7 +28,7 @@ final chattingProvider = ChangeNotifierProvider.family<ChatNotifier, Room>(
       isArchived: ref.watch(archivedRoomsProvider)!.contains(room),
       isBlockedByOther: ref.watch(blockedByProvider)!.contains(
             room.users.firstWhere(
-              (User i) => i != ILocalStorage.storage.user!,
+              (LocalUser i) => i != ILocalStorage.storage.user!,
             ),
           ),
     );
@@ -48,7 +48,7 @@ class ChatNotifier extends ChangeNotifier {
   final Room room;
   final Reader read;
 
-  final User _user = ILocalStorage.storage.user!;
+  final LocalUser _user = ILocalStorage.storage.user!;
   final IDatabase _db = IDatabase.databseService;
 
   late StreamSubscription<Message?> serverMessagesUpdates;
@@ -62,7 +62,7 @@ class ChatNotifier extends ChangeNotifier {
   final bool isBlockedByOther;
 
   Message? replyingOn;
-  User get other => room.users.firstWhere((User i) => i != _user);
+  LocalUser get other => room.users.firstWhere((LocalUser i) => i != _user);
 
   bool _isChatPageOpened = false;
 
@@ -86,8 +86,10 @@ class ChatNotifier extends ChangeNotifier {
         Message message = change.element!;
         if (replyingOn != null) replyingOn = null;
         if (isArchived) {
-          read(archivedRoomsProvider.notifier)
-              .editArchives(room: room, archive: false);
+          read(archivedRoomsProvider.notifier).editArchives(
+            roomId: room.id,
+            archive: false,
+          );
         }
 
         read(chatsListProvider.notifier).latestActiveChat = room;
@@ -129,8 +131,10 @@ class ChatNotifier extends ChangeNotifier {
           if (message.isSenderBlocked) return;
 
           if (isArchived) {
-            read(archivedRoomsProvider.notifier)
-                .editArchives(room: room, archive: false);
+            read(archivedRoomsProvider.notifier).editArchives(
+              roomId: room.id,
+              archive: false,
+            );
           }
 
           assert(!allMessages.contains(message));
@@ -207,7 +211,7 @@ class ChatNotifier extends ChangeNotifier {
   }
 
   String get recipient =>
-      room.users.firstWhere((User user) => user.id != _user.id).id;
+      room.users.firstWhere((LocalUser user) => user.id != _user.id).id;
 
   bool isSuccessful(Message message) => successfullySent.contains(message);
 

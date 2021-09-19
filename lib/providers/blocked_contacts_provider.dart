@@ -17,13 +17,14 @@ import 'dart:async';
 import 'package:anonymous_chat/interfaces/database_interface.dart';
 import 'package:anonymous_chat/database_entities/user_entity.dart';
 import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
-import 'package:anonymous_chat/services.dart/firestore.dart';
+import 'package:anonymous_chat/utilities/enums.dart';
 import 'package:anonymous_chat/utilities/general_functions.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tuple/tuple.dart';
 
 final blockedContactsFuture =
-    FutureProvider.autoDispose<List<User>>((ref) async {
+    FutureProvider.autoDispose<List<LocalUser>>((ref) async {
   ref.maintainState = true;
 
   final db = IDatabase.databseService;
@@ -31,67 +32,104 @@ final blockedContactsFuture =
 
   List<String> blockedIds = await db.getBlockedContacts(userId: userId);
 
-  List<User> blockedUsers = [];
+  List<LocalUser> blockedUsers = [];
 
   for (String id in blockedIds) {
-    Map<String, dynamic> data = await FirestoreService().getUserData(id: id);
-    User user = User.fromMap(data);
-    blockedUsers.add(user);
+    Map<String, dynamic>? data = await db.getUserData(id: id);
+    if (data != null) {
+      LocalUser user = LocalUser.fromMap(data);
+      blockedUsers.add(user);
+    }
   }
+
+  ref.read(blockedContactsProvider.notifier).blockedContacts = blockedUsers;
 
   return blockedUsers;
 });
 
-final blockedContactsProvider =
-    StateNotifierProvider.autoDispose<BlockedContactsNotifier, List<User>>(
-  (ref) =>
-      BlockedContactsNotifier(ref.watch(blockedContactsFuture).data!.value),
+final blockedContactsProvider = StateNotifierProvider.autoDispose<
+    BlockedContactsNotifier, List<LocalUser>?>(
+  (_) => BlockedContactsNotifier(),
 );
 
-class BlockedContactsNotifier extends StateNotifier<List<User>> {
-  BlockedContactsNotifier(List<User> state) : super(state);
+class BlockedContactsNotifier extends StateNotifier<List<LocalUser>?> {
+  BlockedContactsNotifier() : super(null);
 
   final db = IDatabase.databseService;
   final userId = ILocalStorage.storage.user!.id;
 
-  void toggleBlock({required User other, required bool block}) {
+  set blockedContacts(List<LocalUser> contacts) => state = contacts;
+
+  void toggleBlock({required LocalUser other, required bool block}) {
     if (block) {
-      state.add(other);
+      state!.add(other);
       state = state;
       retry(f: () => db.blockUser(client: userId, other: other.id));
     } else {
-      state.remove(other);
+      state!.remove(other);
       state = state;
       retry(f: () => db.unblockUser(client: userId, other: other.id));
     }
   }
 }
 
-final blockedByProvider =
-    StateNotifierProvider<BlockedByContactsNotifier, List<User>?>(
-  (ref) => BlockedByContactsNotifier(),
-);
-
-class BlockedByContactsNotifier extends StateNotifier<List<User>?> {
-  BlockedByContactsNotifier() : super(null) {
-    init();
-  }
-  late final StreamSubscription<List<String>> _subscription;
+final blockingContactsFuture =
+    FutureProvider.autoDispose<List<LocalUser>>((ref) async {
+  ref.maintainState = true;
   final String userId = ILocalStorage.storage.user!.id;
   final db = IDatabase.databseService;
 
+  List<String> blockingContacts = await db.getBlockingContacts(userId: userId);
+
+  List<LocalUser> temp = [];
+  for (String id in blockingContacts) {
+    Map<String, dynamic>? userData =
+        await retry(f: () async => await db.getUserData(id: id));
+    if (userData != null) {
+      LocalUser user = LocalUser.fromMap(userData);
+      temp.add(user);
+    }
+  }
+  ref.read(blockedByProvider.notifier).blockedBy = temp;
+
+  return temp;
+});
+
+final blockedByProvider =
+    StateNotifierProvider<BlockedByContactsNotifier, List<LocalUser>?>(
+  (ref) => BlockedByContactsNotifier(),
+);
+
+class BlockedByContactsNotifier extends StateNotifier<List<LocalUser>?> {
+  BlockedByContactsNotifier() : super(null) {
+    init();
+  }
+  late final StreamSubscription<List<Tuple2<String, DataChangeType>>>
+      _subscription;
+  final userId = ILocalStorage.storage.user!.id;
+  final db = IDatabase.databseService;
+
+  set blockedBy(List<LocalUser> data) => state = data;
+
   void init() {
-    _subscription =
-        db.blockedByStream(userId: userId).listen((List<String> ids) async {
-      List<User> temp = [];
-      for (String id in ids) {
-        try {
-          Map<String, dynamic> userData =
-              await retry(f: () => FirestoreService().getUserData(id: id));
-          User user = User.fromMap(userData);
-          temp.add(user);
-        } on Exception {
-          continue;
+    _subscription = db
+        .blockingContactsChanges(userId: userId)
+        .listen((List<Tuple2<String, DataChangeType>> changes) async {
+      List<LocalUser> temp = [];
+      for (Tuple2<String, DataChangeType> change in changes) {
+        if (change.item2 == DataChangeType.added) {
+          try {
+            Map<String, dynamic>? userData =
+                await retry(f: () async => db.getUserData(id: change.item1));
+            if (userData != null) {
+              LocalUser user = LocalUser.fromMap(userData);
+              temp.add(user);
+            }
+          } on Exception {
+            continue;
+          }
+        } else {
+          state!.removeWhere((element) => element.id == change.item1);
         }
       }
       state = List.from(temp);

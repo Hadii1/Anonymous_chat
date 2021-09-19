@@ -7,6 +7,7 @@ class TitledAppBar extends PreferredSize {
     this.trailing,
     this.leading,
     this.previousPageTitle,
+    this.title,
   }) : super(
           child: SizedBox.shrink(),
           preferredSize: Size.fromHeight(kToolbarHeight),
@@ -14,6 +15,7 @@ class TitledAppBar extends PreferredSize {
 
   final Widget? trailing;
   final Widget? leading;
+  final String? title;
   final String? previousPageTitle;
 
   @override
@@ -24,16 +26,27 @@ class TitledAppBar extends PreferredSize {
       automaticallyImplyLeading: false,
       automaticallyImplyMiddle: false,
       previousPageTitle: previousPageTitle,
-      middle: Text(
-        'ANONIMA',
-        style: TextStyle(
-          color: style.accentColor,
-          fontSize: 24,
-          letterSpacing: 4,
-          fontWeight: FontWeight.bold,
-          fontFamily: 'Playfair',
-        ),
-      ),
+      middle: title != null
+          ? Text(
+              title!,
+              style: TextStyle(
+                color: style.backgroundContrastColor,
+                fontSize: 24,
+                fontFamily: 'Playfair',
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.5,
+              ),
+            )
+          : Text(
+              'ANONIMA',
+              style: TextStyle(
+                color: style.accentColor,
+                fontSize: 24,
+                letterSpacing: 4,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Playfair',
+              ),
+            ),
       trailing: trailing,
       backgroundColor: style.backgroundColor,
       leading: Material(
@@ -67,7 +80,7 @@ class TitledAppBar extends PreferredSize {
         bottom: 8,
         start: 12,
         end: 24,
-        top: 8,
+        top: 0,
       ),
       border: Border(
         bottom: BorderSide(

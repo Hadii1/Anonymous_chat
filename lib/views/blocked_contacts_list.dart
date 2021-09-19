@@ -42,7 +42,7 @@ class BlockedContactsScreen extends StatelessWidget {
               Expanded(
                 child: Consumer(
                   builder: (context, watch, _) {
-                    List<User>? blockedUsers = watch(blockedContactsProvider);
+                    List<LocalUser>? blockedUsers = watch(blockedContactsProvider);
 
                     return AnimatedSwitcher(
                       duration: Duration(milliseconds: 250),
@@ -82,7 +82,7 @@ class BlockedContactsScreen extends StatelessWidget {
                               : CustomSlide(
                                   duration: Duration(milliseconds: 300),
                                   startOffset: Offset(0, 0.4),
-                                  child: ImplicitlyAnimatedList<User>(
+                                  child: ImplicitlyAnimatedList<LocalUser>(
                                     areItemsTheSame: (a, b) => a.id == b.id,
                                     items: blockedUsers,
                                     insertDuration: Duration(milliseconds: 200),
@@ -128,7 +128,7 @@ class BlockedContactsScreen extends StatelessWidget {
                                                 ),
                                                 child: _BlockedUserHeader(
                                                   user: user,
-                                                  onRemove: (User user) {
+                                                  onRemove: (LocalUser user) {
                                                     context
                                                         .read(
                                                             blockedContactsProvider
@@ -174,8 +174,8 @@ class BlockedContactsScreen extends StatelessWidget {
 }
 
 class _BlockedUserHeader extends StatelessWidget {
-  final User user;
-  final Function(User) onRemove;
+  final LocalUser user;
+  final Function(LocalUser) onRemove;
 
   const _BlockedUserHeader({
     required this.user,

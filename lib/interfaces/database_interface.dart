@@ -12,11 +12,11 @@ import 'package:tuple/tuple.dart';
 abstract class IDatabase {
   static IDatabase get databseService => FirestoreService();
 
-  Future<void> saveUserData({required User user});
+  Future<void> saveUserData({required LocalUser user});
 
   Future<void> saveNewRoom({required RoomEntity roomEntity});
 
-  Future<Map<String, dynamic>> getUserData({required String id});
+  Future<Map<String, dynamic>>? getUserData({required String id});
 
   Future<void> writeMessage({required String roomId, required Message message});
 
@@ -26,9 +26,11 @@ abstract class IDatabase {
 
   Future<List<String>> getBlockedContacts({required String userId});
 
+  Future<List<String>> getBlockingContacts({required String userId});
+
   Future<List<Map<String, dynamic>>> getAllMessages({required String roomId});
 
-  Stream<List<Tuple2<Map<String, dynamic>, RoomChangeType>>> userRooms({
+  Stream<List<Tuple2<Map<String, dynamic>, DataChangeType>>> userRooms({
     required String userId,
   });
 
@@ -69,7 +71,8 @@ abstract class IDatabase {
 
   Future<void> unArchiveChat({required String userId, required String roomId});
 
-  Stream<List<String>> blockedByStream({required String userId});
+  Stream<List<Tuple2<String, DataChangeType>>> blockingContactsChanges(
+      {required String userId});
 
   Stream<Map<String, dynamic>> activityStatusStream({required String id});
 

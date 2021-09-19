@@ -1,74 +1,65 @@
 import 'dart:convert';
 
-class User {
+class LocalUser {
   final String nickname;
   final String phoneNumber;
   final String id;
-  final String country;
+  final int dob;
   final String gender;
 
-  User({
-    required this.nickname,
-    required this.phoneNumber,
+  LocalUser({
     required this.id,
-    required this.country,
-    required this.gender,
+    required this.phoneNumber,
+    this.dob = -1,
+    this.nickname = '',
+    this.gender = '',
   });
 
-  User copyWith({
-    String? nickname,
-    String? phoneNumber,
-    String? id,
-    String? country,
-    String? gender,
-  }) {
-    return User(
-      nickname: nickname ?? this.nickname,
-      phoneNumber: phoneNumber ?? this.phoneNumber,
-      id: id ?? this.id,
-      country: country ?? this.country,
-      gender: gender ?? this.gender,
-    );
-  }
+  static bool isDataComplete(Map<String, dynamic> map) =>
+      map['gender'] != '' && map['dob'] != -1 && map['nickname'] != '';
 
   Map<String, dynamic> toMap() {
     return {
       'nickname': nickname,
       'phoneNumber': phoneNumber,
       'id': id,
-      'country': country,
       'gender': gender,
+      'dob': dob,
     };
   }
 
-  factory User.fromMap(Map<String, dynamic> map) {
-    return User(
-      nickname: map['nickname'],
+  factory LocalUser.newlyCreated({
+    required String id,
+    required String phoneNumber,
+  }) =>
+      LocalUser(
+        id: id,
+        phoneNumber: phoneNumber,
+      );
+
+  factory LocalUser.fromMap(Map<String, dynamic> map) {
+    return LocalUser(
+      nickname: map['nickname']??'',
+      dob: map['dob']??'',
       phoneNumber: map['phoneNumber'],
       id: map['id'],
-      country: map['country'],
-      gender: map['gender'],
+      gender: map['gender']??'',
     );
   }
 
   String toJson() => json.encode(toMap());
 
-  factory User.fromJson(String source) => User.fromMap(json.decode(source));
-
-  @override
-  String toString() {
-    return 'User(nickname: $nickname, phoneNumber: $phoneNumber, id: $id, country: $country, gender: $gender)';
-  }
+  factory LocalUser.fromJson(String source) =>
+      LocalUser.fromMap(json.decode(source));
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
 
-    return other is User &&
+    return other is LocalUser &&
         other.nickname == nickname &&
         other.phoneNumber == phoneNumber &&
         other.id == id &&
-        other.country == country &&
         other.gender == gender;
   }
 
@@ -77,7 +68,6 @@ class User {
     return nickname.hashCode ^
         phoneNumber.hashCode ^
         id.hashCode ^
-        country.hashCode ^
         gender.hashCode;
   }
 }

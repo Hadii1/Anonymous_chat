@@ -1,16 +1,13 @@
-import 'package:anonymous_chat/views/home_screen.dart';
-import 'package:anonymous_chat/views/info_collecting_screen.dart';
-import 'package:anonymous_chat/views/name_generator_screen.dart';
+import 'package:anonymous_chat/views/login_screen.dart';
+import 'package:anonymous_chat/views/splash_screen.dart';
 
 import 'package:flutter/cupertino.dart';
 
 class AppNavigator extends StatelessWidget {
   final bool isAuthenticated;
-  final bool isNicknamed;
 
   const AppNavigator({
     required this.isAuthenticated,
-    required this.isNicknamed,
   });
 
   @override
@@ -24,11 +21,7 @@ class AppNavigator extends StatelessWidget {
           builder: (c) {
             switch (settings.name) {
               default:
-                return isAuthenticated
-                    ? isNicknamed
-                        ? Home()
-                        : NameGenerator()
-                    : InfoCollectionScreen();
+                return isAuthenticated ? UserInfoInitializing() : LoginScreen();
             }
           },
         );

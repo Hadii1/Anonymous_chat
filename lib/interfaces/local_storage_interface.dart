@@ -19,8 +19,8 @@ import 'package:anonymous_chat/utilities/theme_widget.dart';
 abstract class ILocalStorage {
   static ILocalStorage get storage => SharedPrefs();
   
-  User? get user;
-  Future<void> setUser(User? user);
+  LocalUser? get user;
+  Future<void> setUser(LocalUser? user);
 
   ThemeState get preferedTheme;
   set preferedTheme(ThemeState theme);

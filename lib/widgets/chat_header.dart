@@ -25,8 +25,8 @@ class ChatHeader extends StatelessWidget {
     required this.archivable,
   });
 
-  User get other =>
-      room.users.firstWhere((User user) => user != SharedPrefs().user);
+  LocalUser get other =>
+      room.users.firstWhere((LocalUser user) => user != SharedPrefs().user);
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +35,7 @@ class ChatHeader extends StatelessWidget {
     Message lastMessage = room.messages.last;
 
     return Consumer(builder: (context, watch, _) {
-      List<User> blockedContacts = watch(blockedContactsProvider)!;
+      List<LocalUser> blockedContacts = watch(blockedContactsProvider)!;
       return InkWell(
         splashColor: Colors.transparent,
         highlightColor: Colors.transparent,
@@ -122,9 +122,11 @@ class ChatHeader extends StatelessWidget {
               ),
             ),
             SlideAction(
-              onTap: () => context
-                  .read(archivedRoomsProvider.notifier)
-                  .editArchives(room: room, archive: archivable),
+              onTap: () =>
+                  context.read(archivedRoomsProvider.notifier).editArchives(
+                        roomId: room.id,
+                        archive: archivable,
+                      ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
