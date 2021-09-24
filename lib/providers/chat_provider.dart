@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:anonymous_chat/database_entities/room_entity.dart';
-import 'package:anonymous_chat/interfaces/database_interface.dart';
+import 'package:anonymous_chat/interfaces/online_database_interface.dart';
 import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/room.dart';
@@ -12,20 +12,22 @@ import 'package:anonymous_chat/providers/blocked_contacts_provider.dart';
 import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/providers/user_rooms_provider.dart';
 import 'package:anonymous_chat/services.dart/local_storage.dart';
-import 'package:anonymous_chat/utilities/extrentions.dart';
+import 'package:anonymous_chat/utilities/enums.dart';
+import 'package:anonymous_chat/utilities/extentions.dart';
 import 'package:anonymous_chat/utilities/general_functions.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:observable_ish/observable_ish.dart';
 
 import 'package:flutter/foundation.dart';
+import 'package:tuple/tuple.dart';
 
 final chattingProvider = ChangeNotifierProvider.family<ChatNotifier, Room>(
   (ref, room) {
     return ChatNotifier(
       ref.read,
       room: room,
-      isArchived: ref.watch(archivedRoomsProvider)!.contains(room),
+      isArchived: ref.watch(archivedRoomsProvider)!.contains(room.id),
       isBlockedByOther: ref.watch(blockedByProvider)!.contains(
             room.users.firstWhere(
               (LocalUser i) => i != ILocalStorage.storage.user!,
@@ -49,16 +51,18 @@ class ChatNotifier extends ChangeNotifier {
   final Reader read;
 
   final LocalUser _user = ILocalStorage.storage.user!;
-  final IDatabase _db = IDatabase.databseService;
+  final IDatabase _db = IDatabase.db;
+  final List<ChatPersistance> chatPersistance = ChatPersistance.cp;
 
-  late StreamSubscription<Message?> serverMessagesUpdates;
+  late StreamSubscription<Tuple2<Message, MessageServeUpdateType>?>
+      serverMessagesUpdates;
   late StreamSubscription<ListChangeNotification<Message>?>
       localMessagesChanges;
 
   late RxList<Message> allMessages;
   late List<Message> successfullySent;
 
-  final bool isArchived;
+  bool isArchived;
   final bool isBlockedByOther;
 
   Message? replyingOn;
@@ -85,12 +89,6 @@ class ChatNotifier extends ChangeNotifier {
       if (change.element != null && change.element!.isSent()) {
         Message message = change.element!;
         if (replyingOn != null) replyingOn = null;
-        if (isArchived) {
-          read(archivedRoomsProvider.notifier).editArchives(
-            roomId: room.id,
-            archive: false,
-          );
-        }
 
         read(chatsListProvider.notifier).latestActiveChat = room;
 
@@ -113,6 +111,13 @@ class ChatNotifier extends ChangeNotifier {
               ),
             );
           }
+
+          if (isArchived) {
+            read(archivedRoomsProvider.notifier).editArchives(
+              roomId: room.id,
+              archive: false,
+            );
+          }
         } on Exception catch (e, _) {
           read(errorsStateProvider.notifier).set(e is SocketException
               ? 'Bad internet connection.'
@@ -123,41 +128,48 @@ class ChatNotifier extends ChangeNotifier {
 
     serverMessagesUpdates =
         read(roomMessagesUpdatesChannel(room.id).stream).listen(
-      (Message? message) async {
-        if (message == null) return;
+      (Tuple2<Message, MessageServeUpdateType>? update) async {
+        if (update == null) {
+          return;
+        }
+        switch (update.item2) {
+          case MessageServeUpdateType.MessageRead:
+            Message message = update.item1;
+            int index = successfullySent.indexWhere((e) => e == message);
 
-        if (message.isReceived()) {
-          // A new message is received
-          if (message.isSenderBlocked) return;
+            assert(message.isSent());
+            assert(index != -1);
+            assert(successfullySent[index].isRead == false);
+            assert(message.isRead == true);
 
-          if (isArchived) {
-            read(archivedRoomsProvider.notifier).editArchives(
-              roomId: room.id,
-              archive: false,
-            );
-          }
+            allMessages.firstWhere((m) => m == message).isRead = true;
+            break;
 
-          assert(!allMessages.contains(message));
+          case MessageServeUpdateType.MessageRecieved:
+            Message message = update.item1;
+            assert(message.isReceived());
+            if (message.isSenderBlocked) return;
+            if (isArchived) {
+              read(archivedRoomsProvider.notifier).editArchives(
+                roomId: room.id,
+                archive: false,
+              );
+            }
 
-          allMessages.add(message);
+            assert(!allMessages.contains(message));
 
-          read(chatsListProvider.notifier).latestActiveChat = room;
+            allMessages.add(message);
 
-          if (_isChatPageOpened) {
-            message.isRead = true;
-            _db.markMessageAsRead(
-              roomId: room.id,
-              messageId: message.id,
-            );
-          }
-        } else {
-          // A sent message is read
-          int index = successfullySent.indexWhere((e) => e == message);
-          assert(index != -1);
-          assert(successfullySent[index].isRead == false);
-          assert(message.isRead == true);
+            read(chatsListProvider.notifier).latestActiveChat = room;
 
-          allMessages.firstWhere((m) => m == message).isRead = true;
+            if (_isChatPageOpened) {
+              message.isRead = true;
+              _db.markMessageAsRead(
+                roomId: room.id,
+                messageId: message.id,
+              );
+            }
+            break;
         }
         notifyListeners();
       },

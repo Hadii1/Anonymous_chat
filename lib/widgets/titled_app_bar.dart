@@ -38,16 +38,19 @@ class TitledAppBar extends PreferredSize {
               ),
             )
           : Text(
-              'ANONIMA',
+              'DISCLOSE',
               style: TextStyle(
                 color: style.accentColor,
                 fontSize: 24,
-                letterSpacing: 4,
+                letterSpacing: 3,
                 fontWeight: FontWeight.bold,
                 fontFamily: 'Playfair',
               ),
             ),
-      trailing: trailing,
+      trailing: () {
+        if (trailing != null) return trailing;
+        return SizedBox.shrink();
+      }(),
       backgroundColor: style.backgroundColor,
       leading: Material(
         type: MaterialType.transparency,

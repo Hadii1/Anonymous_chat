@@ -14,7 +14,7 @@
 
 import 'dart:async';
 
-import 'package:anonymous_chat/interfaces/database_interface.dart';
+import 'package:anonymous_chat/interfaces/online_database_interface.dart';
 import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
 import 'package:anonymous_chat/models/activity_status.dart';
 import 'package:anonymous_chat/services.dart/firestore.dart';
@@ -71,7 +71,7 @@ class UserActivityState extends StateNotifier<ActivityStatus> {
   UserActivityState() : super(ActivityStatus.online());
 
   final String? userId = ILocalStorage.storage.user?.id;
-  final IDatabase db = IDatabase.databseService;
+  final IDatabase db = IDatabase.db;
 
   Future<void> set({required ActivityStatus activityStatus}) async {
     if (userId != null) {

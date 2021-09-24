@@ -119,7 +119,7 @@ class AppStyle {
     ),
     title3Style: TextStyle(
       color: Colors.white,
-      fontSize: 17,
+      fontSize: 16,
       wordSpacing: 1.2,
       fontFamily: 'SourceSansPro',
     ),
@@ -132,7 +132,7 @@ class AppStyle {
     chatHeaderLetter: TextStyle(
       color: Colors.white,
       fontSize: 24,
-      fontFamily: 'Playfair',
+      fontFamily: 'SourceSansPro',
       fontWeight: FontWeight.bold,
     ),
   );

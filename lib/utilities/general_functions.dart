@@ -21,7 +21,7 @@ Future<T> retry<T>({
   required Future<T> Function() f,
   Function({Exception e, StackTrace s})? onFirstThrow,
   Duration duration = const Duration(milliseconds: 400),
-  Duration timeout = const Duration(seconds: 15),
+  Duration timeout = const Duration(minutes: 1),
   bool sendExceptionToSentry = true,
   int maxAttempts = 3,
   double delayFactor = 0.25,

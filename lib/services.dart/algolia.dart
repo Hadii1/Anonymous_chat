@@ -22,15 +22,17 @@ class AlgoliaSearch implements ISearchService {
   Future<List<Map<String, dynamic>>> getTagSuggestions(
       {required String label}) async {
     AlgoliaQuerySnapshot a =
-        await algolia.index('TAGS').query(label).getObjects();
+        await algolia.index('Tags').query(label).getObjects();
 
     return a.hits.map((AlgoliaObjectSnapshot e) => e.data).toList();
   }
 
   @override
   Future<void> addSearchableTag({required Tag tag}) async =>
-      await algolia.instance.index('TAGS').addObject({
-        'label': tag.label,
-        'id': tag.id,
-      });
+      await algolia.instance.index('Tags').addObject(
+        {
+          'label': tag.label,
+          'id': tag.id,
+        },
+      );
 }

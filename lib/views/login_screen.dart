@@ -25,6 +25,7 @@ class LoginScreen extends StatelessWidget {
     final style = AppTheming.of(context).style;
 
     return ProviderListener<bool>(
+      provider: navigationSignal,
       onChange: (_, bool navigate) {
         if (navigate)
           Navigator.of(context).pushAndRemoveUntil(
@@ -34,7 +35,6 @@ class LoginScreen extends StatelessWidget {
             (route) => false,
           );
       },
-      provider: navigationSignal,
       child: Scaffold(
         backgroundColor: style.backgroundColor,
         body: KeyboardHider(

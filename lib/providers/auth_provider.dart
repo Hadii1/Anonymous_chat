@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:anonymous_chat/database_entities/user_entity.dart';
 import 'package:anonymous_chat/interfaces/auth_interface.dart';
-import 'package:anonymous_chat/interfaces/database_interface.dart';
+import 'package:anonymous_chat/interfaces/online_database_interface.dart';
 import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/providers/loading_provider.dart';
 import 'package:anonymous_chat/services.dart/authentication.dart';
@@ -100,6 +100,7 @@ class PhoneVerificationNotifier extends ChangeNotifier {
 
     try {
       assert((code == null && phoneAuthCredential == null) == false);
+
       UserCredential credentail = phoneAuthCredential != null
           ? await _auth.signInWithPhoneCredential(
               credential: phoneAuthCredential)
@@ -108,13 +109,14 @@ class PhoneVerificationNotifier extends ChangeNotifier {
               code: code!,
             );
 
-      IDatabase db = IDatabase.databseService;
-      await db.saveUserData(
-        user: LocalUser.newlyCreated(
-          id: credentail.user!.uid,
-          phoneNumber: number,
-        ),
-      );
+      if (credentail.additionalUserInfo!.isNewUser) {
+        await IDatabase.db.saveUserData(
+          user: LocalUser.newlyCreated(
+            id: credentail.user!.uid,
+            phoneNumber: number,
+          ),
+        );
+      }
 
       _navigationSignal.navigate = true;
     } on Exception catch (e) {

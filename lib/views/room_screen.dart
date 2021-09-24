@@ -11,7 +11,7 @@ import 'package:anonymous_chat/widgets/animated_widgets.dart';
 import 'package:anonymous_chat/widgets/chat_bubble.dart';
 import 'package:anonymous_chat/widgets/chat_message_field.dart';
 import 'package:anonymous_chat/widgets/keyboard_hider.dart';
-import 'package:anonymous_chat/utilities/extrentions.dart';
+import 'package:anonymous_chat/utilities/extentions.dart';
 import 'package:anonymous_chat/widgets/shaded_container.dart';
 import 'package:anonymous_chat/widgets/typing_indicator.dart';
 

@@ -1,35 +1,85 @@
-import 'dart:convert';
-
-class Tag {
-  final String label;
-  final String id;
+class UserTag {
+  final Tag tag;
   final bool isActive;
+  final String userId;
+  final int? deactivatedAt;
+  final int? activatedAt;
 
-  Tag({
-    required this.label,
-    required this.id,
+  UserTag({
+    required this.tag,
     required this.isActive,
+    required this.userId,
+    required this.deactivatedAt,
+    required this.activatedAt,
   });
 
-  Tag copyWith({
-    String? label,
-    String? id,
-    List<String>? activeUsers,
-    List<String>? allUsers,
+  UserTag copyWith({
     bool? isActive,
+    int? deactivatedAt,
+    int? activatedAt,
   }) {
-    return Tag(
-      label: label ?? this.label,
-      id: id ?? this.id,
+    return UserTag(
+      tag: this.tag,
+      userId: this.userId,
       isActive: isActive ?? this.isActive,
+      deactivatedAt: deactivatedAt ?? this.deactivatedAt,
+      activatedAt: activatedAt ?? this.activatedAt,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
+      'tag': tag.toMap(),
+      'isActive': isActive,
+      'deactivatedAt': deactivatedAt,
+      'activatedAt': activatedAt,
+      'userId': userId,
+    };
+  }
+
+  factory UserTag.fromMap(Map<String, dynamic> map) {
+    return UserTag(
+      tag: Tag.fromMap(map['tag']),
+      userId: map['userId'],
+      isActive: map['isActive'],
+      deactivatedAt: map['deactivatedAt'],
+      activatedAt: map['activatedAt'],
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is UserTag &&
+        other.tag == tag &&
+        other.isActive == isActive &&
+        other.deactivatedAt == deactivatedAt &&
+        other.activatedAt == activatedAt;
+  }
+
+  @override
+  int get hashCode {
+    return tag.hashCode ^
+        isActive.hashCode ^
+        deactivatedAt.hashCode ^
+        activatedAt.hashCode;
+  }
+}
+
+class Tag {
+  final String label;
+  final String id;
+
+  Tag({
+    required this.label,
+    required this.id,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
       'label': label,
       'id': id,
-      'isActive': isActive,
     };
   }
 
@@ -37,17 +87,7 @@ class Tag {
     return Tag(
       label: map['label'],
       id: map['id'],
-      isActive: map['isActive'],
     );
-  }
-
-  String toJson() => json.encode(toMap());
-
-  factory Tag.fromJson(String source) => Tag.fromMap(json.decode(source));
-
-  @override
-  String toString() {
-    return 'Tag(label: $label, id: $id, isActive: $isActive)';
   }
 
   @override
@@ -59,6 +99,6 @@ class Tag {
 
   @override
   int get hashCode {
-    return label.hashCode ^ id.hashCode ^ isActive.hashCode;
+    return label.hashCode ^ id.hashCode;
   }
 }

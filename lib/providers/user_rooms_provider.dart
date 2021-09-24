@@ -1,28 +1,31 @@
 import 'dart:async';
 
 import 'package:anonymous_chat/database_entities/room_entity.dart';
-import 'package:anonymous_chat/interfaces/database_interface.dart';
+import 'package:anonymous_chat/interfaces/online_database_interface.dart';
 import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/room.dart';
 import 'package:anonymous_chat/database_entities/user_entity.dart';
 import 'package:anonymous_chat/providers/archived_rooms_provider.dart';
 import 'package:anonymous_chat/providers/errors_provider.dart';
+import 'package:anonymous_chat/providers/user_auth_events_provider.dart';
 import 'package:anonymous_chat/utilities/enums.dart';
 import 'package:anonymous_chat/utilities/general_functions.dart';
+import 'package:anonymous_chat/utilities/extentions.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:observable_ish/observable_ish.dart';
 import 'package:tuple/tuple.dart';
 
 final chatsListProvider =
-    StateNotifierProvider.autoDispose<ChatsListNotifier, List<Room>?>(
-  (ref) => ChatsListNotifier(
+    StateNotifierProvider<ChatsListNotifier, List<Room>?>((ref) {
+  ref.watch(userAuthEventsProvider);
+  return ChatsListNotifier(
     rooms: ref.watch(userRoomsProvider),
     archivedRooms: ref.watch(archivedRoomsProvider),
     errorNotifier: ref.read(errorsStateProvider.notifier),
-  ),
-);
+  );
+});
 
 class ChatsListNotifier extends StateNotifier<List<Room>?> {
   final ErrorsNotifier errorNotifier;
@@ -36,18 +39,18 @@ class ChatsListNotifier extends StateNotifier<List<Room>?> {
   }) : super(rooms) {
     if (archivedRooms == null || rooms == null) return;
 
-    state = List.from(rooms!);
+    List<Room> temp = List.from(rooms!);
 
-    state!.sort(
+    temp.sort(
       (a, b) => -a.messages.last.time.compareTo(b.messages.last.time),
     );
 
     if (archivedRooms!.isNotEmpty) {
-      state!.removeWhere(
-        (Room room) => archivedRooms!.contains(room),
+      temp.removeWhere(
+        (Room room) => archivedRooms!.contains(room.id),
       );
     }
-    state = state;
+    state = List.from(temp);
   }
 
   set latestActiveChat(Room room) {
@@ -61,36 +64,43 @@ class ChatsListNotifier extends StateNotifier<List<Room>?> {
   }
 
   void deleteChat({required String roomId}) {
-    state!.removeWhere((element) => element.id == roomId);
-    state = rooms;
-    retry(f: () => IDatabase.databseService.deleteChat(roomId: roomId));
+    state!.removeWhere((Room room) => room.id == roomId);
+    state = state;
+    retry(f: () => IDatabase.db.deleteChat(roomId: roomId));
   }
 }
 
-// Message updates to this room.
-// Either a new  message is recieved
-// or a sent message is read
-// by the other side
-
 final roomMessagesUpdatesChannel =
-    StreamProvider.family<Message?, String>((ref, roomId) {
-  final IDatabase db = IDatabase.databseService;
+    StreamProvider.family<Tuple2<Message, MessageServeUpdateType>?, String>(
+        (ref, roomId) {
+  ref.watch(userAuthEventsProvider);
+  final IDatabase db = IDatabase.db;
 
   return db
       .roomMessagesUpdates(roomId: roomId)
       .skip(1)
-      .map((List<Map<String, dynamic>> data) {
-    assert(data.length <= 1);
-    if (data.length == 0) return null;
-    Message message = Message.fromMap(data.first);
-    return message;
+      .map((Tuple2<Map<String, dynamic>, DataChangeType> data) {
+    Message message = Message.fromMap(data.item1);
+
+    if (data.item2 == DataChangeType.added) {
+      if (message.isReceived()) {
+        return Tuple2(message, MessageServeUpdateType.MessageRecieved);
+      }
+    } else {
+      assert(data.item2 == DataChangeType.modified);
+      if (message.isSent()) {
+        return Tuple2(message, MessageServeUpdateType.MessageRead);
+      }
+    }
+    return null;
   });
 });
 
 final userRoomsFuture = FutureProvider.autoDispose<List<Room>>((ref) async {
   ref.maintainState = true;
+  ref.watch(userAuthEventsProvider);
 
-  final db = IDatabase.databseService;
+  final db = IDatabase.db;
   final user = ILocalStorage.storage.user!;
 
   List<Room> temp = [];
@@ -116,6 +126,7 @@ final userRoomsFuture = FutureProvider.autoDispose<List<Room>>((ref) async {
           await db.getAllMessages(roomId: entity.id);
       for (Map<String, dynamic> m in messagesData) {
         Message message = Message.fromMap(m);
+        roomMessages.add(message);
         assert(message.isSenderBlocked == false);
       }
       roomMessages.sort((a, b) => a.time.compareTo(b.time));
@@ -132,16 +143,18 @@ final userRoomsFuture = FutureProvider.autoDispose<List<Room>>((ref) async {
 });
 
 final userRoomsProvider =
-    StateNotifierProvider<UserRoomsChangesNotifier, List<Room>?>(
-  (ref) => UserRoomsChangesNotifier(),
-);
+    StateNotifierProvider<UserRoomsChangesNotifier, List<Room>?>((ref) {
+  ref.watch(userAuthEventsProvider);
+
+  return UserRoomsChangesNotifier();
+});
 
 class UserRoomsChangesNotifier extends StateNotifier<List<Room>?> {
   UserRoomsChangesNotifier() : super(null) {
     init();
   }
 
-  final db = IDatabase.databseService;
+  final db = IDatabase.db;
   final user = ILocalStorage.storage.user!;
 
   List<Room> _rooms = [];
@@ -152,7 +165,8 @@ class UserRoomsChangesNotifier extends StateNotifier<List<Room>?> {
   set rooms(List<Room> rooms) => state = rooms;
 
   void init() {
-    roomChangesListener = db.userRooms(userId: user.id).listen((data) async {
+    roomChangesListener =
+        db.userRoomsChanges(userId: user.id).listen((data) async {
       for (Tuple2<Map<String, dynamic>, DataChangeType> m in data) {
         try {
           await _handleRoomsChange(m);
@@ -191,6 +205,7 @@ class UserRoomsChangesNotifier extends StateNotifier<List<Room>?> {
             await db.getAllMessages(roomId: roomEntity.id);
         for (Map<String, dynamic> m in messagesData) {
           Message message = Message.fromMap(m);
+          roomMessages.add(message);
           assert(message.isSenderBlocked == false);
         }
         roomMessages.sort((a, b) => a.time.compareTo(b.time));

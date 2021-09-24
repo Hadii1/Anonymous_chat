@@ -14,7 +14,7 @@
 
 import 'package:anonymous_chat/database_entities/user_entity.dart';
 import 'package:anonymous_chat/interfaces/auth_interface.dart';
-import 'package:anonymous_chat/interfaces/database_interface.dart';
+import 'package:anonymous_chat/interfaces/online_database_interface.dart';
 import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/providers/loading_provider.dart';
 import 'package:anonymous_chat/utilities/general_functions.dart';
@@ -150,7 +150,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                         NameGenerator(
                           onChanged: (n) => onboardingNotifier.nickname = n,
-                        )
+                        ),
                       ],
                     ),
                   ),
@@ -204,7 +204,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 final userInfoSavingProvider =
     FutureProvider.family.autoDispose<bool, OnboardingInfo>(
   (ref, info) async {
-    IDatabase db = IDatabase.databseService;
+    IDatabase db = IDatabase.db;
     IAuth auth = IAuth.auth;
 
     Map<String, dynamic> userData = await db.getUserData(id: auth.getId()!)!;

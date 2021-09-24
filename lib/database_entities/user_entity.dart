@@ -18,6 +18,9 @@ class LocalUser {
   static bool isDataComplete(Map<String, dynamic> map) =>
       map['gender'] != '' && map['dob'] != -1 && map['nickname'] != '';
 
+  static bool isProfileComplete(LocalUser user) =>
+      user.gender.isNotEmpty && user.dob != -1 && user.nickname.isNotEmpty;
+
   Map<String, dynamic> toMap() {
     return {
       'nickname': nickname,
@@ -39,11 +42,11 @@ class LocalUser {
 
   factory LocalUser.fromMap(Map<String, dynamic> map) {
     return LocalUser(
-      nickname: map['nickname']??'',
-      dob: map['dob']??'',
+      nickname: map['nickname'] ?? '',
+      dob: map['dob'] ?? '',
       phoneNumber: map['phoneNumber'],
       id: map['id'],
-      gender: map['gender']??'',
+      gender: map['gender'] ?? '',
     );
   }
 

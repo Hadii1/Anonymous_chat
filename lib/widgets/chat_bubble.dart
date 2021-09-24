@@ -21,7 +21,7 @@ import 'package:flutter/services.dart';
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/database_entities/user_entity.dart';
 import 'package:anonymous_chat/services.dart/local_storage.dart';
-import 'package:anonymous_chat/utilities/extrentions.dart';
+import 'package:anonymous_chat/utilities/extentions.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 
 class ChatBubble extends StatelessWidget {

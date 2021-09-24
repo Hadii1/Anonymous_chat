@@ -36,22 +36,34 @@ class Settings extends StatelessWidget {
                     children: [
                       Container(
                         alignment: Alignment.centerLeft,
-                        width: 50,
-                        height: 50,
+                        width: 60,
+                        height: 60,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
                             width: 0.2,
-                            color: style.borderColor,
+                            color: style.accentColor,
                           ),
                         ),
-                        child: Center(
-                          child: Text(
-                            ILocalStorage.storage.user!.nickname
-                                .substring(0, 1)
-                                .toUpperCase(),
-                            style: style.chatHeaderLetter,
-                            textAlign: TextAlign.center,
+                        child: Padding(
+                          padding: const EdgeInsets.all(4.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                width: 0.2,
+                                color: style.borderColor,
+                              ),
+                            ),
+                            child: Center(
+                              child: Text(
+                                ILocalStorage.storage.user!.nickname
+                                    .substring(0, 1)
+                                    .toUpperCase(),
+                                style: style.chatHeaderLetter,
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -68,6 +80,10 @@ class Settings extends StatelessWidget {
                           ),
                           SizedBox(
                             height: 4,
+                          ),
+                          Text(
+                            ILocalStorage.storage.user!.phoneNumber,
+                            style: style.title3Style,
                           ),
                         ],
                       ),

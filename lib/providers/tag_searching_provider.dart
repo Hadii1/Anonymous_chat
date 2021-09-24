@@ -11,141 +11,94 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-//
+
 import 'dart:async';
 import 'dart:io';
 
-import 'package:anonymous_chat/interfaces/database_interface.dart';
+import 'package:anonymous_chat/interfaces/online_database_interface.dart';
+import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
+import 'package:anonymous_chat/interfaces/search_service_interface.dart';
 import 'package:anonymous_chat/models/tag.dart';
 import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/providers/tags_provider.dart';
-import 'package:anonymous_chat/services.dart/algolia.dart';
-import 'package:anonymous_chat/services.dart/firestore.dart';
-import 'package:anonymous_chat/services.dart/local_storage.dart';
 import 'package:anonymous_chat/utilities/general_functions.dart';
-import 'package:flutter/material.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:flutter/material.dart';
+
 enum TagScreenState {
   loadingTags,
-  showingResults,
   addingNewTag,
+  showingSuggestedTags,
+  idle,
 }
 
 final suggestedTagsProvider = ChangeNotifierProvider.autoDispose((ref) {
-  return TagSuggestionsNotifier(ref.read);
+  return TagSuggestionsNotifier(
+    ref.read,
+    ref.read(errorsStateProvider.notifier),
+  );
 });
 
 class TagSuggestionsNotifier extends ChangeNotifier {
   TagSuggestionsNotifier(
     this.read,
-  ) {
-    _errorNotifier = read(errorsStateProvider.notifier);
-  }
+    this._errorNotifier,
+  );
 
-  final FirestoreService firestore = FirestoreService();
-  final SharedPrefs storage = SharedPrefs();
-  final AlgoliaSearch algolia = AlgoliaSearch();
+  final db = IDatabase.db;
+  final storage = ILocalStorage.storage;
+  final searchService = ISearchService.searchService;
+
+  final ErrorsNotifier _errorNotifier;
   final Reader read;
-
-  late ErrorsNotifier _errorNotifier;
 
   List<Tag> suggestedTags = [];
 
   Tag? newTagToAdd;
-  TagScreenState? screenState;
-  Timer? _debounceTimer;
-  String? currentLabel;
-  // ignore: cancel_subscriptions
-  StreamSubscription<void>? _suggestedTagsSub;
-
-  @override
-  void dispose() {
-    if (_suggestedTagsSub != null) _suggestedTagsSub!.cancel();
-    super.dispose();
-  }
+  TagScreenState screenState = TagScreenState.idle;
 
   set searchedTag(String label) {
-    if (_suggestedTagsSub != null) _suggestedTagsSub!.cancel();
-
-    if (label.isEmpty) {
-      screenState = null;
-      newTagToAdd = null;
-      suggestedTags = [];
-      currentLabel = null;
-
-      notifyListeners();
-
-      if (_debounceTimer != null && _debounceTimer!.isActive) {
-        _debounceTimer!.cancel();
-      }
-    } else {
-      // To avoid unnessecary rebuilds
-      if (screenState != TagScreenState.loadingTags ||
-          currentLabel != null ||
-          suggestedTags.isNotEmpty) {
-        screenState = TagScreenState.loadingTags;
-        newTagToAdd = null;
-        suggestedTags.clear();
-      }
-
-      currentLabel = label;
-      notifyListeners();
-
-      if (_debounceTimer != null) _debounceTimer!.cancel();
-      _debounceTimer = Timer(
-        Duration(milliseconds: 400),
-        () {
-          _suggestedTagsSub =
-              _getSuggestedTags(label).asStream().listen((List<Tag> tags) {
-            screenState = TagScreenState.showingResults;
-            suggestedTags = tags;
-            notifyListeners();
-          });
-        },
-      );
-    }
-  }
-
-  void onExistingTagPressed({required Tag tag, required bool selected}) async {
-    screenState = null;
-    currentLabel = null;
     suggestedTags = [];
     notifyListeners();
 
-    if (selected) {
-      await retry(
-          f: () => firestore.activateTag(
-              tag: tag.copyWith(isActive: selected), userId: storage.user!.id));
+    if (label.isEmpty) {
+      screenState = TagScreenState.idle;
+      newTagToAdd = null;
+      suggestedTags = [];
+
+      notifyListeners();
     } else {
-      await retry(
-          f: () => firestore.deactivateTag(
-                tag: tag.copyWith(isActive: selected),
-                userId: storage.user!.id,
-              ));
+      _getSuggestedTags(label).then((List<Tag> suggestions) {
+        screenState = TagScreenState.showingSuggestedTags;
+        suggestedTags = suggestions;
+        notifyListeners();
+      });
     }
+  }
+
+  void onExistingTagPressed(
+      {required Tag tag, required bool selected}) async {
+    screenState = TagScreenState.idle;
+    suggestedTags = [];
+    notifyListeners();
+
+    selected
+        ? read(userTagsProvider.notifier).activateTag(tag)
+        : read(userTagsProvider.notifier).deactivateTag(tag);
   }
 
   void onTagAdditionPressed() async {
     try {
       screenState = TagScreenState.addingNewTag;
-      notifyListeners();
-
       suggestedTags = [];
-      currentLabel = null;
+
       notifyListeners();
 
-      await retry(f: () => algolia.addSearchableTag(tag: newTagToAdd!));
+      read(userTagsProvider.notifier).addNewTag(newTagToAdd!);
 
-      await retry(
-          f: () => firestore.addNewTag(
-                tag: newTagToAdd!,
-                userId: storage.user!.id,
-              ));
-
-      screenState = null;
+      screenState = TagScreenState.idle;
       newTagToAdd = null;
 
       notifyListeners();
@@ -156,48 +109,48 @@ class TagSuggestionsNotifier extends ChangeNotifier {
             : 'Something went wrong. Try agian.',
       );
 
-      screenState = null;
+      screenState = TagScreenState.idle;
       notifyListeners();
     }
   }
 
   Future<List<Tag>> _getSuggestedTags(String label) async {
     try {
-      List<Tag> tags = [];
-
-      if (label.isEmpty) return tags;
-
+      if (label.isEmpty) return [];
+      List<Tag> suggestedTags = [];
       screenState = TagScreenState.loadingTags;
 
+      // get suggested tags data
       List<Map<String, dynamic>> algoliaData =
-          await retry(f: () => algolia.getTagSuggestions(label: currentLabel!));
+          await retry(f: () => searchService.getTagSuggestions(label: label));
 
       List<Map<String, dynamic>> data = await retry(
-          f: () => IDatabase.databseService.getSuggestedTags(
+          f: () => db.getTagsById(
                 ids: algoliaData
                     .map((Map<String, dynamic> e) => e['id'] as String)
                     .toList(),
               ));
 
-      List selectedTags = read(userTagsProvider(storage.user!.id))
-          .where((t) => t.isActive == true)
-          .toList();
+      suggestedTags = data.map((e) => Tag.fromMap(e)).toList();
 
-      tags = data.map((e) => Tag.fromMap(e)).toList();
-      tags.removeWhere((element) => selectedTags.contains(element));
+      // Remove already exisiting active tags
+      List selectedTags =
+          read(userTagsProvider)!.where((t) => t.isActive == true).toList();
+      suggestedTags.removeWhere((element) => selectedTags.contains(element));
 
-      // If tag is new allow adding it
-      if (!tags
+      // If the label isn't present in any of the suggested tags
+      // allow adding it as a new tag
+      if (!suggestedTags
           .map((e) => e.label.toLowerCase().trim())
           .contains(label.toLowerCase().trim())) {
         newTagToAdd = Tag(
           id: generateUid(),
-          isActive: true,
           label: label,
         );
       }
+      notifyListeners();
 
-      return tags;
+      return suggestedTags;
     } on Exception catch (e, _) {
       _errorNotifier.set(
         e is SocketException
@@ -205,7 +158,7 @@ class TagSuggestionsNotifier extends ChangeNotifier {
             : 'Something went wrong. Try agian.',
       );
 
-      screenState = null;
+      screenState = TagScreenState.idle;
       notifyListeners();
       return [];
     }

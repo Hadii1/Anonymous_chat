@@ -41,7 +41,7 @@ class MessageBox extends StatefulWidget {
 }
 
 class _TypingIndicatorThrottle {
-  final void Function(bool) f;
+  final void Function(bool) onChange;
 
   final Duration waitingTime;
 
@@ -49,7 +49,7 @@ class _TypingIndicatorThrottle {
 
   _TypingIndicatorThrottle({
     required this.waitingTime,
-    required this.f,
+    required this.onChange,
   });
 
   Timer? timer;
@@ -62,17 +62,17 @@ class _TypingIndicatorThrottle {
     // First Call
     if (lastCallTime == null) {
       lastCallTime = DateTime.now();
-      f(true);
+      onChange(true);
 
       timer = Timer(waitingTime, () {
-        f(false);
+        onChange(false);
       });
     } else {
       if (DateTime.now().difference(lastCallTime!) >= waitingTime &&
           !lastState) {
         lastCallTime = DateTime.now();
         lastState = true;
-        f(true);
+        onChange(true);
       }
     }
   }
@@ -80,7 +80,7 @@ class _TypingIndicatorThrottle {
   _restartTimer() {
     timer!.cancel();
     timer = Timer(waitingTime, () {
-      f(false);
+      onChange(false);
       lastState = false;
     });
   }
@@ -94,8 +94,8 @@ class _MessageBoxState extends State<MessageBox> {
   @override
   void initState() {
     throttle = _TypingIndicatorThrottle(
-      waitingTime: Duration(seconds: 2),
-      f: widget.onTypingStateChange,
+      waitingTime: Duration(seconds: 3),
+      onChange: widget.onTypingStateChange,
     );
 
     _controller.addListener(_inputListener);

@@ -14,7 +14,7 @@
 
 import 'dart:async';
 
-import 'package:anonymous_chat/interfaces/database_interface.dart';
+import 'package:anonymous_chat/interfaces/online_database_interface.dart';
 import 'package:anonymous_chat/database_entities/user_entity.dart';
 import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
 import 'package:anonymous_chat/utilities/enums.dart';
@@ -27,7 +27,7 @@ final blockedContactsFuture =
     FutureProvider.autoDispose<List<LocalUser>>((ref) async {
   ref.maintainState = true;
 
-  final db = IDatabase.databseService;
+  final db = IDatabase.db;
   final userId = ILocalStorage.storage.user!.id;
 
   List<String> blockedIds = await db.getBlockedContacts(userId: userId);
@@ -48,14 +48,15 @@ final blockedContactsFuture =
 });
 
 final blockedContactsProvider = StateNotifierProvider.autoDispose<
-    BlockedContactsNotifier, List<LocalUser>?>(
-  (_) => BlockedContactsNotifier(),
-);
+    BlockedContactsNotifier, List<LocalUser>?>((ref) {
+  ref.maintainState = true;
+  return BlockedContactsNotifier();
+});
 
 class BlockedContactsNotifier extends StateNotifier<List<LocalUser>?> {
   BlockedContactsNotifier() : super(null);
 
-  final db = IDatabase.databseService;
+  final db = IDatabase.db;
   final userId = ILocalStorage.storage.user!.id;
 
   set blockedContacts(List<LocalUser> contacts) => state = contacts;
@@ -77,7 +78,7 @@ final blockingContactsFuture =
     FutureProvider.autoDispose<List<LocalUser>>((ref) async {
   ref.maintainState = true;
   final String userId = ILocalStorage.storage.user!.id;
-  final db = IDatabase.databseService;
+  final db = IDatabase.db;
 
   List<String> blockingContacts = await db.getBlockingContacts(userId: userId);
 
@@ -107,7 +108,7 @@ class BlockedByContactsNotifier extends StateNotifier<List<LocalUser>?> {
   late final StreamSubscription<List<Tuple2<String, DataChangeType>>>
       _subscription;
   final userId = ILocalStorage.storage.user!.id;
-  final db = IDatabase.databseService;
+  final db = IDatabase.db;
 
   set blockedBy(List<LocalUser> data) => state = data;
 

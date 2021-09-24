@@ -1,10 +1,26 @@
+import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
 import 'package:anonymous_chat/models/activity_status.dart';
 import 'package:anonymous_chat/models/message.dart';
-import 'package:anonymous_chat/services.dart/local_storage.dart';
+import 'package:anonymous_chat/utilities/enums.dart';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 extension MessageDirection on Message {
-  bool isReceived() => this.recipient == SharedPrefs().user!.id;
+  bool isReceived() => this.recipient == ILocalStorage.storage.user!.id;
   bool isSent() => !this.isReceived();
+}
+
+extension ChangeType on DocumentChangeType {
+  DataChangeType changeType() {
+    switch (this) {
+      case DocumentChangeType.added:
+        return DataChangeType.added;
+      case DocumentChangeType.modified:
+        return DataChangeType.modified;
+      case DocumentChangeType.removed:
+        return DataChangeType.delete;
+    }
+  }
 }
 
 extension MessageTimeFormat on int {

@@ -4,7 +4,7 @@ import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:flutter/material.dart';
 
 class TagsRow extends StatelessWidget {
-  final List<Tag> tags;
+  final List<UserTag> tags;
   final String? title;
   final void Function(Tag, bool) onSelected;
 
@@ -41,7 +41,7 @@ class TagsRow extends StatelessWidget {
               (index) => _Chip(
                 onSelected: onSelected,
                 isSelected: tags[index].isActive,
-                tag: tags[index],
+                tag: tags[index].tag,
                 isFirstElement: index == 0,
                 isLastElement: index == tags.length - 1,
               ),

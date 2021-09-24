@@ -7,7 +7,7 @@ import 'package:anonymous_chat/providers/user_rooms_provider.dart';
 import 'package:anonymous_chat/services.dart/local_storage.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/views/room_screen.dart';
-import 'package:anonymous_chat/utilities/extrentions.dart';
+import 'package:anonymous_chat/utilities/extentions.dart';
 import 'package:anonymous_chat/widgets/custom_route.dart';
 
 import 'package:flutter/cupertino.dart';

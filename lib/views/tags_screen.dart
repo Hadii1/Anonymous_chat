@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:anonymous_chat/models/tag.dart';
@@ -6,10 +7,10 @@ import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/providers/suggestions_provider.dart';
 import 'package:anonymous_chat/providers/tag_searching_provider.dart';
 import 'package:anonymous_chat/providers/tags_provider.dart';
-import 'package:anonymous_chat/services.dart/local_storage.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/widgets/animated_widgets.dart';
 import 'package:anonymous_chat/widgets/keyboard_hider.dart';
+import 'package:anonymous_chat/widgets/loading_widget.dart';
 import 'package:anonymous_chat/widgets/search_field.dart';
 import 'package:anonymous_chat/widgets/suggestion_header.dart';
 import 'package:anonymous_chat/widgets/tags_row.dart';
@@ -34,31 +35,51 @@ class TagsScreen extends StatelessWidget {
       body: KeyboardHider(
         child: Consumer(
           builder: (context, watch, child) {
+            AsyncValue<List<UserTag>> tagsData = watch(userTagsFuture);
             final tagsNotifier = watch(suggestedTagsProvider);
 
-            return ListView(
-              children: [
-                Container(
-                  color: style.backgroundColor,
-                  child: SafeArea(
-                    bottom: false,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-                      child: SearchField(
-                        hint: 'Search or add new tags to match up',
-                        onChanged: (value) => tagsNotifier.searchedTag = value,
+            return AnimatedSwitcher(
+              duration: Duration(milliseconds: 300),
+              child: () {
+                if (tagsData is AsyncLoading)
+                  return LoadingWidget(
+                    isLoading: true,
+                  );
+
+                if (tagsData is AsyncError) {
+                  Future.delayed(Duration(seconds: 2)).then(
+                    (value) => context.refresh(userTagsProvider),
+                  );
+
+                  return LoadingWidget(
+                    isLoading: true,
+                  );
+                }
+                return ListView(
+                  children: [
+                    Container(
+                      color: style.backgroundColor,
+                      child: SafeArea(
+                        bottom: false,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                          child: _TagsSearchField(
+                            onChanged: (value) =>
+                                tagsNotifier.searchedTag = value,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-                _TagsSearchResponse(),
-                AnimatedSwitcher(
-                  duration: Duration(milliseconds: 350),
-                  child: tagsNotifier.screenState == null
-                      ? _SuggestedContacts()
-                      : SizedBox.shrink(),
-                ),
-              ],
+                    _TagsSearchResponse(),
+                    AnimatedSwitcher(
+                      duration: Duration(milliseconds: 350),
+                      child: tagsNotifier.screenState == TagScreenState.idle
+                          ? _SuggestedContacts()
+                          : SizedBox.shrink(),
+                    ),
+                  ],
+                );
+              }(),
             );
           },
         ),
@@ -79,7 +100,7 @@ class _TagsSearchResponseState extends State<_TagsSearchResponse>
     AppStyle style = AppTheming.of(context).style;
     return Consumer(
       builder: (context, watch, child) {
-        final userTags = watch(userTagsProvider(SharedPrefs().user!.id));
+        final List<UserTag> userTags = watch(userTagsProvider)!;
         final tagsNotifier = watch(suggestedTagsProvider);
         return AnimatedSize(
           vsync: this,
@@ -88,14 +109,14 @@ class _TagsSearchResponseState extends State<_TagsSearchResponse>
             duration: Duration(milliseconds: 300),
             child: () {
               switch (tagsNotifier.screenState) {
-                case null:
+                case TagScreenState.idle:
                   return TagsRow(
                     tags: userTags,
                     onSelected: (Tag tag, bool selected) {
-                      context.read(suggestedTagsProvider).onExistingTagPressed(
-                            tag: tag,
-                            selected: selected,
-                          );
+                      tagsNotifier.onExistingTagPressed(
+                        tag: tag,
+                        selected: selected,
+                      );
                     },
                   );
                 case TagScreenState.addingNewTag:
@@ -116,15 +137,14 @@ class _TagsSearchResponseState extends State<_TagsSearchResponse>
                     ),
                   );
 
-                case TagScreenState.showingResults:
+                case TagScreenState.showingSuggestedTags:
                   return Column(
                     children: [
                       tagsNotifier.newTagToAdd != null
                           ? _NewTagTile(
                               label: tagsNotifier.newTagToAdd!.label,
-                              onAddedPressed: () => context
-                                  .read(suggestedTagsProvider)
-                                  .onTagAdditionPressed(),
+                              onAddedPressed: () =>
+                                  tagsNotifier.onTagAdditionPressed(),
                             )
                           : SizedBox.shrink(),
                       Padding(
@@ -383,9 +403,9 @@ class __SuggestedContactsState extends State<_SuggestedContacts>
       padding: const EdgeInsets.only(left: 24.0, right: 24),
       child: Consumer(
         builder: (context, watch, child) {
-          final activeTags = watch(userTagsProvider(SharedPrefs().user!.id))
-              .where((Tag tag) => tag.isActive);
-          final allTags = watch(userTagsProvider(SharedPrefs().user!.id));
+          final List<UserTag> allTags = watch(userTagsProvider)!;
+          final List<UserTag> activeTags =
+              allTags.where((UserTag userTag) => userTag.isActive).toList();
 
           return watch(suggestedContactsProvider).when(
             data: (List<Tuple2<LocalUser, List<Tag>>>? data) {
@@ -470,5 +490,48 @@ class __SuggestedContactsState extends State<_SuggestedContacts>
         },
       ),
     );
+  }
+}
+
+class _TagsSearchField extends StatefulWidget {
+  final Function(String) onChanged;
+
+  const _TagsSearchField({
+    required this.onChanged,
+  });
+
+  @override
+  _TagsSearchFieldState createState() => _TagsSearchFieldState();
+}
+
+class _TagsSearchFieldState extends State<_TagsSearchField> {
+  Timer? _debounceTimer;
+
+  @override
+  void dispose() {
+    cancelTimer();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SearchField(
+      hint: 'Search or add new tags to match up',
+      onChanged: (v) {
+        cancelTimer();
+        if (v.isEmpty) {
+          widget.onChanged('');
+        } else {
+          _debounceTimer = Timer(Duration(milliseconds: 400), () {
+            widget.onChanged(v);
+          });
+        }
+      },
+    );
+  }
+
+  void cancelTimer() {
+    if (_debounceTimer != null && _debounceTimer!.isActive)
+      _debounceTimer!.cancel();
   }
 }

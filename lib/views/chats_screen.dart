@@ -2,7 +2,6 @@ import 'package:anonymous_chat/models/room.dart';
 import 'package:anonymous_chat/database_entities/user_entity.dart';
 import 'package:anonymous_chat/providers/archived_rooms_provider.dart';
 import 'package:anonymous_chat/providers/blocked_contacts_provider.dart';
-import 'package:anonymous_chat/providers/chat_provider.dart';
 import 'package:anonymous_chat/providers/user_rooms_provider.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/widgets/animated_widgets.dart';
@@ -38,7 +37,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
         AsyncValue<List<LocalUser>> blockedContacts =
             watch(blockedContactsFuture);
 
-        AsyncValue<List<Room>?> archivedRooms = watch(archivedRoomsFuture);
+        AsyncValue<List<String>?> archivedRooms = watch(archivedRoomsFuture);
 
         List<AsyncValue> values = [
           userRooms,
@@ -138,8 +137,6 @@ class _ChatsScreenState extends State<ChatsScreen> {
                           );
                         },
                         itemBuilder: (context, animation, room, index) {
-                          watch(chattingProvider(room));
-
                           return SizeFadeTransition(
                             animation: animation,
                             child: Padding(

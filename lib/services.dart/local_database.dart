@@ -12,13 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-enum DataChangeType {
-  added,
-  delete,
-  modified,
-}
+import 'package:anonymous_chat/database_entities/room_entity.dart';
+import 'package:anonymous_chat/interfaces/chat_persistance_interface.dart';
+import 'package:anonymous_chat/models/message.dart';
 
-enum MessageServeUpdateType {
-  MessageRead,
-  MessageRecieved,
+class LocalChatPersistance extends DataRepository {
+  @override
+  Future<void> saveNewRoom({required RoomEntity roomEntity}) {}
+
+  @override
+  Future<void> writeMessage(
+      {required String roomId, required Message message}) {
+    // TODO: implement writeMessage
+    throw UnimplementedError();
+  }
 }

@@ -1,7 +1,6 @@
 import 'dart:async';
 
-import 'package:anonymous_chat/database_entities/room_entity.dart';
-import 'package:anonymous_chat/models/message.dart';
+import 'package:anonymous_chat/interfaces/chat_persistance_interface.dart';
 import 'package:anonymous_chat/models/tag.dart';
 import 'package:anonymous_chat/database_entities/user_entity.dart';
 import 'package:anonymous_chat/services.dart/firestore.dart';
@@ -9,20 +8,12 @@ import 'package:anonymous_chat/utilities/enums.dart';
 
 import 'package:tuple/tuple.dart';
 
-abstract class IDatabase {
-  static IDatabase get databseService => FirestoreService();
+abstract class IDatabase implements DataRepository {
+  static IDatabase get db => FirestoreService();
 
   Future<void> saveUserData({required LocalUser user});
 
-  Future<void> saveNewRoom({required RoomEntity roomEntity});
-
   Future<Map<String, dynamic>>? getUserData({required String id});
-
-  Future<void> writeMessage({required String roomId, required Message message});
-
-  Future<List<Map<String, dynamic>>> getUserRooms({required String userId});
-
-  Future<List<String>> getUserArchivedRooms({required String userId});
 
   Future<List<String>> getBlockedContacts({required String userId});
 
@@ -30,7 +21,7 @@ abstract class IDatabase {
 
   Future<List<Map<String, dynamic>>> getAllMessages({required String roomId});
 
-  Stream<List<Tuple2<Map<String, dynamic>, DataChangeType>>> userRooms({
+  Stream<List<Tuple2<Map<String, dynamic>, DataChangeType>>> userRoomsChanges({
     required String userId,
   });
 
@@ -41,19 +32,21 @@ abstract class IDatabase {
 
   Future<void> deleteAccount({required String userId});
 
-  Future<List<Map<String, dynamic>>> getSuggestedTags(
-      {required List<String> ids});
+  Future<List<Map<String, dynamic>>> getUserTags({required String userId});
 
-  Future<void> addNewTag({required Tag tag, required String userId});
+  Future<List<Map<String, dynamic>>> getTagsById({required List<String> ids});
 
-  Stream<List<Map<String, dynamic>?>> userTagsChanges({required String userId});
+  Future<void> createNewTag({required UserTag userTag, required String userId});
 
-  Stream<List<Map<String, dynamic>>> roomMessagesUpdates(
+  // Stream<List<Map<String, dynamic>?>> userTagsChanges({required String userId});
+
+  Stream<Tuple2<Map<String, dynamic>, DataChangeType>> roomMessagesUpdates(
       {required String roomId});
 
-  Future<void> deactivateTag({required Tag tag, required String userId});
+  Future<void> deactivateTag(
+      {required UserTag userTag, required String userId});
 
-  Future<void> activateTag({required Tag tag, required String userId});
+  Future<void> activateTag({required UserTag userTag, required String userId});
 
   Future<void> deleteChat({required String roomId});
 

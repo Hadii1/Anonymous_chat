@@ -14,8 +14,9 @@
 
 import 'package:anonymous_chat/database_entities/user_entity.dart';
 import 'package:anonymous_chat/interfaces/auth_interface.dart';
-import 'package:anonymous_chat/interfaces/database_interface.dart';
+import 'package:anonymous_chat/interfaces/online_database_interface.dart';
 import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
+import 'package:anonymous_chat/providers/user_auth_events_provider.dart';
 import 'package:anonymous_chat/services.dart/algolia.dart';
 import 'package:anonymous_chat/services.dart/authentication.dart';
 import 'package:anonymous_chat/services.dart/push_notificaitons.dart';
@@ -44,18 +45,20 @@ final appInitialzationProvider = FutureProvider.autoDispose<bool>((ref) async {
 });
 
 // Check if the user info (nickname/dob/gender) are filled.
-final userInfoStateProvider =
+final userInfoProvider =
     StateNotifierProvider.autoDispose<UserInfoNotifier, bool?>(
-        (ref) => UserInfoNotifier());
+        (ref) => UserInfoNotifier(ref.read));
 
 class UserInfoNotifier extends StateNotifier<bool?> {
-  UserInfoNotifier() : super(null) {
+  UserInfoNotifier(this.read) : super(null) {
     init();
   }
 
+  final Reader read;
+
   init() async {
     retry(f: () async {
-      IDatabase db = IDatabase.databseService;
+      IDatabase db = IDatabase.db;
       ILocalStorage storage = ILocalStorage.storage;
       FirebaseAuthService auth = IAuth.auth as FirebaseAuthService;
 
@@ -65,10 +68,12 @@ class UserInfoNotifier extends StateNotifier<bool?> {
       bool isDataComplete = LocalUser.isDataComplete(userData);
 
       if (isDataComplete) {
+        LocalUser user = LocalUser.fromMap(userData);
         // Update local user in case it's missing (due to uninstalling app)
-        if (storage.user == null) {
-          storage.setUser(LocalUser.fromMap(userData));
+        if (storage.user == null || storage.user != user) {
+          storage.setUser(user);
         }
+        read(userAuthEventsProvider.notifier).user = user;
         state = true;
       } else
         state = false;

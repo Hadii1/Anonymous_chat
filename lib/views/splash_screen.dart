@@ -61,9 +61,10 @@ class SplashScreen extends StatelessWidget {
 class UserInfoInitializing extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final style = AppTheming.of(context).style;
     return Scaffold(
       body: ProviderListener<bool?>(
-        provider: userInfoStateProvider,
+        provider: userInfoProvider,
         onChange: (context, bool? isProfileComplete) {
           if (isProfileComplete != null) {
             Widget destination =
@@ -75,11 +76,11 @@ class UserInfoInitializing extends StatelessWidget {
           }
         },
         child: Container(
-          color: Colors.white,
+          color: style.backgroundColor,
           child: Center(
             child: SpinKitThreeBounce(
               size: 25,
-              color: Color(0xff008080),
+              color: style.accentColor,
             ),
           ),
         ),
