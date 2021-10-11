@@ -1,11 +1,11 @@
 import 'dart:async';
 
+import 'package:anonymous_chat/database_entities/message_entity.dart';
 import 'package:anonymous_chat/database_entities/room_entity.dart';
-import 'package:anonymous_chat/interfaces/chat_persistance_interface.dart';
-import 'package:anonymous_chat/interfaces/online_database_interface.dart';
-import 'package:anonymous_chat/models/message.dart';
+import 'package:anonymous_chat/interfaces/database_interface.dart';
+import 'package:anonymous_chat/models/contact.dart';
 import 'package:anonymous_chat/models/tag.dart';
-import 'package:anonymous_chat/database_entities/user_entity.dart';
+import 'package:anonymous_chat/models/local_user.dart';
 import 'package:anonymous_chat/utilities/custom_exceptions.dart';
 import 'package:anonymous_chat/utilities/enums.dart';
 import 'package:anonymous_chat/utilities/extentions.dart';
@@ -14,7 +14,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:tuple/tuple.dart';
 
-class FirestoreService implements IDatabase {
+class FirestoreService
+    implements IDatabase<OnlineRoomEntity, OnlineMessageEntity> {
   static final FirestoreService _instance = FirestoreService._internal();
 
   factory FirestoreService() => _instance;
@@ -25,7 +26,7 @@ class FirestoreService implements IDatabase {
 
   @override
   Future<void> writeMessage(
-      {required String roomId, required Message message}) async {
+      {required String roomId, required OnlineMessageEntity message}) async {
     await _db
         .collection('Rooms')
         .doc(roomId)
@@ -47,30 +48,30 @@ class FirestoreService implements IDatabase {
   }
 
   @override
-  Future<void> blockUser({
-    required String client,
-    required String other,
+  Future<void> blockContact({
+    required String userId,
+    required String blockedContact,
   }) async {
     await _db
         .collection('Users')
-        .doc(client)
+        .doc(userId)
         .collection('Blocked Users')
-        .doc(other)
+        .doc(blockedContact)
         .set({
-      'blockingUser': client,
-      'blockedUser': other,
+      'blockingUser': userId,
+      'blockedUser': blockedContact,
     });
   }
 
-  Future<void> unblockUser({
-    required String client,
-    required String other,
+  Future<void> unblockContact({
+    required String userId,
+    required String blockedContact,
   }) async {
     await _db
         .collection('Users')
-        .doc(client)
+        .doc(userId)
         .collection('Blocked Users')
-        .doc(other)
+        .doc(blockedContact)
         .delete();
   }
 
@@ -93,14 +94,25 @@ class FirestoreService implements IDatabase {
   }
 
   @override
+  Future<Contact> getContactData({required String id}) async {
+    DocumentSnapshot<Map<String, dynamic>> doc =
+        await _db.collection('Users').doc(id).get();
+    return Contact.fromMap(doc.data()!);
+  }
+
+  @override
+  Future<void> saveContactData({required Contact contact}) {
+    throw UnimplementedError();
+  }
+
+  @override
   Stream<List<Tuple2<Map<String, dynamic>, DataChangeType>>> userRoomsChanges({
     required String userId,
   }) {
     return _db
         .collection('Rooms')
-        .where('users', arrayContains: userId)
+        .where('participiants', arrayContains: userId)
         .snapshots()
-        .skip(1)
         .map(
           (QuerySnapshot<Map<String, dynamic>> snapshot) =>
               snapshot.docChanges.map(
@@ -108,16 +120,16 @@ class FirestoreService implements IDatabase {
               late DataChangeType type;
               switch (c.type) {
                 case DocumentChangeType.added:
-                  type = DataChangeType.added;
+                  type = DataChangeType.ADDED;
                   break;
                 case DocumentChangeType.modified:
                   throw CustomException(
                     INVALID_ROOM_CHANGE_TYPE,
                     details:
-                        'User room change type was EDIT, only ADD and REMOVE are granted.',
+                        'User room change type was EDIT, only ADD and REMOVE are permitted.',
                   );
                 case DocumentChangeType.removed:
-                  type = DataChangeType.delete;
+                  type = DataChangeType.DELETED;
                   break;
               }
               return Tuple2(c.doc.data()!, type);
@@ -142,10 +154,10 @@ class FirestoreService implements IDatabase {
           (DocumentChange<Map<String, dynamic>> documentChange) {
             if (documentChange.type == DocumentChangeType.added) {
               changes.add(Tuple2(documentChange.doc.data()!['blockingUser'],
-                  DataChangeType.added));
+                  DataChangeType.ADDED));
             } else if (documentChange.type == DocumentChangeType.removed) {
               changes.add(Tuple2(documentChange.doc.data()!['blockingUser'],
-                  DataChangeType.delete));
+                  DataChangeType.DELETED));
             }
           },
         );
@@ -156,24 +168,28 @@ class FirestoreService implements IDatabase {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> getUserRooms(
+  Future<List<OnlineRoomEntity>> getUserRoomsEntities(
       {required String userId}) async {
     QuerySnapshot<Map<String, dynamic>> querySnapshot = await _db
         .collection('Rooms')
-        .where('users', arrayContains: userId)
+        .where('participiants', arrayContains: userId)
         .get();
-    return querySnapshot.docs.map((e) => e.data()).toList();
+
+    return querySnapshot.docs
+        .map((e) => OnlineRoomEntity.fromMap(e.data()))
+        .toList()
+        .cast<OnlineRoomEntity>();
   }
 
   @override
-  Future<Map<String, dynamic>>? getUserData({required String id}) async {
+  Future<LocalUser?> getUserData({required String id}) async {
     DocumentSnapshot<Map<String, dynamic>> doc =
         await _db.collection('Users').doc(id).get();
-    return doc.data()!;
+    return doc.data() == null ? null : LocalUser.fromMap(doc.data()!);
   }
 
   @override
-  Future<List<Map<String, dynamic>>> getMatchingUsers(
+  Future<List<Contact>> getMatchingUsers(
       {required List<String> tagsIds}) async {
     List<String> userIds = [];
     List<Map<String, dynamic>> usersData = [];
@@ -186,7 +202,7 @@ class FirestoreService implements IDatabase {
           .where('isActive', isEqualTo: true)
           .get();
 
-      userIds = List.from(querySnapshot.docs.map((e) => e.id));
+      userIds.addAll(querySnapshot.docs.map((e) => e.id));
     }
 
     for (String id in userIds) {
@@ -196,7 +212,7 @@ class FirestoreService implements IDatabase {
         usersData.add(documentSnapshot.data()!);
     }
 
-    return usersData;
+    return usersData.map((e) => Contact.fromMap(e)).toList();
   }
 
   @override
@@ -222,18 +238,6 @@ class FirestoreService implements IDatabase {
 
     return querySnapshot.docs.map((d) => d.data()).toList();
   }
-
-  // Stream<List<Map<String, dynamic>>> userTagsChanges({required String userId}) {
-  //   return _db
-  //       .collection('Users')
-  //       .doc(userId)
-  //       .collection('Tags')
-  //       .snapshots()
-  //       .map(
-  //         (QuerySnapshot<Map<String, dynamic>> event) =>
-  //             event.docChanges.map((e) => e.doc.data()!).toList(),
-  //       );
-  // }
 
   @override
   Future<void> createNewTag({
@@ -281,7 +285,7 @@ class FirestoreService implements IDatabase {
   }
 
   @override
-  Stream<Tuple2<Map<String, dynamic>, DataChangeType>> roomMessagesUpdates({
+  Stream<Tuple2<OnlineMessageEntity, DataChangeType>> roomMessagesUpdates({
     required String roomId,
   }) {
     return _db
@@ -295,33 +299,40 @@ class FirestoreService implements IDatabase {
           (QuerySnapshot<Map<String, dynamic>> event) => event.docChanges
               .where((element) => !element.doc.metadata.isFromCache)
               .where((element) => element.type != DocumentChangeType.removed)
-              .map((DocumentChange<Map<String, dynamic>> e) {
-                return Tuple2(e.doc.data()!, e.type.changeType());
-              })
+              .map(
+                (DocumentChange<Map<String, dynamic>> e) {
+                  return Tuple2(
+                      OnlineMessageEntity.fromMap(
+                        e.doc.data()!,
+                      ),
+                      e.type.changeType());
+                },
+              )
               .toList()
               .first,
         );
   }
 
   @override
-  Future<List<Map<String, dynamic>>> getAllMessages(
+  Future<List<OnlineMessageEntity>> getAllMessages(
       {required String roomId}) async {
     var a =
         await _db.collection('Rooms').doc(roomId).collection('Messages').get();
 
-    return a.docs.map((e) => e.data()).toList();
+    return a.docs.map((e) => OnlineMessageEntity.fromMap(e.data())).toList();
   }
 
   @override
-  Future<void> saveNewRoom({required RoomEntity roomEntity}) async {
+  Future<void> saveNewRoomEntity({required RoomEntity roomEntity}) async {
     await _db.collection('Rooms').doc(roomEntity.id).set(
           roomEntity.toMap(),
         );
   }
 
   @override
-  void markMessageAsRead({required String roomId, required String messageId}) {
-    _db
+  Future<void> markMessageAsRead(
+      {required String roomId, required String messageId}) async {
+    await _db
         .collection('Rooms')
         .doc(roomId)
         .collection('Messages')
@@ -362,6 +373,19 @@ class FirestoreService implements IDatabase {
 
     // Delete the user document
     await _db.collection('Users').doc(userId).delete();
+  }
+
+  @override
+  Future<bool> isArchived(
+      {required String roomId, required String userId}) async {
+    DocumentSnapshot<Map<String, dynamic>> a = await _db
+        .collection('Users')
+        .doc(userId)
+        .collection('Archived Rooms')
+        .doc(roomId)
+        .get();
+
+    return a.exists;
   }
 
   @override

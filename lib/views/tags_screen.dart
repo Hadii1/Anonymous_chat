@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:anonymous_chat/models/contact.dart';
 import 'package:anonymous_chat/models/tag.dart';
-import 'package:anonymous_chat/database_entities/user_entity.dart';
 import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/providers/suggestions_provider.dart';
 import 'package:anonymous_chat/providers/tag_searching_provider.dart';
@@ -103,7 +103,6 @@ class _TagsSearchResponseState extends State<_TagsSearchResponse>
         final List<UserTag> userTags = watch(userTagsProvider)!;
         final tagsNotifier = watch(suggestedTagsProvider);
         return AnimatedSize(
-          vsync: this,
           duration: Duration(milliseconds: 260),
           child: AnimatedSwitcher(
             duration: Duration(milliseconds: 300),
@@ -408,7 +407,7 @@ class __SuggestedContactsState extends State<_SuggestedContacts>
               allTags.where((UserTag userTag) => userTag.isActive).toList();
 
           return watch(suggestedContactsProvider).when(
-            data: (List<Tuple2<LocalUser, List<Tag>>>? data) {
+            data: (List<Tuple2<Contact, List<Tag>>>? data) {
               return Fader(
                 duration: Duration(milliseconds: 300),
                 child: Column(

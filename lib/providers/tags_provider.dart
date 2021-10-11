@@ -1,4 +1,4 @@
-import 'package:anonymous_chat/interfaces/online_database_interface.dart';
+import 'package:anonymous_chat/interfaces/database_interface.dart';
 import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
 import 'package:anonymous_chat/interfaces/search_service_interface.dart';
 import 'package:anonymous_chat/models/tag.dart';
@@ -10,8 +10,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 final userTagsFuture = FutureProvider.autoDispose<List<UserTag>>((ref) async {
   ref.maintainState = true;
   ref.watch(userAuthEventsProvider);
-  final db = IDatabase.db;
-  final user = ILocalStorage.storage.user!;
+  final db = IDatabase.onlineDb;
+  final user = ILocalPrefs.storage.user!;
 
   List<Map<String, dynamic>> tagsData = await db.getUserTags(userId: user.id);
   List<UserTag> tags = tagsData.map((e) => UserTag.fromMap(e)).toList();
@@ -26,9 +26,9 @@ final userTagsProvider =
 });
 
 class UserTagsState extends StateNotifier<List<UserTag>?> {
-  final db = IDatabase.db;
+  final db = IDatabase.onlineDb;
   final searchService = ISearchService.searchService;
-  final user = ILocalStorage.storage.user!;
+  final user = ILocalPrefs.storage.user!;
 
   set tags(List<UserTag> tags) => state = List.from(tags);
 

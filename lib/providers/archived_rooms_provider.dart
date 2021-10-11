@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:anonymous_chat/interfaces/online_database_interface.dart';
+import 'package:anonymous_chat/interfaces/database_interface.dart';
 import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
 import 'package:anonymous_chat/utilities/general_functions.dart';
 
@@ -22,8 +22,8 @@ final archivedRoomsFuture =
     FutureProvider.autoDispose<List<String>>((ref) async {
   ref.maintainState = true;
 
-  final IDatabase db = IDatabase.db;
-  final ILocalStorage storage = ILocalStorage.storage;
+  final IDatabase db = IDatabase.onlineDb;
+  final ILocalPrefs storage = ILocalPrefs.storage;
 
   List<String> userArchivedRooms =
       await db.getUserArchivedRooms(userId: storage.user!.id);
@@ -40,8 +40,8 @@ final archivedRoomsProvider =
 class ArchivedRoomsNotifier extends StateNotifier<List<String>?> {
   ArchivedRoomsNotifier() : super(null);
 
-  final IDatabase db = IDatabase.db;
-  final ILocalStorage storage = ILocalStorage.storage;
+  final IDatabase db = IDatabase.onlineDb;
+  final ILocalPrefs storage = ILocalPrefs.storage;
 
   set archivedRooms(List<String> rooms) => state = rooms;
 

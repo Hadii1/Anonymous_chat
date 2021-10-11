@@ -1,24 +1,21 @@
-import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
-import 'package:anonymous_chat/models/room.dart';
+import 'package:anonymous_chat/models/chat_room.dart';
+import 'package:anonymous_chat/models/contact.dart';
 import 'package:anonymous_chat/models/tag.dart';
-import 'package:anonymous_chat/database_entities/user_entity.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/views/room_screen.dart';
-
-import 'package:tuple/tuple.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tuple/tuple.dart';
 
 class SuggestedContact extends StatelessWidget {
-  final Tuple2<LocalUser, List<Tag>> data;
+  final Tuple2<Contact, List<Tag>> data;
 
   const SuggestedContact({
     required this.data,
   });
 
-  LocalUser get suggestedUser => data.item1;
+  Contact get suggestedUser => data.item1;
   List<Tag> get commonTags => data.item2;
 
   @override
@@ -35,10 +32,7 @@ class SuggestedContact extends StatelessWidget {
               CupertinoPageRoute(
                 builder: (c) {
                   return ChatRoomScreen(
-                    room: Room.startNew([
-                      ILocalStorage.storage.user!,
-                      suggestedUser,
-                    ]),
+                    room: ChatRoom.startNew(suggestedUser),
                   );
                 },
               ),

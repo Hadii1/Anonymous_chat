@@ -12,24 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:bubble/bubble.dart';
-
-import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/services.dart';
-
+import 'package:anonymous_chat/models/contact.dart';
 import 'package:anonymous_chat/models/message.dart';
-import 'package:anonymous_chat/database_entities/user_entity.dart';
 import 'package:anonymous_chat/services.dart/local_storage.dart';
 import 'package:anonymous_chat/utilities/extentions.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
+import 'package:bubble/bubble.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class ChatBubble extends StatelessWidget {
   final bool isLatestMessage;
   final bool isReceived;
   final Message message;
   final Message? replyOn;
-  final LocalUser other;
+  final Contact other;
   final bool isSuccesful;
   final Function(Message) onHold;
 
@@ -105,7 +103,7 @@ class TextMessageBody extends StatelessWidget {
   final Message? replyOn;
   final bool isReceived;
   final bool isSuccesful;
-  final LocalUser other;
+  final Contact other;
 
   const TextMessageBody({
     Key? key,

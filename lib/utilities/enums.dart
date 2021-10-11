@@ -12,13 +12,39 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+enum DestinationAfterAuth {
+  NAME_GENERATOR_SCREEN,
+  HOME_SCREEN,
+}
+enum UserState {
+  AUTHENTICATETD_AND_NICKNAMED,
+  NOT_AUTHENTICATTED,
+  AUTHENTICATED_NOT_NICKNAMED
+}
 enum DataChangeType {
-  added,
-  delete,
-  modified,
+  ADDED,
+  DELETED,
+  MODIFIED,
 }
 
 enum MessageServeUpdateType {
-  MessageRead,
-  MessageRecieved,
+  MESSAGE_READ,
+  MESSAGE_RECIEVED,
+}
+
+enum GetDataSource {
+  LOCAL,
+  ONLINE,
+}
+
+enum SetDataSource {
+  LOCAL,
+  ONLINE,
+  BOTH,
+}
+
+enum RoomsServerUpdateType {
+  ROOM_DELETED,
+  // ROOM_MODIFIED, // A message(s) sent/received/read
+  ROOM_ADDED,
 }

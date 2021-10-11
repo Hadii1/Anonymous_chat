@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:anonymous_chat/models/room.dart';
+import 'package:anonymous_chat/models/chat_room.dart';
 import 'package:anonymous_chat/providers/archived_rooms_provider.dart';
 import 'package:anonymous_chat/providers/user_rooms_provider.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
@@ -44,7 +44,7 @@ class ArchivedContactsList extends StatelessWidget {
                 child: Consumer(
                   builder: (context, watch, _) {
                     List<String> archivedIds = watch(archivedRoomsProvider)!;
-                    List<Room> archivedRooms = watch(userRoomsProvider)!
+                    List<ChatRoom> archivedRooms = watch(userRoomsProvider)!
                         .where((element) => archivedIds.contains(element.id))
                         .toList();
                     return AnimatedSwitcher(
@@ -77,7 +77,7 @@ class ArchivedContactsList extends StatelessWidget {
                               startOffset: Offset(0, 0.4),
                               child: Fader(
                                 duration: Duration(milliseconds: 250),
-                                child: ImplicitlyAnimatedList<Room>(
+                                child: ImplicitlyAnimatedList<ChatRoom>(
                                   areItemsTheSame: (a, b) => a.id == b.id,
                                   items: archivedRooms,
                                   insertDuration: Duration(milliseconds: 200),

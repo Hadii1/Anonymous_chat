@@ -1,7 +1,8 @@
 import 'package:anonymous_chat/providers/auth_provider.dart';
+import 'package:anonymous_chat/utilities/enums.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
-import 'package:anonymous_chat/views/onboarding.dart';
-import 'package:anonymous_chat/views/splash_screen.dart';
+import 'package:anonymous_chat/views/home_screen.dart';
+import 'package:anonymous_chat/views/nickname_screen.dart';
 import 'package:anonymous_chat/widgets/cta_button.dart';
 import 'package:anonymous_chat/widgets/custom_text_field.dart';
 import 'package:anonymous_chat/widgets/keyboard_hider.dart';
@@ -16,24 +17,28 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 
 class LoginScreen extends StatelessWidget {
-  // If onboarding info is null then the user is signing in and not registering.
-  final OnboardingInfo? onboardingInfo;
-  const LoginScreen({this.onboardingInfo});
-
   @override
   Widget build(BuildContext context) {
     final style = AppTheming.of(context).style;
 
-    return ProviderListener<bool>(
+    return ProviderListener<DestinationAfterAuth?>(
       provider: navigationSignal,
-      onChange: (_, bool navigate) {
-        if (navigate)
-          Navigator.of(context).pushAndRemoveUntil(
-            CupertinoPageRoute(
-              builder: (_) => UserInfoInitializing(),
-            ),
-            (route) => false,
-          );
+      onChange: (_, DestinationAfterAuth? dest) {
+        if (dest == null) return;
+
+        Widget w;
+
+        if (dest == DestinationAfterAuth.HOME_SCREEN)
+          w = Home();
+        else
+          w = NameScreen();
+
+        Navigator.of(context).pushAndRemoveUntil(
+          CupertinoPageRoute(
+            builder: (_) => w,
+          ),
+          (route) => false,
+        );
       },
       child: Scaffold(
         backgroundColor: style.backgroundColor,

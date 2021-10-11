@@ -1,5 +1,5 @@
-import 'package:anonymous_chat/models/room.dart';
-import 'package:anonymous_chat/database_entities/user_entity.dart';
+import 'package:anonymous_chat/models/chat_room.dart';
+import 'package:anonymous_chat/models/contact.dart';
 import 'package:anonymous_chat/providers/archived_rooms_provider.dart';
 import 'package:anonymous_chat/providers/blocked_contacts_provider.dart';
 import 'package:anonymous_chat/providers/user_rooms_provider.dart';
@@ -30,37 +30,26 @@ class _ChatsScreenState extends State<ChatsScreen> {
       builder: (context, watch, _) {
         bool isLoading = false;
 
-        AsyncValue<List<Room>> userRooms = watch(userRoomsFuture);
+        AsyncValue<List<ChatRoom>?> userRooms = watch(localUserRoomsFuture);
 
-        AsyncValue<List<LocalUser>> blockedBy = watch(blockingContactsFuture);
-
-        AsyncValue<List<LocalUser>> blockedContacts =
-            watch(blockedContactsFuture);
+        AsyncValue<List<Contact>> blockedContacts =
+            watch(localBlockedContactsFuture);
 
         AsyncValue<List<String>?> archivedRooms = watch(archivedRoomsFuture);
 
-        List<AsyncValue> values = [
-          userRooms,
-          blockedBy,
-          blockedContacts,
-          archivedRooms
-        ];
+        List<AsyncValue> values = [userRooms, blockedContacts, archivedRooms];
 
         values.forEach((element) {
           if (element is AsyncLoading) isLoading = true;
         });
 
         if (userRooms is AsyncError) {
-          context.refresh(userRoomsFuture);
+          context.refresh(localUserRoomsFuture);
           isLoading = true;
         }
 
-        if (blockedBy is AsyncError) {
-          context.refresh(blockingContactsFuture);
-          isLoading = true;
-        }
         if (blockedContacts is AsyncError) {
-          context.refresh(blockedContactsFuture);
+          context.refresh(localBlockedContactsFuture);
           isLoading = true;
         }
         if (archivedRooms is AsyncError) {
@@ -79,7 +68,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
                 ),
               );
             }
-            List<Room> chatRooms = watch(chatsListProvider)!;
+            List<ChatRoom> chatRooms = watch(chatsListProvider)!;
 
             return chatRooms.isEmpty
                 ? Column(
@@ -106,7 +95,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
                     startOffset: Offset(0, 0.4),
                     child: Fader(
                       duration: Duration(milliseconds: 250),
-                      child: ImplicitlyAnimatedList<Room>(
+                      child: ImplicitlyAnimatedList<ChatRoom>(
                         areItemsTheSame: (a, b) => a.id == b.id,
                         items: chatRooms,
                         insertDuration: Duration(milliseconds: 200),

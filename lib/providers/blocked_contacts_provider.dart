@@ -12,134 +12,61 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'dart:async';
-
-import 'package:anonymous_chat/interfaces/online_database_interface.dart';
-import 'package:anonymous_chat/database_entities/user_entity.dart';
+import 'package:anonymous_chat/mappers/contact_mapper.dart';
+import 'package:anonymous_chat/models/contact.dart';
 import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
+import 'package:anonymous_chat/providers/user_auth_events_provider.dart';
 import 'package:anonymous_chat/utilities/enums.dart';
 import 'package:anonymous_chat/utilities/general_functions.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tuple/tuple.dart';
 
-final blockedContactsFuture =
-    FutureProvider.autoDispose<List<LocalUser>>((ref) async {
+final localBlockedContactsFuture =
+    FutureProvider.autoDispose<List<Contact>>((ref) async {
   ref.maintainState = true;
 
-  final db = IDatabase.db;
-  final userId = ILocalStorage.storage.user!.id;
+  final userId = ref.watch(userAuthEventsProvider)!.id;
+  final contactsMapper = ContactMapper();
 
-  List<String> blockedIds = await db.getBlockedContacts(userId: userId);
+  List<Contact> blockedContacts = await contactsMapper.getBlockedContacts(
+      userId: userId, source: GetDataSource.LOCAL);
 
-  List<LocalUser> blockedUsers = [];
+  ref.read(blockedContactsProvider.notifier).blockedContacts = blockedContacts;
 
-  for (String id in blockedIds) {
-    Map<String, dynamic>? data = await db.getUserData(id: id);
-    if (data != null) {
-      LocalUser user = LocalUser.fromMap(data);
-      blockedUsers.add(user);
-    }
-  }
-
-  ref.read(blockedContactsProvider.notifier).blockedContacts = blockedUsers;
-
-  return blockedUsers;
+  return blockedContacts;
 });
 
-final blockedContactsProvider = StateNotifierProvider.autoDispose<
-    BlockedContactsNotifier, List<LocalUser>?>((ref) {
-  ref.maintainState = true;
-  return BlockedContactsNotifier();
-});
-
-class BlockedContactsNotifier extends StateNotifier<List<LocalUser>?> {
-  BlockedContactsNotifier() : super(null);
-
-  final db = IDatabase.db;
-  final userId = ILocalStorage.storage.user!.id;
-
-  set blockedContacts(List<LocalUser> contacts) => state = contacts;
-
-  void toggleBlock({required LocalUser other, required bool block}) {
-    if (block) {
-      state!.add(other);
-      state = state;
-      retry(f: () => db.blockUser(client: userId, other: other.id));
-    } else {
-      state!.remove(other);
-      state = state;
-      retry(f: () => db.unblockUser(client: userId, other: other.id));
-    }
-  }
-}
-
-final blockingContactsFuture =
-    FutureProvider.autoDispose<List<LocalUser>>((ref) async {
-  ref.maintainState = true;
-  final String userId = ILocalStorage.storage.user!.id;
-  final db = IDatabase.db;
-
-  List<String> blockingContacts = await db.getBlockingContacts(userId: userId);
-
-  List<LocalUser> temp = [];
-  for (String id in blockingContacts) {
-    Map<String, dynamic>? userData =
-        await retry(f: () async => await db.getUserData(id: id));
-    if (userData != null) {
-      LocalUser user = LocalUser.fromMap(userData);
-      temp.add(user);
-    }
-  }
-  ref.read(blockedByProvider.notifier).blockedBy = temp;
-
-  return temp;
-});
-
-final blockedByProvider =
-    StateNotifierProvider<BlockedByContactsNotifier, List<LocalUser>?>(
-  (ref) => BlockedByContactsNotifier(),
+final blockedContactsProvider =
+    StateNotifierProvider.autoDispose<BlockedContactsNotifier, List<Contact>?>(
+  (ref) {
+    ref.maintainState = true;
+    return BlockedContactsNotifier();
+  },
 );
 
-class BlockedByContactsNotifier extends StateNotifier<List<LocalUser>?> {
-  BlockedByContactsNotifier() : super(null) {
-    init();
-  }
-  late final StreamSubscription<List<Tuple2<String, DataChangeType>>>
-      _subscription;
-  final userId = ILocalStorage.storage.user!.id;
-  final db = IDatabase.db;
+class BlockedContactsNotifier extends StateNotifier<List<Contact>?> {
+  BlockedContactsNotifier() : super(null);
 
-  set blockedBy(List<LocalUser> data) => state = data;
+  final ContactMapper contactMapper = ContactMapper();
+  final userId = ILocalPrefs.storage.user!.id;
 
-  void init() {
-    _subscription = db
-        .blockingContactsChanges(userId: userId)
-        .listen((List<Tuple2<String, DataChangeType>> changes) async {
-      List<LocalUser> temp = [];
-      for (Tuple2<String, DataChangeType> change in changes) {
-        if (change.item2 == DataChangeType.added) {
-          try {
-            Map<String, dynamic>? userData =
-                await retry(f: () async => db.getUserData(id: change.item1));
-            if (userData != null) {
-              LocalUser user = LocalUser.fromMap(userData);
-              temp.add(user);
-            }
-          } on Exception {
-            continue;
-          }
-        } else {
-          state!.removeWhere((element) => element.id == change.item1);
-        }
-      }
-      state = List.from(temp);
-    });
-  }
+  set blockedContacts(List<Contact> contacts) => state = contacts;
 
-  @override
-  void dispose() {
-    super.dispose();
-    _subscription.cancel();
+  void toggleBlock({required Contact contact, required bool block}) {
+    if (block) {
+      state!.add(contact);
+      state = state;
+      retry(
+        f: () => contactMapper.toggleContactBlock(
+            contact: contact, block: block, userId: userId),
+      );
+    } else {
+      state!.remove(contact);
+      state = state;
+      retry(
+        f: () => contactMapper.toggleContactBlock(
+            contact: contact, block: block, userId: userId),
+      );
+    }
   }
 }

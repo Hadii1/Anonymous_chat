@@ -1,26 +1,24 @@
 import 'package:anonymous_chat/models/activity_status.dart';
+import 'package:anonymous_chat/models/chat_room.dart';
+import 'package:anonymous_chat/models/contact.dart';
 import 'package:anonymous_chat/models/message.dart';
-import 'package:anonymous_chat/models/room.dart';
-import 'package:anonymous_chat/database_entities/user_entity.dart';
 import 'package:anonymous_chat/providers/activity_status_provider.dart';
 import 'package:anonymous_chat/providers/blocked_contacts_provider.dart';
 import 'package:anonymous_chat/providers/chat_provider.dart';
-import 'package:anonymous_chat/services.dart/local_storage.dart';
+import 'package:anonymous_chat/providers/user_auth_events_provider.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/widgets/animated_widgets.dart';
 import 'package:anonymous_chat/widgets/chat_bubble.dart';
 import 'package:anonymous_chat/widgets/chat_message_field.dart';
 import 'package:anonymous_chat/widgets/keyboard_hider.dart';
-import 'package:anonymous_chat/utilities/extentions.dart';
 import 'package:anonymous_chat/widgets/shaded_container.dart';
 import 'package:anonymous_chat/widgets/typing_indicator.dart';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ChatRoomScreen extends StatefulWidget {
-  final Room room;
+  final ChatRoom room;
 
   const ChatRoomScreen({
     required this.room,
@@ -31,8 +29,7 @@ class ChatRoomScreen extends StatefulWidget {
 }
 
 class _ChatRoomScreenState extends State<ChatRoomScreen> {
-  LocalUser get other =>
-      widget.room.users.firstWhere((u) => u.id != SharedPrefs().user!.id);
+  Contact get other => widget.room.contact;
 
   @override
   void initState() {
@@ -56,7 +53,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       backgroundColor: style.backgroundColor,
       body: Consumer(builder: (context, watch, _) {
         final chatNotifier = watch(chattingProvider(widget.room));
-        List<LocalUser> blockedContacts = watch(blockedContactsProvider)!;
+        final String userId = watch(userAuthEventsProvider)!.id;
+        final List<Contact> blockedContacts = watch(blockedContactsProvider)!;
 
         return SizedBox(
           height: MediaQuery.of(context).size.height,
@@ -106,14 +104,15 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                             startOffset: Offset(0, 1),
                                             child: ChatBubble(
                                               message: message,
-                                              other: chatNotifier.other,
+                                              other: other,
                                               onHold: (Message m) =>
                                                   chatNotifier
                                                       .onMessageLongPress(m),
                                               replyOn: replyOn,
                                               isLatestMessage: chatNotifier
                                                   .isLatestMessage(message),
-                                              isReceived: message.isReceived(),
+                                              isReceived:
+                                                  message.isReceived(userId),
                                               isSuccesful: chatNotifier
                                                   .isSuccessful(message),
                                             ),
@@ -145,7 +144,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                       startOffset: Offset(0, 1),
                       child: MessageBox(
                         onSendPressed: (String value) {
-                          chatNotifier.onSendPressed(text: value);
+                          chatNotifier.onSendPressed(value);
                         },
                         replyMessage: chatNotifier.replyingOn,
                         onCancelReply: chatNotifier.onCancelReply,
@@ -251,7 +250,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                   onTap: () => context
                                       .read(blockedContactsProvider.notifier)
                                       .toggleBlock(
-                                        other: other,
+                                        contact: other,
                                         block: !blockedContacts.contains(other),
                                       ),
                                   splashColor: Colors.transparent,

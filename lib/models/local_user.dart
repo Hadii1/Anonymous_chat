@@ -4,30 +4,33 @@ class LocalUser {
   final String nickname;
   final String phoneNumber;
   final String id;
-  final int dob;
-  final String gender;
+  final List<String> blockedContacts;
 
   LocalUser({
     required this.id,
     required this.phoneNumber,
-    this.dob = -1,
+    this.blockedContacts = const [],
     this.nickname = '',
-    this.gender = '',
   });
 
-  static bool isDataComplete(Map<String, dynamic> map) =>
-      map['gender'] != '' && map['dob'] != -1 && map['nickname'] != '';
+  copyWith({
+    required nickname,
+  }) =>
+      LocalUser(
+        id: this.id,
+        phoneNumber: phoneNumber,
+        blockedContacts: this.blockedContacts,
+        nickname: nickname,
+      );
 
-  static bool isProfileComplete(LocalUser user) =>
-      user.gender.isNotEmpty && user.dob != -1 && user.nickname.isNotEmpty;
+  bool get isNicknamed => nickname.isNotEmpty;
 
   Map<String, dynamic> toMap() {
     return {
       'nickname': nickname,
+      'blockedContacts': blockedContacts,
       'phoneNumber': phoneNumber,
       'id': id,
-      'gender': gender,
-      'dob': dob,
     };
   }
 
@@ -43,10 +46,9 @@ class LocalUser {
   factory LocalUser.fromMap(Map<String, dynamic> map) {
     return LocalUser(
       nickname: map['nickname'] ?? '',
-      dob: map['dob'] ?? '',
       phoneNumber: map['phoneNumber'],
       id: map['id'],
-      gender: map['gender'] ?? '',
+      blockedContacts: map['blockedContacts'] ?? [],
     );
   }
 
@@ -62,15 +64,11 @@ class LocalUser {
     return other is LocalUser &&
         other.nickname == nickname &&
         other.phoneNumber == phoneNumber &&
-        other.id == id &&
-        other.gender == gender;
+        other.id == id;
   }
 
   @override
   int get hashCode {
-    return nickname.hashCode ^
-        phoneNumber.hashCode ^
-        id.hashCode ^
-        gender.hashCode;
+    return nickname.hashCode ^ phoneNumber.hashCode ^ id.hashCode;
   }
 }

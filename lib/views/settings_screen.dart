@@ -57,7 +57,7 @@ class Settings extends StatelessWidget {
                             ),
                             child: Center(
                               child: Text(
-                                ILocalStorage.storage.user!.nickname
+                                ILocalPrefs.storage.user!.nickname
                                     .substring(0, 1)
                                     .toUpperCase(),
                                 style: style.chatHeaderLetter,
@@ -75,14 +75,14 @@ class Settings extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           Text(
-                            ILocalStorage.storage.user!.nickname,
+                            ILocalPrefs.storage.user!.nickname,
                             style: style.title3Style,
                           ),
                           SizedBox(
                             height: 4,
                           ),
                           Text(
-                            ILocalStorage.storage.user!.phoneNumber,
+                            ILocalPrefs.storage.user!.phoneNumber,
                             style: style.title3Style,
                           ),
                         ],

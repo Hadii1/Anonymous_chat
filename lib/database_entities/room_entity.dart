@@ -1,23 +1,54 @@
-class RoomEntity {
+abstract class RoomEntity {
   final String id;
-  final List<String> users;
 
-  RoomEntity({
+  RoomEntity(this.id);
+
+  // RoomEntity fromMap(Map<String, dynamic> map);
+  Map<String, dynamic> toMap();
+}
+
+class LocalRoomEntity implements RoomEntity {
+  final String id;
+  final String contact;
+  final bool isArchived;
+
+  LocalRoomEntity({
     required this.id,
-    required this.users,
+    required this.contact,
+    required this.isArchived,
   });
 
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'users': users,
-    };
-  }
+  static LocalRoomEntity fromMap(Map<String, dynamic> map) => LocalRoomEntity(
+        id: map['id'],
+        contact: map['contact'],
+        isArchived: map['isArchived'],
+      );
 
-  factory RoomEntity.fromMap(Map<String, dynamic> map) {
-    return RoomEntity(
-      id: map['id'],
-      users: List<String>.from(map['users']),
-    );
-  }
+  @override
+  Map<String, dynamic> toMap() => {
+        'id': this.id,
+        'contact': this.contact,
+        'isArchived': this.isArchived,
+      };
+}
+
+class OnlineRoomEntity implements RoomEntity {
+  final String id;
+  final List<String> participiants;
+
+  OnlineRoomEntity({
+    required this.id,
+    required this.participiants,
+  });
+
+  static OnlineRoomEntity fromMap(Map<String, dynamic> map) => OnlineRoomEntity(
+        id: map['id'],
+        participiants: map['participiants'],
+      );
+
+  @override
+  Map<String, dynamic> toMap() => {
+        'id': this.id,
+        'participiants': this.participiants,
+      };
 }

@@ -15,7 +15,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:anonymous_chat/interfaces/online_database_interface.dart';
+import 'package:anonymous_chat/interfaces/database_interface.dart';
 import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
 import 'package:anonymous_chat/interfaces/search_service_interface.dart';
 import 'package:anonymous_chat/models/tag.dart';
@@ -47,8 +47,8 @@ class TagSuggestionsNotifier extends ChangeNotifier {
     this._errorNotifier,
   );
 
-  final db = IDatabase.db;
-  final storage = ILocalStorage.storage;
+  final db = IDatabase.onlineDb;
+  final storage = ILocalPrefs.storage;
   final searchService = ISearchService.searchService;
 
   final ErrorsNotifier _errorNotifier;

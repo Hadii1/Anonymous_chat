@@ -1,24 +1,28 @@
+import 'package:anonymous_chat/models/contact.dart';
 import 'package:anonymous_chat/models/message.dart';
-import 'package:anonymous_chat/database_entities/user_entity.dart';
 import 'package:anonymous_chat/utilities/general_functions.dart';
+
 import 'package:observable_ish/observable_ish.dart';
 
-class Room {
-  final RxList<Message> messages;
-  final List<LocalUser> users;
+class ChatRoom {
   final String id;
+  final RxList<Message> messages;
+  final Contact contact;
+  final bool isArchived;
 
-  Room({
-    required this.users,
+  ChatRoom({
+    required this.contact,
     required this.messages,
     required this.id,
+    required this.isArchived,
   });
 
-  factory Room.startNew(List<LocalUser> users) {
-    return Room(
+  factory ChatRoom.startNew(Contact other) {
+    return ChatRoom(
       messages: RxList<Message>(),
       id: generateUid(),
-      users: users,
+      contact: other,
+      isArchived: false,
     );
   }
 
@@ -26,11 +30,11 @@ class Room {
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
 
-    return other is Room && other.id == id;
+    return other is ChatRoom && other.id == id;
   }
 
   @override
   int get hashCode {
-    return messages.hashCode ^ users.hashCode ^ id.hashCode;
+    return messages.hashCode;
   }
 }

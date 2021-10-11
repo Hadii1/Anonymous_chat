@@ -1,32 +1,30 @@
+import 'package:anonymous_chat/models/chat_room.dart';
+import 'package:anonymous_chat/models/contact.dart';
 import 'package:anonymous_chat/models/message.dart';
-import 'package:anonymous_chat/models/room.dart';
-import 'package:anonymous_chat/database_entities/user_entity.dart';
 import 'package:anonymous_chat/providers/archived_rooms_provider.dart';
 import 'package:anonymous_chat/providers/blocked_contacts_provider.dart';
+import 'package:anonymous_chat/providers/user_auth_events_provider.dart';
 import 'package:anonymous_chat/providers/user_rooms_provider.dart';
-import 'package:anonymous_chat/services.dart/local_storage.dart';
+import 'package:anonymous_chat/utilities/extentions.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/views/room_screen.dart';
-import 'package:anonymous_chat/utilities/extentions.dart';
 import 'package:anonymous_chat/widgets/custom_route.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:fluttericon/linearicons_free_icons.dart';
 
 class ChatHeader extends StatelessWidget {
-  final Room room;
+  final ChatRoom room;
   final bool archivable;
 
   const ChatHeader({
     required this.room,
     required this.archivable,
   });
-
-  LocalUser get other =>
-      room.users.firstWhere((LocalUser user) => user != SharedPrefs().user);
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +33,9 @@ class ChatHeader extends StatelessWidget {
     Message lastMessage = room.messages.last;
 
     return Consumer(builder: (context, watch, _) {
-      List<LocalUser> blockedContacts = watch(blockedContactsProvider)!;
+      final List<Contact> blockedContacts = watch(blockedContactsProvider)!;
+      final String userId = watch(userAuthEventsProvider)!.id;
+
       return InkWell(
         splashColor: Colors.transparent,
         highlightColor: Colors.transparent,
@@ -79,12 +79,12 @@ class ChatHeader extends StatelessWidget {
             SlideAction(
               onTap: () =>
                   context.read(blockedContactsProvider.notifier).toggleBlock(
-                        other: other,
-                        block: !blockedContacts.contains(other),
+                        contact: room.contact,
+                        block: !blockedContacts.contains(room.contact),
                       ),
               child: AnimatedSwitcher(
                 duration: Duration(milliseconds: 250),
-                child: blockedContacts.contains(other)
+                child: blockedContacts.contains(room.contact)
                     ? Column(
                         key: ValueKey<int>(0),
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -154,7 +154,7 @@ class ChatHeader extends StatelessWidget {
                 height: 50,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: lastMessage.isSent() || lastMessage.isRead
+                  color: lastMessage.isSent(userId) || lastMessage.isRead
                       ? Colors.transparent
                       : style.accentColor.withOpacity(0.5),
                   border: Border.all(
@@ -164,7 +164,7 @@ class ChatHeader extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text(
-                    other.nickname.substring(0, 1).toUpperCase(),
+                    room.contact.nickname.substring(0, 1).toUpperCase(),
                     style: style.chatHeaderLetter,
                     textAlign: TextAlign.center,
                   ),
@@ -182,7 +182,7 @@ class ChatHeader extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Hero(
-                          tag: '${other.id}${other.nickname}',
+                          tag: '${room.contact.id}${room.contact.nickname}',
                           flightShuttleBuilder: (
                             BuildContext flightContext,
                             Animation<double> animation,
@@ -201,7 +201,7 @@ class ChatHeader extends StatelessWidget {
                           child: Material(
                             type: MaterialType.transparency,
                             child: Text(
-                              other.nickname,
+                              room.contact.nickname,
                               style: TextStyle(
                                 fontSize: 18,
                                 color: Colors.white,

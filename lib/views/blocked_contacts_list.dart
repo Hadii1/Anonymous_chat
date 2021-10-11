@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:anonymous_chat/database_entities/user_entity.dart';
+import 'package:anonymous_chat/models/contact.dart';
 import 'package:anonymous_chat/providers/blocked_contacts_provider.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/widgets/animated_widgets.dart';
@@ -42,7 +42,8 @@ class BlockedContactsScreen extends StatelessWidget {
               Expanded(
                 child: Consumer(
                   builder: (context, watch, _) {
-                    List<LocalUser>? blockedUsers = watch(blockedContactsProvider);
+                    List<Contact>? blockedUsers =
+                        watch(blockedContactsProvider);
 
                     return AnimatedSwitcher(
                       duration: Duration(milliseconds: 250),
@@ -82,19 +83,19 @@ class BlockedContactsScreen extends StatelessWidget {
                               : CustomSlide(
                                   duration: Duration(milliseconds: 300),
                                   startOffset: Offset(0, 0.4),
-                                  child: ImplicitlyAnimatedList<LocalUser>(
+                                  child: ImplicitlyAnimatedList<Contact>(
                                     areItemsTheSame: (a, b) => a.id == b.id,
                                     items: blockedUsers,
                                     insertDuration: Duration(milliseconds: 200),
                                     removeDuration: Duration(milliseconds: 200),
                                     removeItemBuilder:
-                                        (context, animation, user) {
+                                        (context, animation, contact) {
                                       return SizeFadeTransition(
                                         animation: animation,
                                         child: Column(
                                           children: [
                                             _BlockedUserHeader(
-                                              user: user,
+                                              contact: contact,
                                               onRemove: (_) {},
                                             ),
                                             Divider(
@@ -127,16 +128,17 @@ class BlockedContactsScreen extends StatelessWidget {
                                                   left: 24,
                                                 ),
                                                 child: _BlockedUserHeader(
-                                                  user: user,
-                                                  onRemove: (LocalUser user) {
+                                                  contact: user,
+                                                  onRemove: (Contact contact) {
                                                     context
                                                         .read(
                                                             blockedContactsProvider
                                                                 .notifier)
                                                         .toggleBlock(
-                                                          other: user,
+                                                          contact: contact,
                                                           block: !blockedUsers
-                                                              .contains(user),
+                                                              .contains(
+                                                                  contact),
                                                         );
                                                   },
                                                 ),
@@ -174,11 +176,11 @@ class BlockedContactsScreen extends StatelessWidget {
 }
 
 class _BlockedUserHeader extends StatelessWidget {
-  final LocalUser user;
-  final Function(LocalUser) onRemove;
+  final Contact contact;
+  final Function(Contact) onRemove;
 
   const _BlockedUserHeader({
-    required this.user,
+    required this.contact,
     required this.onRemove,
   });
 
@@ -202,7 +204,7 @@ class _BlockedUserHeader extends StatelessWidget {
           ),
           child: Center(
             child: Text(
-              user.nickname.substring(0, 1).toUpperCase(),
+              contact.nickname.substring(0, 1).toUpperCase(),
               style: style.chatHeaderLetter,
               textAlign: TextAlign.center,
             ),
@@ -214,7 +216,7 @@ class _BlockedUserHeader extends StatelessWidget {
         Material(
           type: MaterialType.transparency,
           child: Text(
-            user.nickname,
+            contact.nickname,
             style: TextStyle(
               fontSize: 16,
               color: Colors.white,
@@ -231,7 +233,7 @@ class _BlockedUserHeader extends StatelessWidget {
                 hoverColor: Colors.transparent,
                 radius: 10,
                 splashColor: style.accentColor,
-                onTap: () => onRemove(user),
+                onTap: () => onRemove(contact),
                 child: Icon(
                   LineariconsFree.cross,
                   color: Colors.white.withOpacity(0.8),

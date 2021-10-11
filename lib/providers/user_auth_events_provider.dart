@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:anonymous_chat/database_entities/user_entity.dart';
+import 'package:anonymous_chat/models/local_user.dart';
 import 'package:anonymous_chat/interfaces/auth_interface.dart';
 import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,7 +24,7 @@ final userAuthEventsProvider =
 );
 
 class UserAuthNotifier extends StateNotifier<LocalUser?> {
-  UserAuthNotifier() : super(ILocalStorage.storage.user);
+  UserAuthNotifier() : super(ILocalPrefs.storage.user);
 
   final auth = IAuth.auth;
 

@@ -1,10 +1,10 @@
 import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
-import 'package:anonymous_chat/database_entities/user_entity.dart';
+import 'package:anonymous_chat/models/local_user.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-class SharedPrefs implements ILocalStorage {
+class SharedPrefs implements ILocalPrefs {
   static final SharedPrefs _instance = SharedPrefs._internal();
 
   factory SharedPrefs() => _instance;

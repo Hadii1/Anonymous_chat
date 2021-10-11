@@ -1,54 +1,42 @@
 class Message {
+  final String id;
   final String sender;
   final String recipient;
   final String content;
-  final String id;
-
-  final bool isSenderBlocked;
-
   // The replied on message id if exists
   final String? replyingOn;
   // Milliseconds since epoch
   final int time;
 
-  bool isRead;
+  final bool isRead;
 
   Message({
     required this.sender,
     required this.recipient,
-    required this.isSenderBlocked,
     required this.content,
     required this.time,
     required this.id,
-    this.isRead = false,
+    required this.isRead,
     this.replyingOn,
   });
 
-  Map<String, dynamic> toMap() {
-    return {
-      'sender': sender,
-      'recipient': recipient,
-      'content': content,
-      'time': time,
-      'id': id,
-      'replyingOn': replyingOn,
-      'isSenderBlocked': isSenderBlocked,
-      'isRead': isRead,
-    };
-  }
-
-  factory Message.fromMap(Map<String, dynamic> map) {
-    return Message(
-      sender: map['sender'],
-      id: map['id'],
-      recipient: map['recipient'],
-      replyingOn: map['replyingOn'],
-      content: map['content'],
-      time: map['time'],
-      isSenderBlocked: map['isSenderBlocked'],
-      isRead: map['isRead'] ?? false,
-    );
-  }
+  factory Message.create({
+    required sender,
+    required recipient,
+    required content,
+    required time,
+    required id,
+    required replyingOn,
+  }) =>
+      Message(
+        isRead: false,
+        content: content,
+        id: id,
+        recipient: recipient,
+        sender: sender,
+        time: time,
+        replyingOn: replyingOn,
+      );
 
   @override
   bool operator ==(Object other) {
@@ -68,15 +56,21 @@ class Message {
 
   @override
   String toString() {
-    return 'Message(sender: $sender, recipient: $recipient, content: $content, id: $id, isSenderBlocked: $isSenderBlocked, replyingOn: $replyingOn, time: $time, isRead: $isRead)';
+    return 'Message(sender: $sender, recipient: $recipient, content: $content, id: $id,replyingOn: $replyingOn, time: $time, isRead: $isRead)';
   }
-}
 
-class MessageType {
-  static const String TEXT_ON_TEXT = 'text on text';
-  static const String TEXT_ON_MEDIA = 'text on media';
-  static const String MEDIA_ON_TEXT = 'media on text';
-  static const String MEDIA_ON_MEDIA = 'media on media';
-  static const String TEXT_ONLY = 'text only';
-  static const String MEDIA_ONLY = 'media only';
+  bool isReceived(String userId) => sender != userId;
+  bool isSent(String userId) => !isReceived(userId);
+
+  Message markAsRead() {
+    return Message(
+      id: this.id,
+      sender: this.sender,
+      recipient: this.recipient,
+      content: this.content,
+      replyingOn: this.replyingOn,
+      time: this.time,
+      isRead: true,
+    );
+  }
 }

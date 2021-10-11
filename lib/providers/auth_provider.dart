@@ -1,26 +1,28 @@
 import 'dart:io';
 
-import 'package:anonymous_chat/database_entities/user_entity.dart';
+import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
+import 'package:anonymous_chat/models/local_user.dart';
 import 'package:anonymous_chat/interfaces/auth_interface.dart';
-import 'package:anonymous_chat/interfaces/online_database_interface.dart';
+import 'package:anonymous_chat/interfaces/database_interface.dart';
 import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/providers/loading_provider.dart';
 import 'package:anonymous_chat/services.dart/authentication.dart';
+import 'package:anonymous_chat/utilities/enums.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:flutter/foundation.dart';
 
-final navigationSignal =
-    StateNotifierProvider.autoDispose<NavigationSignalNotifier, bool>(
+final navigationSignal = StateNotifierProvider.autoDispose<
+    NavigationSignalNotifier, DestinationAfterAuth?>(
   (_) => NavigationSignalNotifier(),
 );
 
-class NavigationSignalNotifier extends StateNotifier<bool> {
-  NavigationSignalNotifier() : super(false);
+class NavigationSignalNotifier extends StateNotifier<DestinationAfterAuth?> {
+  NavigationSignalNotifier() : super(null);
 
-  set navigate(bool navigate) => state = navigate;
+  set navigate(DestinationAfterAuth navigate) => state = navigate;
 }
 
 final phoneVerificationProvider = ChangeNotifierProvider.autoDispose(
@@ -35,7 +37,7 @@ class PhoneVerificationNotifier extends ChangeNotifier {
   final ErrorsNotifier _errorNotifier;
   final LoadingNotifier _loadingNotifier;
   final NavigationSignalNotifier _navigationSignal;
-
+  final ILocalPrefs prefs = ILocalPrefs.storage;
   final FirebaseAuthService _auth = (IAuth.auth as FirebaseAuthService);
 
   String number = '';
@@ -52,6 +54,9 @@ class PhoneVerificationNotifier extends ChangeNotifier {
 
   void onSendCodePressed() {
     _loadingNotifier.loading = true;
+    if (number.substring(0, 1) != '!') {
+      number = '+' + number;
+    }
     if (number.isEmpty) {
       _errorNotifier.set('Number field required');
       _loadingNotifier.loading = false;
@@ -103,22 +108,50 @@ class PhoneVerificationNotifier extends ChangeNotifier {
 
       UserCredential credentail = phoneAuthCredential != null
           ? await _auth.signInWithPhoneCredential(
-              credential: phoneAuthCredential)
+              credential: phoneAuthCredential,
+            )
           : await _auth.signInWithPhoneCredential(
               verificationId: _verificationId!,
               code: code!,
             );
 
-      if (credentail.additionalUserInfo!.isNewUser) {
-        await IDatabase.db.saveUserData(
+      bool isNewUser = credentail.additionalUserInfo!.isNewUser;
+
+      if (isNewUser) {
+        await IDatabase.onlineDb.saveUserData(
           user: LocalUser.newlyCreated(
             id: credentail.user!.uid,
             phoneNumber: number,
           ),
         );
-      }
 
-      _navigationSignal.navigate = true;
+        await prefs.setUser(
+          LocalUser(id: credentail.user!.uid, phoneNumber: number),
+        );
+
+        _navigationSignal.navigate = DestinationAfterAuth.NAME_GENERATOR_SCREEN;
+      } else {
+        LocalUser? user =
+            await IDatabase.onlineDb.getUserData(id: credentail.user!.uid);
+
+        // Case the user deleted his account then registered again
+        if (user == null) {
+          await prefs.setUser(
+            LocalUser(id: credentail.user!.uid, phoneNumber: number),
+          );
+
+          _navigationSignal.navigate =
+              DestinationAfterAuth.NAME_GENERATOR_SCREEN;
+        } else {
+          await prefs.setUser(
+            user,
+          );
+
+          _navigationSignal.navigate = user.isNicknamed
+              ? DestinationAfterAuth.HOME_SCREEN
+              : DestinationAfterAuth.NAME_GENERATOR_SCREEN;
+        }
+      }
     } on Exception catch (e) {
       if (e is FirebaseAuthException && e.code == 'invalid-verification-code')
         _errorNotifier.set('Invalid code.');
