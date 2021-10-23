@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import 'package:anonymous_chat/models/local_user.dart';
-import 'package:anonymous_chat/services.dart/local_storage.dart';
+import 'package:anonymous_chat/services.dart/shared_preferences.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 
 abstract class ILocalPrefs {
@@ -24,4 +24,7 @@ abstract class ILocalPrefs {
 
   ThemeState get preferedTheme;
   set preferedTheme(ThemeState theme);
+
+  int? get lastStorageClearingDate;
+  set clearStorageDate(int millisSinceEpoch);
 }

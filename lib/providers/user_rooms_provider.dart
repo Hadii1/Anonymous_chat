@@ -1,134 +1,158 @@
 import 'dart:async';
 
-import 'package:anonymous_chat/interfaces/database_interface.dart';
-import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
+import 'package:anonymous_chat/interfaces/prefs_storage_interface.dart';
 import 'package:anonymous_chat/mappers/chat_room_mapper.dart';
+import 'package:anonymous_chat/mappers/contact_mapper.dart';
 import 'package:anonymous_chat/models/chat_room.dart';
-import 'package:anonymous_chat/providers/archived_rooms_provider.dart';
-import 'package:anonymous_chat/providers/errors_provider.dart';
-import 'package:anonymous_chat/providers/user_auth_events_provider.dart';
+import 'package:anonymous_chat/models/contact.dart';
+import 'package:anonymous_chat/providers/starting_data_provider.dart';
+import 'package:anonymous_chat/syncer/rooms_syncer.dart';
 import 'package:anonymous_chat/utilities/enums.dart';
 import 'package:anonymous_chat/utilities/general_functions.dart';
-
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tuple/tuple.dart';
 
-final chatsListProvider =
-    StateNotifierProvider<ChatsListNotifier, List<ChatRoom>?>((ref) {
-  ref.watch(userAuthEventsProvider);
-  return ChatsListNotifier(
-    rooms: ref.watch(userRoomsProvider),
-    archivedRooms: ref.watch(archivedRoomsProvider),
-    errorNotifier: ref.read(errorsStateProvider.notifier),
-  );
-});
+final roomsProvider = ChangeNotifierProvider(
+  (ref) => RoomsNotifier(
+    ref.watch(startingDataProvider)!,
+  ),
+);
 
-class ChatsListNotifier extends StateNotifier<List<ChatRoom>?> {
-  final ErrorsNotifier errorNotifier;
-  final List<ChatRoom>? rooms;
-  final List<String>? archivedRooms;
+class RoomsNotifier extends ChangeNotifier {
+  late final StreamSubscription<List<Tuple2<ChatRoom, RoomsUpdateType>>>
+      _roomChanges;
+  final ChatRoomsMapper _roomsMapper = ChatRoomsMapper();
+  final String _userId = ILocalPrefs.storage.user!.id;
+  bool isFirstFetch = true;
+  List<ChatRoom> allRooms;
 
-  ChatsListNotifier({
-    required this.rooms,
-    required this.archivedRooms,
-    required this.errorNotifier,
-  }) : super(rooms) {
-    if (archivedRooms == null || rooms == null) return;
+  List<ChatRoom> get unarhcivedRooms =>
+      allRooms.where((r) => !r.isArchived).toList();
+  List<ChatRoom> get archivedRooms =>
+      allRooms.where((r) => r.isArchived).toList();
+  List<Contact> get contacts => allRooms.map((e) => e.contact).toList();
+  List<Contact> get blockedContacts =>
+      contacts.where((c) => c.isBlocked).toList();
 
-    List<ChatRoom> temp = List.from(rooms!);
-
+  RoomsNotifier(this.allRooms) {
+    // Sort
+    List<ChatRoom> temp = List.from(allRooms.where((r) => !r.isArchived));
     temp.sort(
       (a, b) => -a.messages.last.time.compareTo(b.messages.last.time),
     );
+    allRooms = [...temp];
 
-    if (archivedRooms!.isNotEmpty) {
-      temp.removeWhere(
-        (ChatRoom room) => archivedRooms!.contains(room.id),
-      );
-    }
-    state = List.from(temp);
+    // First fetch of online rooms and syncing
+    _roomsMapper
+        .getUserRooms(userId: _userId, source: GetDataSource.ONLINE)
+        .then((List<ChatRoom> onlineRooms) async {
+      bool modified = false;
+      if (allRooms.isNotEmpty) {
+        modified = await RoomsSyncer().syncRooms(onlineRooms, allRooms);
+      }
+      if (modified) {
+        allRooms = [...onlineRooms];
+      }
+      isFirstFetch = false;
+      notifyListeners();
+    });
+    _listenToChanges();
   }
 
   set latestActiveChat(ChatRoom room) {
-    int index = state!.indexOf(room);
+    int index = allRooms.indexOf(room);
     if (index != -1) {
-      state!.removeAt(index);
-      state!.insert(0, room);
+      allRooms.removeAt(index);
+      allRooms.insert(0, room);
 
-      state = state;
+      notifyListeners();
     }
   }
 
-  void deleteChat({required String roomId}) {
-    state!.removeWhere((ChatRoom room) => room.id == roomId);
-    state = state;
-    retry(f: () => IDatabase.onlineDb.deleteChat(roomId: roomId));
-  }
-}
-
-final localUserRoomsFuture =
-    FutureProvider.autoDispose<List<ChatRoom>?>((ref) async {
-  ref.maintainState = true;
-  ref.watch(userAuthEventsProvider);
-
-  final ChatRoomsMapper roomsMapper = ChatRoomsMapper();
-  final user = ILocalPrefs.storage.user!;
-
-  try {
-    List<ChatRoom> rooms = await retry<List<ChatRoom>>(
-      f: () async => await roomsMapper.getUserRooms(userId: user.id),
+  void deleteChat({required ChatRoom room}) {
+    allRooms.remove(room);
+    notifyListeners();
+    retry(
+      shouldRethrow: false,
+      f: () => ChatRoomsMapper().deleteRoom(room, SetDataSource.BOTH),
     );
-    return rooms;
-  } on Exception catch (e) {
-    print(e);
-    return null;
-  }
-});
-
-final userRoomsProvider =
-    StateNotifierProvider<UserRoomsChangesNotifier, List<ChatRoom>?>((ref) {
-  ref.watch(userAuthEventsProvider);
-
-  return UserRoomsChangesNotifier();
-});
-
-class UserRoomsChangesNotifier extends StateNotifier<List<ChatRoom>?> {
-  UserRoomsChangesNotifier() : super(null) {
-    init();
   }
 
-  final ChatRoomsMapper roomsMapper = ChatRoomsMapper();
-  final String userId = ILocalPrefs.storage.user!.id;
+  void toggleBlock({ChatRoom? room, Contact? contact, required bool block}) {
+    assert((room == null && contact == null) == false);
+    int index;
+    if (contact == null) {
+      index = allRooms.indexOf(room!);
+    } else {
+      index = allRooms.indexWhere((r) => r.contact == contact);
+    }
+    ChatRoom selectedRoom = allRooms[index];
 
-  List<ChatRoom> _rooms = [];
+    assert(index != -1);
+    allRooms[index] =
+        block ? selectedRoom.blockContact() : selectedRoom.unBlockContact();
+    notifyListeners();
+    retry(
+      shouldRethrow: false,
+      f: () => ContactMapper().toggleContactBlock(
+        contact: selectedRoom.contact,
+        block: block,
+        userId: _userId,
+      ),
+    );
+  }
 
-  late StreamSubscription<List<Tuple2<ChatRoom, RoomsServerUpdateType>>>
-      roomChangesListener;
+  void editArchives({required ChatRoom room, required bool archive}) {
+    int index = allRooms.indexOf(room);
+    assert(index != -1);
+    allRooms[index] = archive ? room.archive() : room.unArchive();
+    notifyListeners();
+    retry(
+      shouldRethrow: false,
+      f: () => ChatRoomsMapper().editArchives(
+        roomId: room.id,
+        archive: archive,
+        userId: _userId,
+      ),
+    );
+  }
 
-  set rooms(List<ChatRoom> rooms) => state = rooms;
-
-  void init() {
-    roomChangesListener = roomsMapper
+  void _listenToChanges() {
+    _roomChanges = _roomsMapper
         .roomsServerUpdates()
-        .listen((List<Tuple2<ChatRoom, RoomsServerUpdateType>> event) {
+        .listen((List<Tuple2<ChatRoom, RoomsUpdateType>> event) {
+      print(event);
       for (var update in event) {
         switch (update.item2) {
-          case RoomsServerUpdateType.ROOM_DELETED:
-            _rooms.remove(update.item1);
-            state = _rooms;
+          case RoomsUpdateType.ROOM_DELETED:
+            allRooms.remove(update.item1);
+            notifyListeners();
+            retry(
+              shouldRethrow: false,
+              f: () =>
+                  _roomsMapper.deleteRoom(update.item1, SetDataSource.LOCAL),
+            );
             break;
-          case RoomsServerUpdateType.ROOM_ADDED:
-            if (_rooms.contains(update.item1)) break;
-            _rooms.insert(0, update.item1);
-            state = _rooms;
+          case RoomsUpdateType.ROOM_ADDED:
+            if (allRooms.contains(update.item1)) break;
+            _roomsMapper.saveUserRoom(
+              room: update.item1,
+              userId: _userId,
+              source: SetDataSource.LOCAL,
+            );
+
+            allRooms.add(update.item1);
+            notifyListeners();
             break;
         }
       }
     });
   }
 
+  @override
   void dispose() {
+    _roomChanges.cancel();
     super.dispose();
-    roomChangesListener.cancel();
   }
 }

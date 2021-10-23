@@ -1,12 +1,16 @@
 import 'dart:io';
 
-import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
+import 'package:anonymous_chat/interfaces/prefs_storage_interface.dart';
+import 'package:anonymous_chat/mappers/chat_room_mapper.dart';
+import 'package:anonymous_chat/models/chat_room.dart';
 import 'package:anonymous_chat/models/local_user.dart';
 import 'package:anonymous_chat/interfaces/auth_interface.dart';
 import 'package:anonymous_chat/interfaces/database_interface.dart';
 import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/providers/loading_provider.dart';
+import 'package:anonymous_chat/providers/starting_data_provider.dart';
 import 'package:anonymous_chat/services.dart/authentication.dart';
+import 'package:anonymous_chat/syncer/rooms_syncer.dart';
 import 'package:anonymous_chat/utilities/enums.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -25,11 +29,12 @@ class NavigationSignalNotifier extends StateNotifier<DestinationAfterAuth?> {
   set navigate(DestinationAfterAuth navigate) => state = navigate;
 }
 
-final phoneVerificationProvider = ChangeNotifierProvider.autoDispose(
+final authProvider = ChangeNotifierProvider.autoDispose(
   (ref) => PhoneVerificationNotifier(
     ref.read(errorsStateProvider.notifier),
     ref.read(loadingProvider.notifier),
     ref.read(navigationSignal.notifier),
+    ref.read(startingDataProvider.notifier),
   ),
 );
 
@@ -39,6 +44,7 @@ class PhoneVerificationNotifier extends ChangeNotifier {
   final NavigationSignalNotifier _navigationSignal;
   final ILocalPrefs prefs = ILocalPrefs.storage;
   final FirebaseAuthService _auth = (IAuth.auth as FirebaseAuthService);
+  final StartingData _startingData;
 
   String number = '';
 
@@ -50,11 +56,12 @@ class PhoneVerificationNotifier extends ChangeNotifier {
     this._errorNotifier,
     this._loadingNotifier,
     this._navigationSignal,
+    this._startingData,
   );
 
   void onSendCodePressed() {
     _loadingNotifier.loading = true;
-    if (number.substring(0, 1) != '!') {
+    if (number.substring(0, 1) != '+') {
       number = '+' + number;
     }
     if (number.isEmpty) {
@@ -117,7 +124,14 @@ class PhoneVerificationNotifier extends ChangeNotifier {
 
       bool isNewUser = credentail.additionalUserInfo!.isNewUser;
 
-      if (isNewUser) {
+      LocalUser? user =
+          await IDatabase.onlineDb.getUserData(id: credentail.user!.uid);
+
+      if (isNewUser || user == null) {
+        // User is tottaly new or the user
+        // deleted his account then registered again
+        // so we just treat it as new one
+
         await IDatabase.onlineDb.saveUserData(
           user: LocalUser.newlyCreated(
             id: credentail.user!.uid,
@@ -130,29 +144,26 @@ class PhoneVerificationNotifier extends ChangeNotifier {
         );
 
         _navigationSignal.navigate = DestinationAfterAuth.NAME_GENERATOR_SCREEN;
+        _startingData.room = [];
       } else {
-        LocalUser? user =
-            await IDatabase.onlineDb.getUserData(id: credentail.user!.uid);
+        // Logging in
+        await prefs.setUser(
+          user,
+        );
 
-        // Case the user deleted his account then registered again
-        if (user == null) {
-          await prefs.setUser(
-            LocalUser(id: credentail.user!.uid, phoneNumber: number),
-          );
+        List<ChatRoom> userRooms = await ChatRoomsMapper()
+            .getUserRooms(userId: user.id, source: GetDataSource.ONLINE);
 
-          _navigationSignal.navigate =
-              DestinationAfterAuth.NAME_GENERATOR_SCREEN;
-        } else {
-          await prefs.setUser(
-            user,
-          );
+        RoomsSyncer().onUserLogin(userRooms);
 
-          _navigationSignal.navigate = user.isNicknamed
-              ? DestinationAfterAuth.HOME_SCREEN
-              : DestinationAfterAuth.NAME_GENERATOR_SCREEN;
-        }
+        _startingData.room = userRooms;
+
+        _navigationSignal.navigate = user.isNicknamed
+            ? DestinationAfterAuth.HOME_SCREEN
+            : DestinationAfterAuth.NAME_GENERATOR_SCREEN;
       }
     } on Exception catch (e) {
+      print(e);
       if (e is FirebaseAuthException && e.code == 'invalid-verification-code')
         _errorNotifier.set('Invalid code.');
       else if (e is FirebaseAuthException && e.code == 'too-many-requests')

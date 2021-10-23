@@ -49,34 +49,38 @@ class TitledAppBar extends PreferredSize {
             ),
       trailing: () {
         if (trailing != null) return trailing;
-        return SizedBox.shrink();
+        // return SizedBox(
+        //   width: 80,
+        // );
       }(),
       backgroundColor: style.backgroundColor,
-      leading: Material(
-        type: MaterialType.transparency,
-        child: InkWell(
-          splashColor: Colors.transparent,
-          highlightColor: Colors.transparent,
-          onTap: () => Navigator.of(context).pop(),
-          child: leading ??
-              Row(
-                children: [
-                  Icon(
-                    CupertinoIcons.back,
-                    color: style.accentColor,
-                    size: 24,
-                  ),
-                  previousPageTitle != null
-                      ? Text(
-                          previousPageTitle!,
-                          style: TextStyle(
-                            color: style.accentColor,
-                            fontSize: 16,
-                          ),
-                        )
-                      : SizedBox.shrink()
-                ],
-              ),
+      leading: SizedBox(
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            onTap: () => Navigator.of(context).pop(),
+            child: leading ??
+                Row(
+                  children: [
+                    Icon(
+                      CupertinoIcons.back,
+                      color: style.accentColor,
+                      size: 24,
+                    ),
+                    previousPageTitle != null
+                        ? Text(
+                            previousPageTitle!,
+                            style: TextStyle(
+                              color: style.accentColor,
+                              fontSize: 16,
+                            ),
+                          )
+                        : SizedBox.shrink()
+                  ],
+                ),
+          ),
         ),
       ),
       padding: const EdgeInsetsDirectional.only(

@@ -98,7 +98,7 @@ class LocalMessageEntity implements MessageEntity {
         content: map['content'],
         replyingOn: map['replyingOn'],
         time: map['time'],
-        isRead: map['isRead'],
+        isRead: map['isRead'] == 0 ? false : true,
         roomId: map['roomId'],
       );
 }

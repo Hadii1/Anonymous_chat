@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:anonymous_chat/services.dart/local_storage.dart';
+import 'package:anonymous_chat/services.dart/shared_preferences.dart';
 import 'package:flutter/services.dart';
 
 enum ThemeState {

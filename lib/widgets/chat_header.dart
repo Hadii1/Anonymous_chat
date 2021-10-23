@@ -1,29 +1,22 @@
 import 'package:anonymous_chat/models/chat_room.dart';
-import 'package:anonymous_chat/models/contact.dart';
 import 'package:anonymous_chat/models/message.dart';
-import 'package:anonymous_chat/providers/archived_rooms_provider.dart';
-import 'package:anonymous_chat/providers/blocked_contacts_provider.dart';
 import 'package:anonymous_chat/providers/user_auth_events_provider.dart';
 import 'package:anonymous_chat/providers/user_rooms_provider.dart';
 import 'package:anonymous_chat/utilities/extentions.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/views/room_screen.dart';
 import 'package:anonymous_chat/widgets/custom_route.dart';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:fluttericon/linearicons_free_icons.dart';
 
 class ChatHeader extends StatelessWidget {
   final ChatRoom room;
-  final bool archivable;
 
   const ChatHeader({
     required this.room,
-    required this.archivable,
   });
 
   @override
@@ -33,8 +26,10 @@ class ChatHeader extends StatelessWidget {
     Message lastMessage = room.messages.last;
 
     return Consumer(builder: (context, watch, _) {
-      final List<Contact> blockedContacts = watch(blockedContactsProvider)!;
-      final String userId = watch(userAuthEventsProvider)!.id;
+      final String? userId = watch(userAuthEventsProvider)?.id;
+      bool blocked =
+          watch(roomsProvider).blockedContacts.contains(room.contact);
+      bool archived = watch(roomsProvider).archivedRooms.contains(room);
 
       return InkWell(
         splashColor: Colors.transparent,
@@ -56,9 +51,8 @@ class ChatHeader extends StatelessWidget {
           fastThreshold: 1800,
           actions: [
             SlideAction(
-              onTap: () => context
-                  .read(chatsListProvider.notifier)
-                  .deleteChat(roomId: room.id),
+              onTap: () =>
+                  context.read(roomsProvider.notifier).deleteChat(room: room),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -77,14 +71,12 @@ class ChatHeader extends StatelessWidget {
               ),
             ),
             SlideAction(
-              onTap: () =>
-                  context.read(blockedContactsProvider.notifier).toggleBlock(
-                        contact: room.contact,
-                        block: !blockedContacts.contains(room.contact),
-                      ),
+              onTap: () => context
+                  .read(roomsProvider.notifier)
+                  .toggleBlock(contact: room.contact, block: !blocked),
               child: AnimatedSwitcher(
                 duration: Duration(milliseconds: 250),
-                child: blockedContacts.contains(room.contact)
+                child: blocked
                     ? Column(
                         key: ValueKey<int>(0),
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -122,11 +114,10 @@ class ChatHeader extends StatelessWidget {
               ),
             ),
             SlideAction(
-              onTap: () =>
-                  context.read(archivedRoomsProvider.notifier).editArchives(
-                        roomId: room.id,
-                        archive: archivable,
-                      ),
+              onTap: () => context.read(roomsProvider.notifier).editArchives(
+                    room: room,
+                    archive: !archived,
+                  ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -135,7 +126,7 @@ class ChatHeader extends StatelessWidget {
                     color: Colors.white.withOpacity(0.85),
                   ),
                   Text(
-                    archivable ? 'Archive' : 'Restore',
+                    !archived ? 'Archive' : 'Restore',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 12,
@@ -154,7 +145,7 @@ class ChatHeader extends StatelessWidget {
                 height: 50,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: lastMessage.isSent(userId) || lastMessage.isRead
+                  color: lastMessage.isSent(userId!) || lastMessage.isRead
                       ? Colors.transparent
                       : style.accentColor.withOpacity(0.5),
                   border: Border.all(

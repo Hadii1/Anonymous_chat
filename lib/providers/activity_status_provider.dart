@@ -15,10 +15,10 @@
 import 'dart:async';
 
 import 'package:anonymous_chat/interfaces/database_interface.dart';
-import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
+import 'package:anonymous_chat/interfaces/prefs_storage_interface.dart';
 import 'package:anonymous_chat/models/activity_status.dart';
 import 'package:anonymous_chat/services.dart/firestore.dart';
-import 'package:anonymous_chat/services.dart/local_storage.dart';
+import 'package:anonymous_chat/services.dart/shared_preferences.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

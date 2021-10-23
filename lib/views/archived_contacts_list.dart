@@ -13,19 +13,16 @@
 // limitations under the License.
 
 import 'package:anonymous_chat/models/chat_room.dart';
-import 'package:anonymous_chat/providers/archived_rooms_provider.dart';
 import 'package:anonymous_chat/providers/user_rooms_provider.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/widgets/animated_widgets.dart';
 import 'package:anonymous_chat/widgets/chat_header.dart';
 import 'package:anonymous_chat/widgets/titled_app_bar.dart';
-
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttericon/linearicons_free_icons.dart';
 import 'package:implicitly_animated_reorderable_list/implicitly_animated_reorderable_list.dart';
 import 'package:implicitly_animated_reorderable_list/transitions.dart';
-
-import 'package:flutter/material.dart';
 
 class ArchivedContactsList extends StatelessWidget {
   @override
@@ -43,13 +40,11 @@ class ArchivedContactsList extends StatelessWidget {
               Expanded(
                 child: Consumer(
                   builder: (context, watch, _) {
-                    List<String> archivedIds = watch(archivedRoomsProvider)!;
-                    List<ChatRoom> archivedRooms = watch(userRoomsProvider)!
-                        .where((element) => archivedIds.contains(element.id))
-                        .toList();
+                    List<ChatRoom> archivedRooms =
+                        watch(roomsProvider).archivedRooms;
                     return AnimatedSwitcher(
                       duration: Duration(milliseconds: 250),
-                      child: archivedIds.isEmpty
+                      child: archivedRooms.isEmpty
                           ? Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -92,7 +87,6 @@ class ArchivedContactsList extends StatelessWidget {
                                           children: [
                                             ChatHeader(
                                               room: room,
-                                              archivable: false,
                                             ),
                                             Divider(
                                               thickness: 0.15,
@@ -126,7 +120,6 @@ class ArchivedContactsList extends StatelessWidget {
                                               ),
                                               child: ChatHeader(
                                                 room: room,
-                                                archivable: false,
                                               ),
                                             ),
                                             Divider(

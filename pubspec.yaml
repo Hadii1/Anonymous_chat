@@ -48,6 +48,8 @@ dependencies:
   bubble: ^1.2.1
   flutter_staggered_animations: ^1.0.0
   
+  sqlite_viewer: ^1.0.5
+  
   flutter:
     sdk: flutter
 
@@ -57,6 +59,7 @@ dependencies:
   cupertino_icons: ^1.0.3
 
 dev_dependencies:
+
   flutter_lints: ^1.0.4
   flutter_test:
     sdk: flutter

@@ -3,9 +3,9 @@ import 'package:anonymous_chat/models/chat_room.dart';
 import 'package:anonymous_chat/models/contact.dart';
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/providers/activity_status_provider.dart';
-import 'package:anonymous_chat/providers/blocked_contacts_provider.dart';
 import 'package:anonymous_chat/providers/chat_provider.dart';
 import 'package:anonymous_chat/providers/user_auth_events_provider.dart';
+import 'package:anonymous_chat/providers/user_rooms_provider.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/widgets/animated_widgets.dart';
 import 'package:anonymous_chat/widgets/chat_bubble.dart';
@@ -54,7 +54,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       body: Consumer(builder: (context, watch, _) {
         final chatNotifier = watch(chattingProvider(widget.room));
         final String userId = watch(userAuthEventsProvider)!.id;
-        final List<Contact> blockedContacts = watch(blockedContactsProvider)!;
+        final List<Contact> blockedContacts =
+            watch(roomsProvider).blockedContacts;
 
         return SizedBox(
           height: MediaQuery.of(context).size.height,
@@ -93,9 +94,13 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
                                           if (message.replyingOn != null) {
                                             replyOn = chatNotifier.allMessages
+                                                .cast<Message?>()
                                                 .firstWhere(
-                                              (m) => m.id == message.replyingOn,
-                                            );
+                                                  (m) =>
+                                                      m!.id ==
+                                                      message.replyingOn,
+                                                  orElse: () => null,
+                                                );
                                           }
 
                                           return CustomSlide(
@@ -248,7 +253,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                           child: blockedContacts.contains(other)
                               ? InkWell(
                                   onTap: () => context
-                                      .read(blockedContactsProvider.notifier)
+                                      .read(roomsProvider.notifier)
                                       .toggleBlock(
                                         contact: other,
                                         block: !blockedContacts.contains(other),

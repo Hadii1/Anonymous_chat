@@ -15,16 +15,27 @@
 class Contact {
   final String nickname;
   final String id;
+  final bool isBlocked;
 
   Contact({
     required this.nickname,
     required this.id,
+    required this.isBlocked,
   });
+
+  Contact block() {
+    return Contact(nickname: this.nickname, id: this.id, isBlocked: true);
+  }
+
+  Contact unBlock() {
+    return Contact(nickname: this.nickname, id: this.id, isBlocked: false);
+  }
 
   Map<String, dynamic> toMap() {
     return {
       'nickname': nickname,
       'id': id,
+      'isBlocked': isBlocked,
     };
   }
 
@@ -32,6 +43,28 @@ class Contact {
     return Contact(
       nickname: map['nickname'],
       id: map['id'],
+      // This is stored as bool in firestore and as 0/1 in sqlite
+      isBlocked: () {
+        var data = map['isBlocked'];
+        return data is bool
+            ? data
+            : data == 0
+                ? false
+                : true;
+      }(),
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is Contact &&
+        other.nickname == nickname &&
+        other.id == id &&
+        other.isBlocked == isBlocked;
+  }
+
+  @override
+  int get hashCode => nickname.hashCode ^ id.hashCode ^ isBlocked.hashCode;
 }

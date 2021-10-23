@@ -26,9 +26,9 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:tuple/tuple.dart';
 
-const String _messagesTable = 'Messages Table';
-const String _usersTable = 'MetaData Table';
-const String _roomsTable = 'Users Table';
+const String _messagesTable = 'MessagesTable';
+const String _contactsTable = 'ContactsTable';
+const String _roomsTable = 'RoomsTable';
 
 class SqlitePersistance
     implements IDatabase<LocalRoomEntity, LocalMessageEntity> {
@@ -40,16 +40,22 @@ class SqlitePersistance
 
   static late final Database db;
 
+  static bool _initialized = false;
+
   static init() async {
-    db = await openDatabase(
-      join(await getDatabasesPath(), 'MESSAGES.db'),
-      onCreate: (db, version) async {
-        _createTables();
-      },
-    );
+    if (!_initialized) {
+      db = await openDatabase(
+        join(await getDatabasesPath(), 'MESSAGES.db'),
+        onCreate: (db, __) async {
+          _createTables(db);
+        },
+        version: 1,
+      );
+      _initialized = true;
+    }
   }
 
-  static _createTables() async {
+  static _createTables(Database db) async {
     await db.execute(
       '''CREATE TABLE $_messagesTable(
            id TEXT PRIMAREY KEY,
@@ -59,15 +65,15 @@ class SqlitePersistance
            content TEXT,
            replyingOn TEXT,
            time INTEGER,
-           isRead INTEGER,
+           isRead INTEGER
          ) ''',
     );
 
     await db.execute(
-      '''CREATE TABLE $_usersTable(
+      '''CREATE TABLE $_contactsTable(
            id TEXT PRIMAREY KEY,
            nickname TEXT UNIQUE,
-           isBlocked INTEGER,
+           isBlocked INTEGER
          ) ''',
     );
 
@@ -75,7 +81,7 @@ class SqlitePersistance
       '''CREATE TABLE $_roomsTable(
         id TEXT PRIMARY KEY,
         isArchived INTEGER,
-        contact TEXT,
+        contact TEXT
       ) ''',
     );
   }
@@ -84,14 +90,14 @@ class SqlitePersistance
   Future<void> saveNewRoomEntity({required RoomEntity roomEntity}) async {
     LocalRoomEntity entity = roomEntity as LocalRoomEntity;
     await db.rawInsert(
-      'INSERT INTO $_roomsTable VALUES ("${entity.id}",0,"${entity.contact}",)',
+      'INSERT INTO $_roomsTable VALUES ("${entity.id}",0,"${entity.contact}")',
     );
   }
 
   @override
   Future<void> saveUserData({required LocalUser user}) async {
     await db.rawInsert(
-      'INSERT INTO $_usersTable VALUES ("${user.id}","${user.nickname}",0)',
+      'INSERT INTO $_contactsTable VALUES ("${user.id}","${user.nickname}",0)',
     );
   }
 
@@ -137,7 +143,7 @@ class SqlitePersistance
     required String blockedContact,
   }) async {
     int count = await db.rawUpdate(
-      'UPDATE $_usersTable SET isBlocked = ? WHERE id = ?',
+      'UPDATE $_contactsTable SET isBlocked = ? WHERE id = ?',
       [1, blockedContact],
     );
     assert(count == 1);
@@ -152,20 +158,24 @@ class SqlitePersistance
     required String blockedContact,
   }) async {
     int count = await db.rawUpdate(
-      'UPDATE $_usersTable SET isBlocked = ? WHERE id = ?',
+      'UPDATE $_contactsTable SET isBlocked = ? WHERE id = ?',
       [0, blockedContact],
     );
     assert(count == 1);
   }
 
   @override
-  Future<void> deleteChat({required String roomId}) async {
+  Future<void> deleteChat(
+      {required String roomId, required String contactId}) async {
     int count =
         await db.rawDelete('DELETE FROM $_roomsTable WHERE id = ?', [roomId]);
     int count1 = await db
-        .rawDelete('DELTE FROM $_messagesTable WHERE roomId = ?', [roomId]);
+        .rawDelete('DELETE FROM $_messagesTable WHERE roomId = ?', [roomId]);
+    int count2 = await db
+        .rawDelete('DELETE FROM $_contactsTable WHERE id = ?', [contactId]);
     assert(count == 1);
     assert(count1 >= 1);
+    assert(count2 > 0);
   }
 
   @override
@@ -173,7 +183,7 @@ class SqlitePersistance
       {required String roomId, required LocalMessageEntity message}) async {
     int isRead = message.isRead ? 1 : 0;
     await db.rawInsert(
-      'INSERT INTO $_messagesTable VALUES("${message.id}","$roomId","${message.sender}","${message.recipient}","${message.content}","${message.replyingOn}",${message.time},$isRead,)',
+      'INSERT INTO $_messagesTable VALUES("${message.id}","$roomId","${message.sender}","${message.recipient}","${message.content}","${message.replyingOn}",${message.time},$isRead)',
     );
   }
 
@@ -191,7 +201,7 @@ class SqlitePersistance
   Future<List<LocalMessageEntity>> getAllMessages(
       {required String roomId}) async {
     List<Map<String, Object?>> data = await db.rawQuery(
-      'SELECT * FROM $_messagesTable WHERE roomId = ?',
+      'SELECT * FROM $_messagesTable WHERE roomId = ? ORDER BY time ASC',
       [roomId],
     );
     return data.map((e) => LocalMessageEntity.fromMap(e)).toList();
@@ -200,7 +210,7 @@ class SqlitePersistance
   @override
   Future<List<String>> getBlockedContacts({required String userId}) async {
     List<Map<String, Object?>> data = await db.rawQuery(
-      'SELECT id FROM $_usersTable WHERE isBlocked = ?',
+      'SELECT id FROM $_contactsTable WHERE isBlocked = ?',
       [1],
     );
     return data.isEmpty
@@ -227,8 +237,7 @@ class SqlitePersistance
   Future<List<LocalRoomEntity>> getUserRoomsEntities(
       {required String userId}) async {
     List<Map<String, Object?>> data = await db.rawQuery(
-      'SELECT * FROM $_roomsTable WHERE firstUser = ? OR secondUser = ?',
-      [userId, userId],
+      'SELECT * FROM $_roomsTable',
     );
     return data
         .map((Map<String, Object?> e) => LocalRoomEntity.fromMap(e))
@@ -237,11 +246,18 @@ class SqlitePersistance
   }
 
   @override
-  Future<Contact> getContactData({required String id}) async {
-    List<Map<String, Object?>> d =
-        await db.rawQuery('SELECT * FROM $_usersTable WHERE id = ?', [id]);
+  Future<Contact> getContactData(
+      {required String contactId, String? userId}) async {
+    List<Map<String, Object?>> d = await db
+        .rawQuery('SELECT * FROM $_contactsTable WHERE id = ?', [contactId]);
     assert(d.length == 1);
     return Contact.fromMap(d.first);
+  }
+
+  @override
+  Future<void> saveContactData({required Contact contact}) async {
+    await db.rawInsert(
+        'INSERT INTO $_contactsTable VALUES ("${contact.id}","${contact.nickname}",0)');
   }
 
   @override
@@ -278,8 +294,10 @@ class SqlitePersistance
   }
 
   @override
-  Future<void> deleteAccount({required String userId}) {
-    throw UnimplementedError();
+  Future<void> deleteAccount({required String userId}) async {
+    await db.delete(_contactsTable);
+    await db.delete(_messagesTable);
+    await db.delete(_roomsTable);
   }
 
   @override
@@ -288,7 +306,8 @@ class SqlitePersistance
   }
 
   @override
-  Future<List<Contact>> getMatchingUsers({required List<String> tagsIds}) {
+  Future<List<Contact>> getMatchingUsers(
+      {required List<String> tagsIds, required String userId}) {
     throw UnimplementedError();
   }
 
@@ -317,11 +336,6 @@ class SqlitePersistance
   @override
   Stream<List<Tuple2<Map<String, dynamic>, DataChangeType>>> userRoomsChanges(
       {required String userId}) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> saveContactData({required Contact contact}) {
     throw UnimplementedError();
   }
 }

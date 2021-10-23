@@ -31,41 +31,50 @@ class ContactMapper {
     required bool block,
     required String userId,
   }) async {
-    await _onlineDb.blockContact(userId: userId, blockedContact: contact.id);
-    await _offlineDb.blockContact(userId: userId, blockedContact: contact.id);
+    if (block) {
+      await _onlineDb.blockContact(userId: userId, blockedContact: contact.id);
+      await _offlineDb.blockContact(userId: userId, blockedContact: contact.id);
+    } else {
+      await _onlineDb.unblockContact(
+          userId: userId, blockedContact: contact.id);
+      await _offlineDb.unblockContact(
+          userId: userId, blockedContact: contact.id);
+    }
   }
 
   Future<Contact> getContactData({
     GetDataSource source = GetDataSource.ONLINE,
+    required String userId,
     required String contactId,
   }) async {
     switch (source) {
       case GetDataSource.LOCAL:
-        return await _offlineDb.getContactData(id: contactId);
+        return await _offlineDb.getContactData(contactId: contactId);
 
       case GetDataSource.ONLINE:
-        return await _onlineDb.getContactData(id: contactId);
+        return await _onlineDb.getContactData(
+            contactId: contactId, userId: userId);
     }
   }
 
-  Future<List<Contact>> getBlockedContacts(
-      {required String userId, required GetDataSource source}) async {
-    if (source == GetDataSource.ONLINE) {
-      List<String> ids = await _onlineDb.getBlockedContacts(userId: userId);
-      List<Contact> temp = [];
-      for (String id in ids) {
-        Contact contact = await _onlineDb.getContactData(id: id);
-        temp.add(contact);
-      }
-      return temp;
-    } else {
-      List<String> ids = await _offlineDb.getBlockedContacts(userId: userId);
-      List<Contact> temp = [];
-      for (String id in ids) {
-        Contact contact = await _offlineDb.getContactData(id: id);
-        temp.add(contact);
-      }
-      return temp;
-    }
-  }
+  // Future<List<Contact>> getBlockedContacts(
+  //     {required String userId, required GetDataSource source}) async {
+  //   if (source == GetDataSource.ONLINE) {
+  //     List<String> ids = await _onlineDb.getBlockedContacts(userId: userId);
+  //     List<Contact> temp = [];
+  //     for (String id in ids) {
+  //       Contact contact = await _onlineDb.getContactData(contactId: id);
+  //       temp.add(contact);
+  //     }
+  //     return temp;
+  //   } else {
+  //     List<String> ids = await _offlineDb.getBlockedContacts(userId: userId);
+  //     List<Contact> temp = [];
+  //     for (String id in ids) {
+  //       Contact contact = await _offlineDb.getContactData(contactId: id);
+  //       temp.add(contact);
+  //     }
+  //     return temp;
+  //   }
+  // }
 }

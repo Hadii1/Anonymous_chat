@@ -15,7 +15,7 @@
 import 'dart:math';
 
 import 'package:anonymous_chat/interfaces/database_interface.dart';
-import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
+import 'package:anonymous_chat/interfaces/prefs_storage_interface.dart';
 import 'package:anonymous_chat/models/local_user.dart';
 import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/providers/loading_provider.dart';
@@ -28,6 +28,7 @@ import 'package:anonymous_chat/widgets/cta_button.dart';
 import 'package:anonymous_chat/widgets/keyboard_hider.dart';
 import 'package:anonymous_chat/widgets/onboarding_title_text.dart';
 import 'package:anonymous_chat/widgets/shaded_container.dart';
+import 'package:anonymous_chat/widgets/titled_app_bar.dart';
 import 'package:anonymous_chat/widgets/top_padding.dart';
 
 import 'package:flutter/cupertino.dart';
@@ -42,6 +43,23 @@ class NameScreen extends StatefulWidget {
 }
 
 class _NameScreenState extends State<NameScreen> {
+  Future<bool> saveCurrentInfo(LocalUser user, String name) async {
+    IDatabase db = IDatabase.onlineDb;
+    ILocalPrefs prefs = ILocalPrefs.storage;
+
+    try {
+      await retry(f: () async {
+        await db.saveUserData(
+          user: user.copyWith(nickname: name),
+        );
+        await prefs.setUser(user.copyWith(nickname: name));
+      });
+      return true;
+    } on Exception catch (_) {
+      return false;
+    }
+  }
+
   String? currentName;
   @override
   Widget build(BuildContext context) {
@@ -53,6 +71,10 @@ class _NameScreenState extends State<NameScreen> {
           builder: (context, watch, _) {
             return Column(
               children: [
+                TitledAppBar(),
+                SizedBox(
+                  height: 24 * 2,
+                ),
                 Expanded(
                   child: NameGenerator(
                     onChanged: (n) => currentName = n,
@@ -71,13 +93,23 @@ class _NameScreenState extends State<NameScreen> {
                       child: CtaButton(
                         onPressed: () async {
                           if (currentName == null) return;
-                          bool success = await context.refresh(
-                            userInfoSavingProvider(currentName!),
+
+                          watch(loadingProvider.notifier).loading = true;
+
+                          bool success = await saveCurrentInfo(
+                            watch(userAuthEventsProvider)!,
+                            currentName!,
                           );
-                          if (success)
+
+                          if (success) {
+                            watch(loadingProvider.notifier).loading = false;
                             Navigator.of(context).push(
                               CupertinoPageRoute(builder: (_) => Home()),
                             );
+                          } else {
+                            watch(errorsStateProvider.notifier)
+                                .set('Something went wrong. Try again please');
+                          }
                         },
                         text: 'NEXT',
                       ),
@@ -187,32 +219,6 @@ class _NameGeneratorState extends State<NameGenerator> {
     );
   }
 }
-
-final userInfoSavingProvider = FutureProvider.family.autoDispose<bool, String>(
-  (ref, name) async {
-    IDatabase db = IDatabase.onlineDb;
-    ILocalPrefs prefs = ILocalPrefs.storage;
-    LocalUser user = ref.read(userAuthEventsProvider)!;
-
-    try {
-      ref.read(loadingProvider.notifier).loading = true;
-      await retry(f: () async {
-        await db.saveUserData(
-          user: user.copyWith(nickname: user),
-        );
-        await prefs.setUser(user.copyWith(nickname: user));
-      });
-      return true;
-    } on Exception catch (_) {
-      ref
-          .read(errorsStateProvider.notifier)
-          .set('Something went wrong. Try again please');
-      return false;
-    } finally {
-      ref.read(loadingProvider.notifier).loading = false;
-    }
-  },
-);
 
 List<String> _kcolors = [
   'Red',

@@ -16,7 +16,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:anonymous_chat/interfaces/database_interface.dart';
-import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
+import 'package:anonymous_chat/interfaces/prefs_storage_interface.dart';
 import 'package:anonymous_chat/interfaces/search_service_interface.dart';
 import 'package:anonymous_chat/models/tag.dart';
 import 'package:anonymous_chat/providers/errors_provider.dart';
@@ -78,8 +78,7 @@ class TagSuggestionsNotifier extends ChangeNotifier {
     }
   }
 
-  void onExistingTagPressed(
-      {required Tag tag, required bool selected}) async {
+  void onExistingTagPressed({required Tag tag, required bool selected}) async {
     screenState = TagScreenState.idle;
     suggestedTags = [];
     notifyListeners();
@@ -121,21 +120,21 @@ class TagSuggestionsNotifier extends ChangeNotifier {
       screenState = TagScreenState.loadingTags;
 
       // get suggested tags data
-      List<Map<String, dynamic>> algoliaData =
-          await retry(f: () => searchService.getTagSuggestions(label: label));
+      List<Map<String, dynamic>> algoliaData = (await retry(
+          f: () => searchService.getTagSuggestions(label: label)))!;
 
-      List<Map<String, dynamic>> data = await retry(
+      List<Map<String, dynamic>> data = (await retry(
           f: () => db.getTagsById(
                 ids: algoliaData
                     .map((Map<String, dynamic> e) => e['id'] as String)
                     .toList(),
-              ));
+              )))!;
 
       suggestedTags = data.map((e) => Tag.fromMap(e)).toList();
 
       // Remove already exisiting active tags
       List selectedTags =
-          read(userTagsProvider)!.where((t) => t.isActive == true).toList();
+          read(userTagsProvider).where((t) => t.isActive == true).toList();
       suggestedTags.removeWhere((element) => selectedTags.contains(element));
 
       // If the label isn't present in any of the suggested tags

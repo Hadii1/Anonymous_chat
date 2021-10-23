@@ -14,56 +14,70 @@
 
 import 'package:anonymous_chat/interfaces/auth_interface.dart';
 import 'package:anonymous_chat/interfaces/database_interface.dart';
-import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
+import 'package:anonymous_chat/interfaces/prefs_storage_interface.dart';
+import 'package:anonymous_chat/mappers/chat_room_mapper.dart';
+import 'package:anonymous_chat/models/chat_room.dart';
 import 'package:anonymous_chat/models/local_user.dart';
+import 'package:anonymous_chat/providers/starting_data_provider.dart';
 import 'package:anonymous_chat/providers/user_auth_events_provider.dart';
-import 'package:anonymous_chat/providers/user_rooms_provider.dart';
 import 'package:anonymous_chat/services.dart/algolia.dart';
 import 'package:anonymous_chat/services.dart/authentication.dart';
-import 'package:anonymous_chat/services.dart/local_storage.dart';
+import 'package:anonymous_chat/services.dart/sqlite.dart';
+import 'package:anonymous_chat/services.dart/shared_preferences.dart';
 import 'package:anonymous_chat/services.dart/push_notificaitons.dart';
 import 'package:anonymous_chat/utilities/enums.dart';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Returns if the user is authenticated or not
-final appInitialzationProvider =
-    FutureProvider.autoDispose<UserState>((ref) async {
-  await Firebase.initializeApp();
-  await SharedPrefs.init();
-  await AlgoliaSearch.init();
-  await NotificationsService.init();
+final appInitialzationProvider = FutureProvider.autoDispose<UserState>(
+  (ref) async {
+    await Firebase.initializeApp();
+    await SharedPrefs.init();
+    await AlgoliaSearch.init();
+    await NotificationsService.init();
+    await SqlitePersistance.init();
+    
+    // await SqlitePersistance().deleteAccount(userId:  FirebaseAuthService().getUser()!.uid);
+    // await FirebaseAuthService().signOut();
 
-  // await FirebaseAuthService().signOut();
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
-  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
-  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    IDatabase onlineDb = IDatabase.onlineDb;
+    // IDatabase offlineDb = IDatabase.offlineDb;
 
-  IDatabase db = IDatabase.onlineDb;
-  ILocalPrefs storage = ILocalPrefs.storage;
-  IAuth auth = IAuth.auth as FirebaseAuthService;
+    ILocalPrefs storage = ILocalPrefs.storage;
+    IAuth auth = IAuth.auth as FirebaseAuthService;
 
-  User? user = auth.getUser();
-  if (user == null) return UserState.NOT_AUTHENTICATTED;
+    User? user = auth.getUser();
 
-  LocalUser localUser = (await db.getUserData(id: user.uid))!;
+    if (user == null) return UserState.NOT_AUTHENTICATTED;
 
-  if (localUser.isNicknamed) {
-    // Update local user in case it's missing (due to uninstalling app)
-    if (storage.user == null || storage.user != localUser) {
-      storage.setUser(localUser);
+    LocalUser? localUser = (await onlineDb.getUserData(id: user.uid));
+
+    if (localUser == null) return UserState.NOT_AUTHENTICATTED;
+
+    if (localUser.isNicknamed) {
+      // Update local user in case it's missing (due to uninstalling app)
+      if (storage.user == null || storage.user != localUser) {
+        storage.setUser(localUser);
+      }
+      ref.read(userAuthEventsProvider.notifier).user = localUser;
+
+      // Load the local chats here to directly display them in chats screen
+      List<ChatRoom> rooms = await ChatRoomsMapper().getUserRooms(
+        userId: user.uid,
+        source: GetDataSource.LOCAL,
+      );
+
+      ref.read(startingDataProvider.notifier).room = rooms;
+
+      return UserState.AUTHENTICATETD_AND_NICKNAMED;
+    } else {
+      return UserState.AUTHENTICATED_NOT_NICKNAMED;
     }
-    ref.read(userAuthEventsProvider.notifier).user = localUser;
-
-    // Load the local chats here to directly display them in chats screen
-    ref.read(localUserRoomsFuture);
-
-    return UserState.AUTHENTICATETD_AND_NICKNAMED;
-  } else {
-    return UserState.AUTHENTICATED_NOT_NICKNAMED;
-  }
-});
+  },
+);

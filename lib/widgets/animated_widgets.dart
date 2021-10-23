@@ -129,3 +129,95 @@ class _CustomSlideState extends State<CustomSlide>
   }
 }
 
+class CustomSizeTransition extends StatefulWidget {
+  const CustomSizeTransition({
+    required this.child,
+    required this.hide,
+    required this.duration,
+  });
+  final Duration duration;
+  final bool hide;
+  final Widget child;
+
+  @override
+  _CustomSizeTransitionState createState() => _CustomSizeTransitionState();
+}
+
+class _CustomSizeTransitionState extends State<CustomSizeTransition>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _animationController;
+  late final Animation<double> _animation;
+
+  @override
+  void initState() {
+    _animationController = AnimationController(
+      vsync: this,
+      duration: widget.duration,
+    );
+    _animation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.linear,
+    );
+
+    _animationController.forward();
+
+    super.initState();
+  }
+
+  @override
+  void didUpdateWidget(covariant CustomSizeTransition oldWidget) {
+    if (oldWidget.hide != widget.hide) {
+      if (widget.hide) {
+        _animationController.reverse();
+      }
+    }
+    super.didUpdateWidget(oldWidget);
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizeTransition(
+      sizeFactor: _animation,
+      child: widget.child,
+    );
+  }
+}
+
+// class CustomSlideTransition extends StatefulWidget {
+//   final bool hide;
+//   final
+
+//   const CustomSlideTransition({required this.hide});
+
+//   @override
+//   CustomSlideTransitionState createState() => CustomSlideTransitionState();
+// }
+
+// class CustomSlideTransitionState extends State<CustomSlideTransition> with SingleTickerProviderStateMixin {
+  
+
+//    late final AnimationController ctrl ;
+//    late final Animation<Offset> animation;
+//   @override
+//   void initState() {
+// ctrl = AnimationController(vsync: this,duration: )
+//     super.initState();
+//   }
+
+//   @override
+//   void dispose() {
+// ctrl.dispose();
+
+//     super.dispose();
+//   }
+//   @override
+//   Widget build(BuildContext context) {
+//     return SlideTransition(position: position)
+//   }
+// }

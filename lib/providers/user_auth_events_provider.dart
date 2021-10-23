@@ -14,7 +14,7 @@
 
 import 'package:anonymous_chat/models/local_user.dart';
 import 'package:anonymous_chat/interfaces/auth_interface.dart';
-import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
+import 'package:anonymous_chat/interfaces/prefs_storage_interface.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // This is watched by providers that need to re-evaluate their state after auth changes

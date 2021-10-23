@@ -43,7 +43,7 @@ enum SetDataSource {
   BOTH,
 }
 
-enum RoomsServerUpdateType {
+enum RoomsUpdateType {
   ROOM_DELETED,
   // ROOM_MODIFIED, // A message(s) sent/received/read
   ROOM_ADDED,

@@ -13,15 +13,12 @@
 // limitations under the License.
 
 import 'package:anonymous_chat/models/contact.dart';
-import 'package:anonymous_chat/providers/blocked_contacts_provider.dart';
+import 'package:anonymous_chat/providers/user_rooms_provider.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/widgets/animated_widgets.dart';
 import 'package:anonymous_chat/widgets/titled_app_bar.dart';
-
 import 'package:flutter/material.dart';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:fluttericon/linearicons_free_icons.dart';
 import 'package:implicitly_animated_reorderable_list/implicitly_animated_reorderable_list.dart';
 import 'package:implicitly_animated_reorderable_list/transitions.dart';
@@ -42,127 +39,123 @@ class BlockedContactsScreen extends StatelessWidget {
               Expanded(
                 child: Consumer(
                   builder: (context, watch, _) {
-                    List<Contact>? blockedUsers =
-                        watch(blockedContactsProvider);
+                    List<Contact> blockedUsers =
+                        watch(roomsProvider).blockedContacts;
 
                     return AnimatedSwitcher(
                       duration: Duration(milliseconds: 250),
-                      child: blockedUsers == null
+                      // child: blockedUsers == null
+                      //     ? Column(
+                      //         mainAxisAlignment: MainAxisAlignment.center,
+                      //         children: [
+                      //           SpinKitThreeBounce(
+                      //             color: style.loadingBarColor,
+                      //             size: 25,
+                      //           ),
+                      //         ],
+                      //       )
+                      child: blockedUsers.isEmpty
                           ? Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                SpinKitThreeBounce(
-                                  color: style.loadingBarColor,
-                                  size: 25,
+                                SizedBox(
+                                  height: 50,
+                                ),
+                                Icon(
+                                  LineariconsFree.checkmark_cicle,
+                                  color: style.accentColor,
+                                  size: 50,
+                                ),
+                                SizedBox(height: 24),
+                                Text(
+                                  'No Blocked Contacts',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    height: 1.4,
+                                  ),
+                                  textAlign: TextAlign.center,
                                 ),
                               ],
                             )
-                          : blockedUsers.isEmpty
-                              ? Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    SizedBox(
-                                      height: 50,
-                                    ),
-                                    Icon(
-                                      LineariconsFree.checkmark_cicle,
-                                      color: style.accentColor,
-                                      size: 50,
-                                    ),
-                                    SizedBox(height: 24),
-                                    Text(
-                                      'No Blocked Contacts',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        height: 1.4,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ],
-                                )
-                              : CustomSlide(
-                                  duration: Duration(milliseconds: 300),
-                                  startOffset: Offset(0, 0.4),
-                                  child: ImplicitlyAnimatedList<Contact>(
-                                    areItemsTheSame: (a, b) => a.id == b.id,
-                                    items: blockedUsers,
-                                    insertDuration: Duration(milliseconds: 200),
-                                    removeDuration: Duration(milliseconds: 200),
-                                    removeItemBuilder:
-                                        (context, animation, contact) {
-                                      return SizeFadeTransition(
-                                        animation: animation,
-                                        child: Column(
-                                          children: [
-                                            _BlockedUserHeader(
-                                              contact: contact,
-                                              onRemove: (_) {},
-                                            ),
-                                            Divider(
-                                              thickness: 0.15,
-                                              color: style.borderColor,
-                                              indent: MediaQuery.of(context)
-                                                      .size
-                                                      .width *
-                                                  0.15,
-                                              endIndent: MediaQuery.of(context)
-                                                      .size
-                                                      .width *
-                                                  0.15,
-                                            ),
-                                          ],
+                          : CustomSlide(
+                              duration: Duration(milliseconds: 300),
+                              startOffset: Offset(0, 0.4),
+                              child: ImplicitlyAnimatedList<Contact>(
+                                areItemsTheSame: (a, b) => a.id == b.id,
+                                items: blockedUsers,
+                                insertDuration: Duration(milliseconds: 200),
+                                removeDuration: Duration(milliseconds: 200),
+                                removeItemBuilder:
+                                    (context, animation, contact) {
+                                  return SizeFadeTransition(
+                                    animation: animation,
+                                    child: Column(
+                                      children: [
+                                        _BlockedUserHeader(
+                                          contact: contact,
+                                          onRemove: (_) {},
                                         ),
-                                      );
-                                    },
-                                    itemBuilder:
-                                        (context, animation, user, index) {
-                                      return SizeFadeTransition(
-                                        animation: animation,
-                                        child: Padding(
-                                          padding: EdgeInsets.only(
-                                              top: index == 0 ? 16.0 : 8),
-                                          child: Column(
-                                            children: [
-                                              Padding(
-                                                padding: EdgeInsets.only(
-                                                  left: 24,
-                                                ),
-                                                child: _BlockedUserHeader(
-                                                  contact: user,
-                                                  onRemove: (Contact contact) {
-                                                    context
-                                                        .read(
-                                                            blockedContactsProvider
-                                                                .notifier)
-                                                        .toggleBlock(
-                                                          contact: contact,
-                                                          block: !blockedUsers
-                                                              .contains(
-                                                                  contact),
-                                                        );
-                                                  },
-                                                ),
-                                              ),
-                                              Divider(
-                                                thickness: 0.15,
-                                                color: style.borderColor,
-                                                indent: MediaQuery.of(context)
-                                                        .size
-                                                        .width *
-                                                    0.15,
-                                                endIndent:
-                                                    MediaQuery.of(context)
-                                                            .size
-                                                            .width *
-                                                        0.15,
-                                              ),
-                                            ],
+                                        Divider(
+                                          thickness: 0.15,
+                                          color: style.borderColor,
+                                          indent: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.15,
+                                          endIndent: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.15,
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                                itemBuilder: (context, animation, user, index) {
+                                  return SizeFadeTransition(
+                                    animation: animation,
+                                    child: Padding(
+                                      padding: EdgeInsets.only(
+                                          top: index == 0 ? 16.0 : 8),
+                                      child: Column(
+                                        children: [
+                                          Padding(
+                                            padding: EdgeInsets.only(
+                                              left: 24,
+                                            ),
+                                            child: _BlockedUserHeader(
+                                              contact: user,
+                                              onRemove: (Contact contact) {
+                                                context
+                                                    .read(
+                                                        roomsProvider.notifier)
+                                                    .toggleBlock(
+                                                      contact: contact,
+                                                      block: !blockedUsers
+                                                          .contains(contact),
+                                                    );
+                                              },
+                                            ),
                                           ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
+                                          Divider(
+                                            thickness: 0.15,
+                                            color: style.borderColor,
+                                            indent: MediaQuery.of(context)
+                                                    .size
+                                                    .width *
+                                                0.15,
+                                            endIndent: MediaQuery.of(context)
+                                                    .size
+                                                    .width *
+                                                0.15,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
                     );
 
                     // },

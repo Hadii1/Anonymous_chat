@@ -1,60 +1,40 @@
-// Copyright 2021 Hadi Hammoud
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// // Copyright 2021 Hadi Hammoud
+// //
+// // Licensed under the Apache License, Version 2.0 (the "License");
+// // you may not use this file except in compliance with the License.
+// // You may obtain a copy of the License at
+// //
+// //     http://www.apache.org/licenses/LICENSE-2.0
+// //
+// // Unless required by applicable law or agreed to in writing, software
+// // distributed under the License is distributed on an "AS IS" BASIS,
+// // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// // See the License for the specific language governing permissions and
+// // limitations under the License.
 
-import 'package:anonymous_chat/interfaces/database_interface.dart';
-import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
-import 'package:anonymous_chat/utilities/general_functions.dart';
+// import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
+// import 'package:anonymous_chat/models/chat_room.dart';
+// import 'package:anonymous_chat/providers/user_rooms_provider.dart';
+// import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+// final archivedRoomsProvider =
+//     StateNotifierProvider<ArchivedRoomsNotifier, List<ChatRoom>>(
+//   (ref) => ArchivedRoomsNotifier(
+//     ref.watch(userRoomsProvider).where((r) => r.isArchived).toList(),
+//   ),
+// );
 
-final archivedRoomsFuture =
-    FutureProvider.autoDispose<List<String>>((ref) async {
-  ref.maintainState = true;
+// class ArchivedRoomsNotifier extends StateNotifier<List<ChatRoom>> {
+//   final String userId = ILocalPrefs.storage.user!.id;
 
-  final IDatabase db = IDatabase.onlineDb;
-  final ILocalPrefs storage = ILocalPrefs.storage;
+//   ArchivedRoomsNotifier(List<ChatRoom> value) : super(value);
 
-  List<String> userArchivedRooms =
-      await db.getUserArchivedRooms(userId: storage.user!.id);
+//   void archive(ChatRoom room) {
+//     state = [...state, room];
+//   }
 
-  ref.read(archivedRoomsProvider.notifier).archivedRooms = userArchivedRooms;
-  return userArchivedRooms;
-});
-
-final archivedRoomsProvider =
-    StateNotifierProvider<ArchivedRoomsNotifier, List<String>?>(
-  (ref) => ArchivedRoomsNotifier(),
-);
-
-class ArchivedRoomsNotifier extends StateNotifier<List<String>?> {
-  ArchivedRoomsNotifier() : super(null);
-
-  final IDatabase db = IDatabase.onlineDb;
-  final ILocalPrefs storage = ILocalPrefs.storage;
-
-  set archivedRooms(List<String> rooms) => state = rooms;
-
-  void editArchives({required String roomId, required bool archive}) {
-    if (archive) {
-      state!.add(roomId);
-      state = state;
-      retry(f: () => db.archiveChat(userId: storage.user!.id, roomId: roomId));
-    } else {
-      state!.remove(roomId);
-      state = state;
-      retry(
-          f: () => db.unArchiveChat(userId: storage.user!.id, roomId: roomId));
-    }
-  }
-}
+//   void unArchive(ChatRoom room) {
+//     state.remove(room);
+//     state = [...state];
+//   }
+// }

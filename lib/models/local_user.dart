@@ -9,12 +9,12 @@ class LocalUser {
   LocalUser({
     required this.id,
     required this.phoneNumber,
-    this.blockedContacts = const [],
+    this.blockedContacts = const <String>[],
     this.nickname = '',
   });
 
   copyWith({
-    required nickname,
+    required String nickname,
   }) =>
       LocalUser(
         id: this.id,
@@ -48,7 +48,9 @@ class LocalUser {
       nickname: map['nickname'] ?? '',
       phoneNumber: map['phoneNumber'],
       id: map['id'],
-      blockedContacts: map['blockedContacts'] ?? [],
+      blockedContacts: map['blockedContacts'] == null
+          ? []
+          : (map['blockedContacts'] as List).cast<String>(),
     );
   }
 

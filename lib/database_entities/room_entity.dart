@@ -21,7 +21,7 @@ class LocalRoomEntity implements RoomEntity {
   static LocalRoomEntity fromMap(Map<String, dynamic> map) => LocalRoomEntity(
         id: map['id'],
         contact: map['contact'],
-        isArchived: map['isArchived'],
+        isArchived: map['isArchived'] == 0 ? false : true,
       );
 
   @override
@@ -43,7 +43,7 @@ class OnlineRoomEntity implements RoomEntity {
 
   static OnlineRoomEntity fromMap(Map<String, dynamic> map) => OnlineRoomEntity(
         id: map['id'],
-        participiants: map['participiants'],
+        participiants: (map['participiants'] as List).cast<String>(),
       );
 
   @override

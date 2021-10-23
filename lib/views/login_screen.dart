@@ -44,8 +44,8 @@ class LoginScreen extends StatelessWidget {
         backgroundColor: style.backgroundColor,
         body: KeyboardHider(
           child: Consumer(builder: (context, watch, _) {
-            final authNotifier = watch(phoneVerificationProvider.notifier);
-            watch(phoneVerificationProvider);
+            final authNotifier = watch(authProvider.notifier);
+            watch(authProvider);
             return Stack(
               children: [
                 Column(
@@ -142,7 +142,7 @@ class LoginScreen extends StatelessWidget {
     );
   }
 }
-
+// TODO: remove button when code sent
 class _CodeInput extends StatelessWidget {
   final Function(String) onSumbitted;
 

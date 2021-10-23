@@ -1,15 +1,14 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
+import 'package:anonymous_chat/interfaces/prefs_storage_interface.dart';
 import 'package:anonymous_chat/mappers/chat_room_mapper.dart';
 import 'package:anonymous_chat/mappers/message_mapper.dart';
 import 'package:anonymous_chat/models/chat_room.dart';
 import 'package:anonymous_chat/models/message.dart';
-import 'package:anonymous_chat/providers/archived_rooms_provider.dart';
 import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/providers/user_rooms_provider.dart';
-import 'package:anonymous_chat/services.dart/local_storage.dart';
+import 'package:anonymous_chat/services.dart/shared_preferences.dart';
 import 'package:anonymous_chat/utilities/enums.dart';
 import 'package:anonymous_chat/utilities/general_functions.dart';
 import 'package:flutter/foundation.dart';
@@ -21,18 +20,17 @@ final chattingProvider = ChangeNotifierProvider.family<ChatNotifier, ChatRoom>(
   (ref, room) {
     return ChatNotifier(
       ref.read,
-      room: room,
-      isArchived: ref.watch(archivedRoomsProvider)!.contains(room.id),
+      room,
     );
   },
 );
 
 class ChatNotifier extends ChangeNotifier {
   ChatNotifier(
-    this.read, {
-    required this.room,
-    required this.isArchived,
-  }) {
+    this.read,
+    this.room,
+  ) {
+    isArchived = read(roomsProvider).archivedRooms.contains(room);
     initializeRoom();
   }
 
@@ -51,7 +49,7 @@ class ChatNotifier extends ChangeNotifier {
   late RxList<Message> allMessages;
   late List<Message> successfullySent;
 
-  bool isArchived;
+  late bool isArchived;
 
   Message? replyingOn;
 
@@ -80,28 +78,41 @@ class ChatNotifier extends ChangeNotifier {
           notifyListeners();
         }
 
-        read(chatsListProvider.notifier).latestActiveChat = room;
+        read(roomsProvider).latestActiveChat = room;
 
         try {
           await retry(
-            f: () =>
-                messagesMapper.writeMessage(roomId: room.id, message: message),
+            f: () => messagesMapper.writeMessage(
+              roomId: room.id,
+              message: message,
+              source: SetDataSource.ONLINE,
+            ),
           );
 
           successfullySent.add(message);
+
+          retry(
+            f: () => messagesMapper.writeMessage(
+              roomId: room.id,
+              message: message,
+              source: SetDataSource.LOCAL,
+            ),
+          );
 
           notifyListeners();
 
           if (allMessages.length == 1) {
             // Room is new
             await retry(
-              f: () => roomsMapper.saveUserRoom(room: room, userId: userId),
+              f: () => roomsMapper.saveUserRoom(
+                  room: room, userId: userId, source: SetDataSource.BOTH),
             );
           }
 
           if (isArchived) {
-            read(archivedRoomsProvider.notifier).editArchives(
-              roomId: room.id,
+            isArchived = false;
+            read(roomsProvider.notifier).editArchives(
+              room: room,
               archive: false,
             );
           }
@@ -141,26 +152,22 @@ class ChatNotifier extends ChangeNotifier {
               messagesMapper.markMessageAsRead(
                 messageId: message.id,
                 roomId: room.id,
-                source: SetDataSource.ONLINE,
-              );
-              messagesMapper.writeMessage(
-                roomId: room.id,
-                message: message,
-                source: SetDataSource.LOCAL,
+                source: SetDataSource.BOTH,
               );
             }
 
             assert(message.isReceived(userId));
 
             if (isArchived) {
-              read(archivedRoomsProvider.notifier).editArchives(
-                roomId: room.id,
+              isArchived = false;
+              read(roomsProvider.notifier).editArchives(
+                room: room,
                 archive: false,
               );
             }
 
             allMessages.add(message);
-            read(chatsListProvider.notifier).latestActiveChat = room;
+            read(roomsProvider.notifier).latestActiveChat = room;
             notifyListeners();
             break;
         }

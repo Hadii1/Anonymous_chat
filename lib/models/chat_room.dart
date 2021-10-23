@@ -1,8 +1,8 @@
+import 'package:observable_ish/observable_ish.dart';
+
 import 'package:anonymous_chat/models/contact.dart';
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/utilities/general_functions.dart';
-
-import 'package:observable_ish/observable_ish.dart';
 
 class ChatRoom {
   final String id;
@@ -36,5 +36,41 @@ class ChatRoom {
   @override
   int get hashCode {
     return messages.hashCode;
+  }
+
+  ChatRoom archive() {
+    return ChatRoom(
+      id: id,
+      messages: messages,
+      contact: contact,
+      isArchived: true,
+    );
+  }
+
+  ChatRoom unArchive() {
+    return ChatRoom(
+      id: id,
+      messages: messages,
+      contact: contact,
+      isArchived: false,
+    );
+  }
+
+  ChatRoom blockContact() {
+    return ChatRoom(
+      id: id,
+      messages: messages,
+      contact: contact.block(),
+      isArchived: isArchived,
+    );
+  }
+
+  ChatRoom unBlockContact() {
+    return ChatRoom(
+      id: id,
+      messages: messages,
+      contact: contact.unBlock(),
+      isArchived: isArchived,
+    );
   }
 }

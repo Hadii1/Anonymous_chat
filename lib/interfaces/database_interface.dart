@@ -6,7 +6,7 @@ import 'package:anonymous_chat/models/contact.dart';
 import 'package:anonymous_chat/models/local_user.dart';
 import 'package:anonymous_chat/models/tag.dart';
 import 'package:anonymous_chat/services.dart/firestore.dart';
-import 'package:anonymous_chat/services.dart/local_database.dart';
+import 'package:anonymous_chat/services.dart/sqlite.dart';
 import 'package:anonymous_chat/utilities/enums.dart';
 
 import 'package:tuple/tuple.dart';
@@ -27,7 +27,8 @@ abstract class IDatabase<R extends RoomEntity, M extends MessageEntity> {
     required String userId,
   });
 
-  Future<List<Contact>> getMatchingUsers({required List<String> tagsIds});
+  Future<List<Contact>> getMatchingUsers(
+      {required List<String> tagsIds, required String userId});
 
   Future<void> saveNewRoomEntity({required R roomEntity});
 
@@ -43,7 +44,7 @@ abstract class IDatabase<R extends RoomEntity, M extends MessageEntity> {
   Future<List<String>> getUserArchivedRooms({required String userId});
 
   Future<LocalUser?> getUserData({required String id});
-  Future<Contact> getContactData({required String id});
+  Future<Contact> getContactData({required String contactId, String? userId});
 
   Future<void> saveUserData({required LocalUser user});
   Future<void> saveContactData({required Contact contact});
@@ -51,7 +52,7 @@ abstract class IDatabase<R extends RoomEntity, M extends MessageEntity> {
   Future<void> archiveChat({required String userId, required String roomId});
   Future<void> unArchiveChat({required String userId, required String roomId});
 
-  Future<void> deleteChat({required String roomId});
+  Future<void> deleteChat({required String roomId, required String contactId});
 
   Future<void> blockContact({
     required String userId,

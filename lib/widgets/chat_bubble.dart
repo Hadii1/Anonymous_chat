@@ -14,7 +14,7 @@
 
 import 'package:anonymous_chat/models/contact.dart';
 import 'package:anonymous_chat/models/message.dart';
-import 'package:anonymous_chat/services.dart/local_storage.dart';
+import 'package:anonymous_chat/services.dart/shared_preferences.dart';
 import 'package:anonymous_chat/utilities/extentions.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:bubble/bubble.dart';

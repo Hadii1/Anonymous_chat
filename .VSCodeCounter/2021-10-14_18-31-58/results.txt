@@ -1,0 +1,138 @@
+Date : 2021-10-14 18:31:58
+Directory : /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat
+Total : 98 files,  9162 codes, 1945 comments, 1199 blanks, all 12306 lines
+
+Languages
++----------+------------+------------+------------+------------+------------+
+| language | files      | code       | comment    | blank      | total      |
++----------+------------+------------+------------+------------+------------+
+| Dart     |         94 |      7,853 |      1,928 |      1,172 |     10,953 |
+| JSON     |          1 |      1,232 |          0 |          0 |      1,232 |
+| YAML     |          2 |         60 |         17 |         22 |         99 |
+| Markdown |          1 |         17 |          0 |          5 |         22 |
++----------+------------+------------+------------+------------+------------+
+
+Directories
++--------------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                                                     | files      | code       | comment    | blank      | total      |
++--------------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                                                        |         98 |      9,162 |      1,945 |      1,199 |     12,306 |
+| assets                                                                                                                   |          1 |      1,232 |          0 |          0 |      1,232 |
+| lib                                                                                                                      |         93 |      7,853 |      1,904 |      1,165 |     10,922 |
+| lib/database_entities                                                                                                    |          2 |        179 |         16 |         30 |        225 |
+| lib/interfaces                                                                                                           |          5 |         93 |         28 |         49 |        170 |
+| lib/mappers                                                                                                              |          3 |        291 |         41 |         57 |        389 |
+| lib/models                                                                                                               |          6 |        319 |         32 |         64 |        415 |
+| lib/providers                                                                                                            |         15 |        952 |        145 |        233 |      1,330 |
+| lib/services.dart                                                                                                        |          7 |        806 |         94 |        152 |      1,052 |
+| lib/syncer                                                                                                               |          1 |          0 |         51 |         16 |         67 |
+| lib/utilities                                                                                                            |          8 |        426 |         69 |         65 |        560 |
+| lib/views                                                                                                                |         12 |      2,337 |         97 |        138 |      2,572 |
+| lib/widgets                                                                                                              |         33 |      2,438 |      1,331 |        357 |      4,126 |
+| test                                                                                                                     |          1 |          0 |         24 |          7 |         31 |
++--------------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++--------------------------------------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| filename                                                                                                                 | language | code       | comment    | blank      | total      |
++--------------------------------------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/README.md                                        | Markdown |         17 |          0 |          5 |         22 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/analysis_option.yaml                             | YAML     |          1 |          0 |          1 |          2 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/assets/data.json                                 | JSON     |      1,232 |          0 |          0 |      1,232 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/database_entities/message_entity.dart        | Dart     |        136 |         15 |         19 |        170 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/database_entities/room_entity.dart           | Dart     |         43 |          1 |         11 |         55 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/interfaces/auth_interface.dart               | Dart     |         15 |         14 |          9 |         38 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/interfaces/chat_persistance_interface.dart   | Dart     |          0 |          0 |          1 |          1 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/interfaces/database_interface.dart           | Dart     |         61 |          1 |         30 |         92 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/interfaces/local_storage_interface.dart      | Dart     |         10 |         13 |          5 |         28 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/interfaces/search_service_interface.dart     | Dart     |          7 |          0 |          4 |         11 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/main.dart                                    | Dart     |         12 |          0 |          4 |         16 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/mappers/chat_room_mapper.dart                | Dart     |        159 |         15 |         34 |        208 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/mappers/contact_mapper.dart                  | Dart     |         51 |         13 |          8 |         72 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/mappers/message_mapper.dart                  | Dart     |         81 |         13 |         15 |        109 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/models/activity_status.dart                  | Dart     |         47 |         17 |         13 |         77 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/models/chat_room.dart                        | Dart     |         33 |          0 |          8 |         41 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/models/contact.dart                          | Dart     |         20 |         13 |          5 |         38 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/models/local_user.dart                       | Dart     |         64 |          0 |         13 |         77 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/models/message.dart                          | Dart     |         65 |          2 |         10 |         77 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/models/tag.dart                              | Dart     |         90 |          0 |         15 |        105 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/providers/activity_status_provider.dart      | Dart     |         58 |         13 |         14 |         85 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/providers/archived_rooms_provider.dart       | Dart     |         36 |         13 |         12 |         61 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/providers/auth_provider.dart                 | Dart     |        148 |          2 |         28 |        178 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/providers/blocked_contacts_provider.dart     | Dart     |         47 |         13 |         13 |         73 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/providers/chat_provider.dart                 | Dart     |        188 |          3 |         39 |        230 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/providers/connectivity_provider.dart         | Dart     |         33 |         14 |          8 |         55 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/providers/errors_provider.dart               | Dart     |         18 |          0 |          4 |         22 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/providers/initial_settings_providers.dart    | Dart     |         44 |         16 |         16 |         76 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/providers/loading_provider.dart              | Dart     |          8 |          0 |          4 |         12 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/providers/media_sending_provider.dart        | Dart     |          0 |         40 |          7 |         47 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/providers/suggestions_provider.dart          | Dart     |         50 |          0 |         13 |         63 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/providers/tag_searching_provider.dart        | Dart     |        119 |         17 |         31 |        167 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/providers/tags_provider.dart                 | Dart     |         73 |          0 |         15 |         88 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/providers/user_auth_events_provider.dart     | Dart     |         15 |         14 |          7 |         36 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/providers/user_rooms_provider.dart           | Dart     |        115 |          0 |         22 |        137 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/services.dart/algolia.dart                   | Dart     |         30 |          0 |          9 |         39 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/services.dart/authentication.dart            | Dart     |         45 |         18 |         12 |         75 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/services.dart/firestore.dart                 | Dart     |        404 |          3 |         54 |        461 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/services.dart/local_database.dart            | Dart     |        266 |         25 |         44 |        335 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/services.dart/local_storage.dart             | Dart     |         34 |          0 |         11 |         45 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/services.dart/push_notificaitons.dart        | Dart     |         27 |         15 |         11 |         53 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/services.dart/storage.dart                   | Dart     |          0 |         33 |         11 |         44 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/syncer/rooms_syncer.dart                     | Dart     |          0 |         51 |         16 |         67 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/utilities/app_navigator.dart                 | Dart     |         36 |          0 |          3 |         39 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/utilities/constants.dart                     | Dart     |         36 |         13 |          3 |         52 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/utilities/custom_exceptions.dart             | Dart     |          6 |         13 |          4 |         23 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/utilities/enums.dart                         | Dart     |         31 |         14 |          6 |         51 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/utilities/extentions.dart                    | Dart     |         76 |          0 |         10 |         86 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/utilities/fading_route.dart                  | Dart     |         16 |         13 |          5 |         34 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/utilities/general_functions.dart             | Dart     |         45 |         15 |         12 |         72 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/utilities/theme_widget.dart                  | Dart     |        180 |          1 |         22 |        203 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/views/about_screen.dart                      | Dart     |         59 |         14 |          4 |         77 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/views/archived_contacts_list.dart            | Dart     |        143 |         13 |          5 |        161 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/views/blocked_contacts_list.dart             | Dart     |        229 |         14 |         10 |        253 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/views/chats_screen.dart                      | Dart     |        153 |          0 |         15 |        168 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/views/home_screen.dart                       | Dart     |         99 |          0 |         12 |        111 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/views/login_screen.dart                      | Dart     |        174 |          0 |         11 |        185 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/views/nickname_screen.dart                   | Dart     |        413 |         13 |         24 |        450 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/views/room_screen.dart                       | Dart     |        272 |          0 |         13 |        285 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/views/settings_screen.dart                   | Dart     |        186 |          2 |          5 |        193 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/views/splash_screen.dart                     | Dart     |         55 |         28 |          5 |         88 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/views/tags_screen.dart                       | Dart     |        508 |          0 |         29 |        537 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/views/welcome_Screen.dart                    | Dart     |         46 |         13 |          5 |         64 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/age.dart                             | Dart     |          0 |        289 |         29 |        318 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/animated_widgets.dart                | Dart     |        110 |          1 |         21 |        132 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/chat_bubble.dart                     | Dart     |        217 |         13 |         11 |        241 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/chat_header.dart                     | Dart     |        228 |          0 |          9 |        237 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/chat_message_field.dart              | Dart     |        191 |         14 |         24 |        229 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/connectivity_state_notificaiton.dart | Dart     |          7 |         13 |          3 |         23 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/connectrivity_widget.dart            | Dart     |          0 |         14 |          5 |         19 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/country_widget.dart                  | Dart     |          0 |        541 |         32 |        573 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/cta_button.dart                      | Dart     |         40 |          0 |          5 |         45 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/custom_expansion_tile.dart           | Dart     |        186 |         87 |         33 |        306 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/custom_image.dart                    | Dart     |          0 |         98 |         14 |        112 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/custom_route.dart                    | Dart     |         17 |         13 |          5 |         35 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/custom_tab_bar.dart                  | Dart     |        121 |          2 |         15 |        138 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/custom_text_field.dart               | Dart     |        100 |          0 |         13 |        113 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/error_notification.dart              | Dart     |         72 |          0 |          5 |         77 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/error_widget.dart                    | Dart     |         67 |         13 |          7 |         87 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/gender.dart                          | Dart     |          0 |        134 |         10 |        144 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/keyboard_hider.dart                  | Dart     |         17 |          1 |          4 |         22 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/loading_widget.dart                  | Dart     |         34 |          0 |          3 |         37 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/message_reply.dart                   | Dart     |        102 |         26 |         15 |        143 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/onboarding_title_text.dart           | Dart     |         37 |          0 |          3 |         40 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/password_field.dart                  | Dart     |        102 |          0 |         10 |        112 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/progress_indicator.dart              | Dart     |         50 |         13 |          4 |         67 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/rewind_button.dart                   | Dart     |         27 |          0 |          3 |         30 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/search_field.dart                    | Dart     |         78 |          1 |          9 |         88 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/settings_tile.dart                   | Dart     |         36 |         13 |          5 |         54 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/shaded_container.dart                | Dart     |         31 |         14 |          4 |         49 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/step_counter_bar.dart                | Dart     |        125 |          2 |         11 |        138 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/suggestion_header.dart               | Dart     |        101 |          3 |          6 |        110 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/tags_row.dart                        | Dart     |        127 |          0 |         12 |        139 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/titled_app_bar.dart                  | Dart     |         99 |          0 |          7 |        106 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/top_padding.dart                     | Dart     |         18 |         13 |          5 |         36 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/lib/widgets/typing_indicator.dart                | Dart     |         98 |         13 |         15 |        126 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/pubspec.yaml                                     | YAML     |         59 |         17 |         21 |         97 |
+| /Users/hadihammoud/development/flutter projects/Chat App/anonymous_chat/test/widget_test.dart                            | Dart     |          0 |         24 |          7 |         31 |
+| Total                                                                                                                    |          |      9,162 |      1,945 |      1,199 |     12,306 |
++--------------------------------------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+

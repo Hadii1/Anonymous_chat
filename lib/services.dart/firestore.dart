@@ -4,14 +4,12 @@ import 'package:anonymous_chat/database_entities/message_entity.dart';
 import 'package:anonymous_chat/database_entities/room_entity.dart';
 import 'package:anonymous_chat/interfaces/database_interface.dart';
 import 'package:anonymous_chat/models/contact.dart';
-import 'package:anonymous_chat/models/tag.dart';
 import 'package:anonymous_chat/models/local_user.dart';
+import 'package:anonymous_chat/models/tag.dart';
 import 'package:anonymous_chat/utilities/custom_exceptions.dart';
 import 'package:anonymous_chat/utilities/enums.dart';
 import 'package:anonymous_chat/utilities/extentions.dart';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 import 'package:tuple/tuple.dart';
 
 class FirestoreService
@@ -38,7 +36,8 @@ class FirestoreService
   }
 
   @override
-  Future<void> deleteChat({required String roomId}) async {
+  Future<void> deleteChat(
+      {required String roomId, required String contactId}) async {
     QuerySnapshot<Map<String, dynamic>> a =
         await _db.collection('Rooms').doc(roomId).collection('Messages').get();
     for (QueryDocumentSnapshot<Map<String, dynamic>> s in a.docs) {
@@ -63,6 +62,7 @@ class FirestoreService
     });
   }
 
+  @override
   Future<void> unblockContact({
     required String userId,
     required String blockedContact,
@@ -94,10 +94,23 @@ class FirestoreService
   }
 
   @override
-  Future<Contact> getContactData({required String id}) async {
+  Future<Contact> getContactData(
+      {required String contactId, String? userId}) async {
     DocumentSnapshot<Map<String, dynamic>> doc =
-        await _db.collection('Users').doc(id).get();
-    return Contact.fromMap(doc.data()!);
+        await _db.collection('Users').doc(contactId).get();
+
+    bool isBlocked = (await _db
+            .collection('Users')
+            .doc(userId)
+            .collection('Blocked Users')
+            .doc(contactId)
+            .get())
+        .exists;
+
+    Map<String, dynamic> map = {'isBlocked': isBlocked};
+    map.addAll(doc.data()!);
+
+    return Contact.fromMap(map);
   }
 
   @override
@@ -117,6 +130,7 @@ class FirestoreService
           (QuerySnapshot<Map<String, dynamic>> snapshot) =>
               snapshot.docChanges.map(
             (DocumentChange<Map<String, dynamic>> c) {
+              print(c);
               late DataChangeType type;
               switch (c.type) {
                 case DocumentChangeType.added:
@@ -190,9 +204,9 @@ class FirestoreService
 
   @override
   Future<List<Contact>> getMatchingUsers(
-      {required List<String> tagsIds}) async {
-    List<String> userIds = [];
-    List<Map<String, dynamic>> usersData = [];
+      {required List<String> tagsIds, required String userId}) async {
+    List<String> contacts = [];
+    List<Map<String, dynamic>> contactsData = [];
 
     for (String id in tagsIds) {
       QuerySnapshot<Map<String, dynamic>> querySnapshot = await _db
@@ -202,17 +216,26 @@ class FirestoreService
           .where('isActive', isEqualTo: true)
           .get();
 
-      userIds.addAll(querySnapshot.docs.map((e) => e.id));
+      contacts.addAll(querySnapshot.docs.map((e) => e.id));
     }
 
-    for (String id in userIds) {
+    List<String> blockedContacts = await getBlockedContacts(userId: userId);
+
+    for (String id in contacts) {
       DocumentSnapshot<Map<String, dynamic>> documentSnapshot =
           await _db.collection('Users').doc(id).get();
-      if (documentSnapshot.data() != null)
-        usersData.add(documentSnapshot.data()!);
+
+      bool isBlocked = blockedContacts.contains(id);
+
+      Map<String, dynamic> map = {'isBlocked': isBlocked};
+
+      if (documentSnapshot.data() != null) {
+        map.addAll(documentSnapshot.data()!);
+        contactsData.add(map);
+      }
     }
 
-    return usersData.map((e) => Contact.fromMap(e)).toList();
+    return contactsData.map((e) => Contact.fromMap(e)).toList();
   }
 
   @override
@@ -293,6 +316,7 @@ class FirestoreService
         .doc(roomId)
         .collection('Messages')
         .snapshots()
+        .skip(1)
         .where((QuerySnapshot<Map<String, dynamic>> element) =>
             element.docChanges.isNotEmpty)
         .map(
@@ -316,8 +340,12 @@ class FirestoreService
   @override
   Future<List<OnlineMessageEntity>> getAllMessages(
       {required String roomId}) async {
-    var a =
-        await _db.collection('Rooms').doc(roomId).collection('Messages').get();
+    var a = await _db
+        .collection('Rooms')
+        .doc(roomId)
+        .collection('Messages')
+        .orderBy('time')
+        .get();
 
     return a.docs.map((e) => OnlineMessageEntity.fromMap(e.data())).toList();
   }
@@ -347,7 +375,7 @@ class FirestoreService
     //  Delete the user rooms
     QuerySnapshot d = await _db
         .collection('Rooms')
-        .where('participants', arrayContains: userId)
+        .where('participiants', arrayContains: userId)
         .get();
     for (QueryDocumentSnapshot a in d.docs) {
       await a.reference.delete();

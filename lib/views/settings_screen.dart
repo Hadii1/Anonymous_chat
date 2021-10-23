@@ -1,5 +1,7 @@
 import 'package:anonymous_chat/interfaces/auth_interface.dart';
-import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
+import 'package:anonymous_chat/interfaces/database_interface.dart';
+import 'package:anonymous_chat/interfaces/prefs_storage_interface.dart';
+import 'package:anonymous_chat/providers/user_auth_events_provider.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/views/about_screen.dart';
 import 'package:anonymous_chat/views/archived_contacts_list.dart';
@@ -8,6 +10,7 @@ import 'package:anonymous_chat/views/login_screen.dart';
 import 'package:anonymous_chat/widgets/custom_route.dart';
 import 'package:anonymous_chat/widgets/settings_tile.dart';
 import 'package:anonymous_chat/widgets/titled_app_bar.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:fluttericon/linearicons_free_icons.dart';
 
@@ -134,7 +137,10 @@ class Settings extends StatelessWidget {
                     title: 'Sign Out',
                     onTap: () async {
                       // TODO: error handle
+                      await IDatabase.offlineDb
+                          .deleteAccount(userId: ILocalPrefs.storage.user!.id);
                       await IAuth.auth.signOut();
+                      context.read(userAuthEventsProvider.notifier).onLogout();
                       Navigator.of(context).pushAndRemoveUntil(
                         FadingRoute(
                           builder: (_) => LoginScreen(),

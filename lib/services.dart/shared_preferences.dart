@@ -1,4 +1,4 @@
-import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
+import 'package:anonymous_chat/interfaces/prefs_storage_interface.dart';
 import 'package:anonymous_chat/models/local_user.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 
@@ -41,4 +41,11 @@ class SharedPrefs implements ILocalPrefs {
         'theme',
         theme.toString(),
       );
+
+  @override
+  set clearStorageDate(int millisSinceEpoch) =>
+      prefs.setInt('clearStorageDate', millisSinceEpoch);
+
+  @override
+  int? get lastStorageClearingDate => prefs.getInt('clearStorageData');
 }

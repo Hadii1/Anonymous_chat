@@ -16,12 +16,12 @@
 
 import 'dart:math';
 
-
-Future<T> retry<T>({
+Future<T?> retry<T>({
   required Future<T> Function() f,
   Function({Exception e, StackTrace s})? onFirstThrow,
   Duration duration = const Duration(milliseconds: 400),
-  Duration timeout = const Duration(minutes: 1),
+  Duration timeout = const Duration(minutes: 2),
+  bool shouldRethrow = true,
   bool sendExceptionToSentry = true,
   int maxAttempts = 3,
   double delayFactor = 0.25,
@@ -34,7 +34,10 @@ Future<T> retry<T>({
     } on Exception catch (e, s) {
       if (attempts == maxAttempts) {
         print('\n \n \nMax attempts reached\n \n \n ');
-        rethrow;
+        if (shouldRethrow)
+          rethrow;
+        else
+          return null;
       }
 
       if (attempts == 0) {

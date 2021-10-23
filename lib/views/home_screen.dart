@@ -6,14 +6,14 @@ import 'package:anonymous_chat/views/settings_screen.dart';
 import 'package:anonymous_chat/views/tags_screen.dart';
 import 'package:anonymous_chat/widgets/custom_tab_bar.dart';
 import 'package:anonymous_chat/widgets/titled_app_bar.dart';
-
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sqlite_viewer/sqlite_viewer.dart';
 
 class Home extends StatefulWidget {
   const Home();
+
   @override
   _HomeState createState() => _HomeState();
 }
@@ -75,12 +75,30 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     return Scaffold(
       backgroundColor: style.backgroundColor,
       appBar: TitledAppBar(
+        trailing: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            onTap: () {
+              Navigator.push(
+                  context, MaterialPageRoute(builder: (_) => DatabaseList()));
+            },
+            child: Icon(
+              Icons.place,
+              size: 24,
+              color: style.iconColors,
+            ),
+          ),
+        ),
         leading: Material(
           type: MaterialType.transparency,
           child: InkWell(
             splashColor: Colors.transparent,
             highlightColor: Colors.transparent,
             onTap: () {
+              // Navigator.push(
+              // context, MaterialPageRoute(builder: (_) => DatabaseList()));
               Navigator.of(context).push(
                 CupertinoPageRoute(
                   builder: (_) => Settings(),

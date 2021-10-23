@@ -15,7 +15,7 @@
 import 'package:anonymous_chat/database_entities/message_entity.dart';
 import 'package:anonymous_chat/database_entities/room_entity.dart';
 import 'package:anonymous_chat/interfaces/database_interface.dart';
-import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
+import 'package:anonymous_chat/interfaces/prefs_storage_interface.dart';
 import 'package:anonymous_chat/mappers/contact_mapper.dart';
 import 'package:anonymous_chat/mappers/message_mapper.dart';
 import 'package:anonymous_chat/models/chat_room.dart';
@@ -26,6 +26,12 @@ import 'package:observable_ish/observable_ish.dart';
 import 'package:tuple/tuple.dart';
 
 class ChatRoomsMapper {
+  static final ChatRoomsMapper _instance = ChatRoomsMapper._internal();
+
+  factory ChatRoomsMapper() => _instance;
+
+  ChatRoomsMapper._internal();
+
   final IDatabase<LocalRoomEntity, LocalMessageEntity> offlineDb =
       IDatabase.offlineDb;
   final IDatabase<OnlineRoomEntity, OnlineMessageEntity> onlineDb =
@@ -38,7 +44,7 @@ class ChatRoomsMapper {
 
   Future<List<ChatRoom>> getUserRooms({
     required String userId,
-    GetDataSource source = GetDataSource.LOCAL,
+    required GetDataSource source,
   }) async {
     if (source == GetDataSource.LOCAL) {
       List<LocalRoomEntity> roomsData = await offlineDb.getUserRoomsEntities(
@@ -49,7 +55,9 @@ class ChatRoomsMapper {
 
       for (LocalRoomEntity entity in roomsData) {
         Contact contact = await contactMapper.getContactData(
-            contactId: entity.contact, source: GetDataSource.LOCAL);
+            contactId: entity.contact,
+            source: GetDataSource.LOCAL,
+            userId: userId);
 
         List<Message> msgsData =
             await messageMapper.getRoomMessages(entity.id, GetDataSource.LOCAL);
@@ -75,7 +83,8 @@ class ChatRoomsMapper {
       for (OnlineRoomEntity entity in entities) {
         Contact contact = await contactMapper.getContactData(
           contactId: entity.participiants.firstWhere((c) => c != userId),
-          source: GetDataSource.LOCAL,
+          source: GetDataSource.ONLINE,
+          userId: userId,
         );
 
         List<Message> msgsData = await messageMapper.getRoomMessages(
@@ -101,7 +110,7 @@ class ChatRoomsMapper {
   Future<void> saveUserRoom({
     required ChatRoom room,
     required String userId,
-    SetDataSource source = SetDataSource.BOTH,
+    required SetDataSource source,
   }) async {
     if (source == SetDataSource.BOTH || source == SetDataSource.ONLINE) {
       OnlineRoomEntity roomEntity =
@@ -136,40 +145,53 @@ class ChatRoomsMapper {
     }
   }
 
-  Future<void> editArchives(
-      {required String roomId,
-      required bool archive,
-      required String userId}) async {
+  Future<void> editArchives({
+    required String roomId,
+    required bool archive,
+    required String userId,
+  }) async {
     if (archive) {
-      await offlineDb.archiveChat(userId: userId, roomId: roomId);
       await onlineDb.archiveChat(userId: userId, roomId: roomId);
+      await offlineDb.archiveChat(userId: userId, roomId: roomId);
     } else {
-      await offlineDb.unArchiveChat(userId: userId, roomId: roomId);
       await onlineDb.unArchiveChat(userId: userId, roomId: roomId);
+      await offlineDb.unArchiveChat(userId: userId, roomId: roomId);
     }
   }
 
-  // Initially fetches all user rooms and triggers for new rooms added or ones deleted
-  Stream<List<Tuple2<ChatRoom, RoomsServerUpdateType>>>
+  Future<void> deleteRoom(ChatRoom room, SetDataSource source) async {
+    if (source == SetDataSource.BOTH || source == SetDataSource.ONLINE) {
+      await onlineDb.deleteChat(roomId: room.id, contactId: room.contact.id);
+    }
+    if (source == SetDataSource.BOTH || source == SetDataSource.LOCAL) {
+      await offlineDb.deleteChat(roomId: room.id, contactId: room.contact.id);
+    }
+  }
+
+  Stream<List<Tuple2<ChatRoom, RoomsUpdateType>>>
       roomsServerUpdates() async* {
     onlineDb
         .userRoomsChanges(userId: userId)
+
         .map((List<Tuple2<Map<String, dynamic>, DataChangeType>> event) async* {
-      List<Tuple2<ChatRoom, RoomsServerUpdateType>> temp = [];
+          print(event);
+      List<Tuple2<ChatRoom, RoomsUpdateType>> temp = [];
       for (Tuple2<Map<String, dynamic>, DataChangeType> v in event) {
         if (v.item2 == DataChangeType.ADDED) {
           OnlineRoomEntity entity = OnlineRoomEntity.fromMap(v.item1);
 
           Contact contact = await contactMapper.getContactData(
-              contactId: entity.participiants.firstWhere((c) => c != userId));
+            contactId: entity.participiants.firstWhere((c) => c != userId),
+            userId: userId,
+          );
 
           List<Message> messages = await messageMapper.getRoomMessages(
             entity.id,
             GetDataSource.ONLINE,
           );
 
-          bool isArchived =
-              await onlineDb.isArchived(roomId: entity.id, userId: userId);
+          bool isArchived = false;
+          // await onlineDb.isArchived(roomId: entity.id, userId: userId);
 
           ChatRoom chatRoom = ChatRoom(
             contact: contact,
@@ -178,12 +200,14 @@ class ChatRoomsMapper {
             isArchived: isArchived,
           );
 
-          temp.add(Tuple2(chatRoom, RoomsServerUpdateType.ROOM_ADDED));
+          temp.add(Tuple2(chatRoom, RoomsUpdateType.ROOM_ADDED));
         } else if (v.item2 == DataChangeType.DELETED) {
           OnlineRoomEntity entity = OnlineRoomEntity.fromMap(v.item1);
 
           Contact contact = await contactMapper.getContactData(
-              contactId: entity.participiants.firstWhere((c) => c != userId));
+            contactId: entity.participiants.firstWhere((c) => c != userId),
+            userId: userId,
+          );
 
           // Won't fetch msgs bcz the room will just be deleted using id comparison.
           ChatRoom chatRoom = ChatRoom(
@@ -192,7 +216,7 @@ class ChatRoomsMapper {
             id: entity.id,
             isArchived: false,
           );
-          temp.add(Tuple2(chatRoom, RoomsServerUpdateType.ROOM_DELETED));
+          temp.add(Tuple2(chatRoom, RoomsUpdateType.ROOM_DELETED));
         }
       }
       yield temp;

@@ -15,12 +15,18 @@
 import 'package:anonymous_chat/database_entities/message_entity.dart';
 import 'package:anonymous_chat/database_entities/room_entity.dart';
 import 'package:anonymous_chat/interfaces/database_interface.dart';
-import 'package:anonymous_chat/interfaces/local_storage_interface.dart';
+import 'package:anonymous_chat/interfaces/prefs_storage_interface.dart';
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/utilities/enums.dart';
 import 'package:tuple/tuple.dart';
 
 class MessageMapper {
+  static final MessageMapper _instance = MessageMapper._internal();
+
+  factory MessageMapper() => _instance;
+
+  MessageMapper._internal();
+
   final IDatabase<LocalRoomEntity, LocalMessageEntity> offlineDb =
       IDatabase.offlineDb;
   final IDatabase<OnlineRoomEntity, OnlineMessageEntity> onlineDb =
@@ -28,7 +34,7 @@ class MessageMapper {
 
   final String userId = ILocalPrefs.storage.user!.id;
 
-  Stream<Tuple2<Message, MessageServeUpdateType>> serverMessagesUpdates(
+  Stream<Tuple2<Message, MessageServeUpdateType>?> serverMessagesUpdates(
       {required String roomId}) {
     return onlineDb
         .roomMessagesUpdates(roomId: roomId)
@@ -48,8 +54,10 @@ class MessageMapper {
         type = MessageServeUpdateType.MESSAGE_RECIEVED;
       else if (event.item2 == DataChangeType.MODIFIED && message.isSent(userId))
         type = MessageServeUpdateType.MESSAGE_READ;
-
-      return Tuple2(message, type!);
+      // else if (event.item2 == DataChangeType. && message.isSent(userId))
+      // type = MessageServeUpdateType.MESSAGE_READ;
+      if (type != null) return Tuple2(message, type);
+      return null;
     });
   }
 
@@ -71,7 +79,7 @@ class MessageMapper {
   Future<void> writeMessage({
     required String roomId,
     required Message message,
-    SetDataSource source = SetDataSource.BOTH,
+    required SetDataSource source,
   }) async {
     if (source == SetDataSource.BOTH || source == SetDataSource.LOCAL) {
       await offlineDb.writeMessage(
