@@ -126,11 +126,11 @@ class FirestoreService
         .collection('Rooms')
         .where('participiants', arrayContains: userId)
         .snapshots()
+        .skip(1)
         .map(
           (QuerySnapshot<Map<String, dynamic>> snapshot) =>
               snapshot.docChanges.map(
             (DocumentChange<Map<String, dynamic>> c) {
-              print(c);
               late DataChangeType type;
               switch (c.type) {
                 case DocumentChangeType.added:
@@ -150,35 +150,6 @@ class FirestoreService
             },
           ).toList(),
         );
-  }
-
-  @override
-  Stream<List<Tuple2<String, DataChangeType>>> blockingContactsChanges(
-      {required String userId}) {
-    return _db
-        .collectionGroup('Blocked Users')
-        .where('blockedUser', isEqualTo: userId)
-        .snapshots()
-        .skip(1)
-        .map(
-      (QuerySnapshot<Map<String, dynamic>> querySnapshot) {
-        List<Tuple2<String, DataChangeType>> changes = [];
-
-        querySnapshot.docChanges.forEach(
-          (DocumentChange<Map<String, dynamic>> documentChange) {
-            if (documentChange.type == DocumentChangeType.added) {
-              changes.add(Tuple2(documentChange.doc.data()!['blockingUser'],
-                  DataChangeType.ADDED));
-            } else if (documentChange.type == DocumentChangeType.removed) {
-              changes.add(Tuple2(documentChange.doc.data()!['blockingUser'],
-                  DataChangeType.DELETED));
-            }
-          },
-        );
-
-        return changes;
-      },
-    );
   }
 
   @override
@@ -484,5 +455,10 @@ class FirestoreService
         .map((QueryDocumentSnapshot<Map<String, dynamic>> e) =>
             e.data()['blockingUser'] as String)
         .toList();
+  }
+
+  @override
+  Future<void> deleteMessage(String msgId) {
+    throw UnimplementedError();
   }
 }

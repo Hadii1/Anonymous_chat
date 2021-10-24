@@ -57,6 +57,10 @@ class RoomsSyncer {
               source: SetDataSource.LOCAL,
             );
           }
+
+          for (Message m in action.messagesToDelete) {
+            await _messageMapper.deleteMessage(m.id);
+          }
           break;
 
         case ActionType.ROOM_MISSING:
@@ -90,19 +94,32 @@ List<RoomSyncingAction> getSyncingActions(
       if (localRoom.messages.length != onlineRoom.messages.length ||
           localRoom.messages.last != onlineRoom.messages.last) {
         List<Message> pendingWrites = [];
+        List<Message> pendingDeletes = [];
+
         for (int i = onlineRoom.messages.length - 1; i >= 0; i--) {
-          if (!localRoom.messages.contains(onlineRoom.messages[i])) {
+          if (!localRoom.messages.contains(onlineRoom.messages[i]))
             pendingWrites.add(onlineRoom.messages[i]);
-          }
         }
 
-        if (pendingWrites.isNotEmpty)
-          result.add(
-              RoomSyncingAction.unsyncedMsgs(onlineRoom, [...pendingWrites]));
+        for (int i = 0; i < localRoom.messages.length; i++) {
+          if (!onlineRoom.messages.contains(localRoom.messages[i]))
+            pendingDeletes.add(localRoom.messages[i]);
+
+          // // Check for duplicates too
+          // bool isDuplicated = localRoom.messages
+          //         .where((m) => m == localRoom.messages[i])
+          //         .length >
+          //     1;
+        }
+
+        if (pendingWrites.isNotEmpty || pendingDeletes.isNotEmpty)
+          result.add(RoomSyncingAction.unsyncedMsgs(
+              onlineRoom, [...pendingWrites], [...pendingDeletes]));
         else
           result.add(RoomSyncingAction.synced(onlineRoom));
 
         pendingWrites.clear();
+        pendingDeletes.clear();
       }
     }
   });
@@ -119,7 +136,7 @@ enum ActionType {
 @visibleForTesting
 class RoomSyncingAction {
   final List<Message> messagesToWrite;
-  // final List<Message> messagesToWrite;
+  final List<Message> messagesToDelete;
   final bool isRoomMissing;
   final bool inSync;
   final ActionType type;
@@ -127,6 +144,7 @@ class RoomSyncingAction {
 
   RoomSyncingAction._internal(
     this.messagesToWrite,
+    this.messagesToDelete,
     this.isRoomMissing,
     this.inSync,
     this.room,
@@ -136,16 +154,18 @@ class RoomSyncingAction {
   factory RoomSyncingAction.synced(ChatRoom room) =>
       RoomSyncingAction._internal(
         [],
+        [],
         false,
         true,
         room,
         ActionType.NONE,
       );
 
-  factory RoomSyncingAction.unsyncedMsgs(
-          ChatRoom room, List<Message> msgsToWrite) =>
+  factory RoomSyncingAction.unsyncedMsgs(ChatRoom room,
+          List<Message> msgsToWrite, List<Message> msgsToDelete) =>
       RoomSyncingAction._internal(
         msgsToWrite,
+        msgsToDelete,
         false,
         false,
         room,
@@ -155,6 +175,7 @@ class RoomSyncingAction {
   factory RoomSyncingAction.missing(ChatRoom room) =>
       RoomSyncingAction._internal(
         room.messages,
+        [],
         true,
         false,
         room,

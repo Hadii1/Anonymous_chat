@@ -155,11 +155,15 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                         onCancelReply: chatNotifier.onCancelReply,
                         isContactBlocked: blockedContacts.contains(other),
                         onTypingStateChange: (bool typing) {
-                          context.read(userActivityStateProvider.notifier).set(
-                                activityStatus: typing
-                                    ? ActivityStatus.chatting(otherId: other.id)
-                                    : ActivityStatus.online(),
-                              );
+                          if (mounted)
+                            context
+                                .read(userActivityStateProvider.notifier)
+                                .set(
+                                  activityStatus: typing
+                                      ? ActivityStatus.chatting(
+                                          otherId: other.id)
+                                      : ActivityStatus.online(),
+                                );
                         },
                       ),
                     ),

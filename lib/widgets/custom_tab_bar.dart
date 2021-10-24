@@ -94,6 +94,7 @@ class _CustomTabBarState extends State<CustomTabBar> {
         ),
         Expanded(
           child: PageView(
+            physics: ClampingScrollPhysics(),
             onPageChanged: (page) {
               _activeChild = page;
               setState(() {});

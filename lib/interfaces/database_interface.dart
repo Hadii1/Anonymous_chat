@@ -33,6 +33,7 @@ abstract class IDatabase<R extends RoomEntity, M extends MessageEntity> {
   Future<void> saveNewRoomEntity({required R roomEntity});
 
   Future<void> writeMessage({required String roomId, required M message});
+  Future<void> deleteMessage(String msgId);
 
   Future<void> markMessageAsRead(
       {required String roomId, required String messageId});
@@ -81,9 +82,6 @@ abstract class IDatabase<R extends RoomEntity, M extends MessageEntity> {
   Future<bool> isArchived({required String roomId, required String userId});
 
   Future<void> activateTag({required UserTag userTag, required String userId});
-
-  Stream<List<Tuple2<String, DataChangeType>>> blockingContactsChanges(
-      {required String userId});
 
   Stream<Map<String, dynamic>> activityStatusStream({required String id});
 

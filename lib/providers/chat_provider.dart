@@ -21,6 +21,7 @@ final chattingProvider = ChangeNotifierProvider.family<ChatNotifier, ChatRoom>(
     return ChatNotifier(
       ref.read,
       room,
+      ref.watch(roomArhivingState(room.id)),
     );
   },
 );
@@ -29,8 +30,8 @@ class ChatNotifier extends ChangeNotifier {
   ChatNotifier(
     this.read,
     this.room,
+    this.isArchived,
   ) {
-    isArchived = read(roomsProvider).archivedRooms.contains(room);
     initializeRoom();
   }
 
@@ -49,7 +50,7 @@ class ChatNotifier extends ChangeNotifier {
   late RxList<Message> allMessages;
   late List<Message> successfullySent;
 
-  late bool isArchived;
+  final bool isArchived;
 
   Message? replyingOn;
 
@@ -91,35 +92,33 @@ class ChatNotifier extends ChangeNotifier {
 
           successfullySent.add(message);
 
-          retry(
-            f: () => messagesMapper.writeMessage(
+          if (allMessages.length == 1) {
+            // Room is new. This will trigger the room changes listener in [roomsProvider]
+            // and the room + msgs will be saved locally there so we don't do it here.
+            await retry(
+              f: () => roomsMapper.saveUserRoom(
+                  room: room, userId: userId, source: SetDataSource.ONLINE),
+            );
+          } else {
+            messagesMapper.writeMessage(
               roomId: room.id,
               message: message,
               source: SetDataSource.LOCAL,
-            ),
-          );
-
-          notifyListeners();
-
-          if (allMessages.length == 1) {
-            // Room is new
-            await retry(
-              f: () => roomsMapper.saveUserRoom(
-                  room: room, userId: userId, source: SetDataSource.BOTH),
             );
           }
 
+          notifyListeners();
+
           if (isArchived) {
-            isArchived = false;
             read(roomsProvider.notifier).editArchives(
               room: room,
               archive: false,
             );
           }
         } on Exception catch (e, _) {
-          read(errorsStateProvider.notifier).set(e is SocketException
-              ? 'Bad internet connection.'
-              : 'Unknown error');
+          read(errorsStateProvider.notifier).set(
+            e is SocketException ? 'Bad internet connection.' : 'Unknown error',
+          );
         }
       }
     });
@@ -159,7 +158,6 @@ class ChatNotifier extends ChangeNotifier {
             assert(message.isReceived(userId));
 
             if (isArchived) {
-              isArchived = false;
               read(roomsProvider.notifier).editArchives(
                 room: room,
                 archive: false,

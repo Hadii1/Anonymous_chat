@@ -95,6 +95,10 @@ class MessageMapper {
     }
   }
 
+  Future<void> deleteMessage(String id) async {
+    await offlineDb.deleteMessage(id);
+  }
+
   Future<void> markMessageAsRead({
     required String messageId,
     required String roomId,

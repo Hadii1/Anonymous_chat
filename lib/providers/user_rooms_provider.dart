@@ -16,6 +16,7 @@ import 'package:tuple/tuple.dart';
 final roomsProvider = ChangeNotifierProvider(
   (ref) => RoomsNotifier(
     ref.watch(startingDataProvider)!,
+    ref.read,
   ),
 );
 
@@ -23,6 +24,7 @@ class RoomsNotifier extends ChangeNotifier {
   late final StreamSubscription<List<Tuple2<ChatRoom, RoomsUpdateType>>>
       _roomChanges;
   final ChatRoomsMapper _roomsMapper = ChatRoomsMapper();
+  final Reader read;
   final String _userId = ILocalPrefs.storage.user!.id;
   bool isFirstFetch = true;
   List<ChatRoom> allRooms;
@@ -35,13 +37,11 @@ class RoomsNotifier extends ChangeNotifier {
   List<Contact> get blockedContacts =>
       contacts.where((c) => c.isBlocked).toList();
 
-  RoomsNotifier(this.allRooms) {
+  RoomsNotifier(this.allRooms, this.read) {
     // Sort
-    List<ChatRoom> temp = List.from(allRooms.where((r) => !r.isArchived));
-    temp.sort(
+    allRooms.sort(
       (a, b) => -a.messages.last.time.compareTo(b.messages.last.time),
     );
-    allRooms = [...temp];
 
     // First fetch of online rooms and syncing
     _roomsMapper
@@ -73,9 +73,11 @@ class RoomsNotifier extends ChangeNotifier {
   void deleteChat({required ChatRoom room}) {
     allRooms.remove(room);
     notifyListeners();
+    // When successfully deleted online, this will trigger the rooms
+    // listener below and it will be deleted from the local database.
     retry(
       shouldRethrow: false,
-      f: () => ChatRoomsMapper().deleteRoom(room, SetDataSource.BOTH),
+      f: () => ChatRoomsMapper().deleteRoom(room, SetDataSource.ONLINE),
     );
   }
 
@@ -85,11 +87,11 @@ class RoomsNotifier extends ChangeNotifier {
     if (contact == null) {
       index = allRooms.indexOf(room!);
     } else {
-      index = allRooms.indexWhere((r) => r.contact == contact);
+      index = allRooms.indexWhere((r) => r.contact.id == contact.id);
     }
+    assert(index != -1);
     ChatRoom selectedRoom = allRooms[index];
 
-    assert(index != -1);
     allRooms[index] =
         block ? selectedRoom.blockContact() : selectedRoom.unBlockContact();
     notifyListeners();
@@ -108,6 +110,7 @@ class RoomsNotifier extends ChangeNotifier {
     assert(index != -1);
     allRooms[index] = archive ? room.archive() : room.unArchive();
     notifyListeners();
+    read(roomArhivingState(room.id).notifier).archived = archive;
     retry(
       shouldRethrow: false,
       f: () => ChatRoomsMapper().editArchives(
@@ -122,7 +125,6 @@ class RoomsNotifier extends ChangeNotifier {
     _roomChanges = _roomsMapper
         .roomsServerUpdates()
         .listen((List<Tuple2<ChatRoom, RoomsUpdateType>> event) {
-      print(event);
       for (var update in event) {
         switch (update.item2) {
           case RoomsUpdateType.ROOM_DELETED:
@@ -142,7 +144,7 @@ class RoomsNotifier extends ChangeNotifier {
               source: SetDataSource.LOCAL,
             );
 
-            allRooms.add(update.item1);
+            allRooms.insert(0, update.item1);
             notifyListeners();
             break;
         }
@@ -155,4 +157,20 @@ class RoomsNotifier extends ChangeNotifier {
     _roomChanges.cancel();
     super.dispose();
   }
+}
+
+final roomArhivingState =
+    StateNotifierProvider.family<RoomArchiveState, bool, String>(
+  (ref, String id) => RoomArchiveState(
+    ref
+        .read(startingDataProvider)!
+        .where((room) => room.isArchived)
+        .where((room) => room.id == id)
+        .isNotEmpty,
+  ),
+);
+
+class RoomArchiveState extends StateNotifier<bool> {
+  RoomArchiveState(bool state) : super(state);
+  set archived(bool value) => state = value;
 }

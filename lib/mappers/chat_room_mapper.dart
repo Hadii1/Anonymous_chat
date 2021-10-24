@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'dart:async';
+
 import 'package:anonymous_chat/database_entities/message_entity.dart';
 import 'package:anonymous_chat/database_entities/room_entity.dart';
 import 'package:anonymous_chat/interfaces/database_interface.dart';
@@ -139,8 +141,9 @@ class ChatRoomsMapper {
 
       for (Message message in room.messages) {
         await offlineDb.writeMessage(
-            roomId: room.id,
-            message: LocalMessageEntity.fromMessageModel(message, room.id));
+          roomId: room.id,
+          message: LocalMessageEntity.fromMessageModel(message, room.id),
+        );
       }
     }
   }
@@ -168,15 +171,11 @@ class ChatRoomsMapper {
     }
   }
 
-  Stream<List<Tuple2<ChatRoom, RoomsUpdateType>>>
-      roomsServerUpdates() async* {
-    onlineDb
-        .userRoomsChanges(userId: userId)
-
-        .map((List<Tuple2<Map<String, dynamic>, DataChangeType>> event) async* {
-          print(event);
+  Stream<List<Tuple2<ChatRoom, RoomsUpdateType>>> roomsServerUpdates() async* {
+    await for (List<Tuple2<Map<String, dynamic>, DataChangeType>> update
+        in onlineDb.userRoomsChanges(userId: userId)) {
       List<Tuple2<ChatRoom, RoomsUpdateType>> temp = [];
-      for (Tuple2<Map<String, dynamic>, DataChangeType> v in event) {
+      for (var v in update) {
         if (v.item2 == DataChangeType.ADDED) {
           OnlineRoomEntity entity = OnlineRoomEntity.fromMap(v.item1);
 
@@ -220,6 +219,6 @@ class ChatRoomsMapper {
         }
       }
       yield temp;
-    });
+    }
   }
 }

@@ -188,6 +188,13 @@ class SqlitePersistance
   }
 
   @override
+  Future<void> deleteMessage(String id) async {
+    int count =
+        await db.rawDelete('DELETE FROM $_messagesTable WHERE id = ?', [id]);
+    assert(count > 0);
+  }
+
+  @override
   Future<void> markMessageAsRead(
       {required String roomId, required String messageId}) async {
     int count = await db.rawUpdate(
@@ -272,12 +279,6 @@ class SqlitePersistance
 
   @override
   Stream<Map<String, dynamic>> activityStatusStream({required String id}) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Stream<List<Tuple2<String, DataChangeType>>> blockingContactsChanges(
-      {required String userId}) {
     throw UnimplementedError();
   }
 
