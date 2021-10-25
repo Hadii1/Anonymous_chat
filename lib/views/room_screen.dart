@@ -54,8 +54,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       body: Consumer(builder: (context, watch, _) {
         final chatNotifier = watch(chattingProvider(widget.room));
         final String userId = watch(userAuthEventsProvider)!.id;
-        final List<Contact> blockedContacts =
-            watch(roomsProvider).blockedContacts;
+        // This is to show a dialoge when the other contact deletes
+        // the room while this user is viewing it.
+        final bool exists = watch(roomExistanceState(widget.room.id));
+        final bool blocked =
+            watch(roomsProvider).blockedContacts.contains(other);
 
         return SizedBox(
           height: MediaQuery.of(context).size.height,
@@ -153,7 +156,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                         },
                         replyMessage: chatNotifier.replyingOn,
                         onCancelReply: chatNotifier.onCancelReply,
-                        isContactBlocked: blockedContacts.contains(other),
+                        isContactBlocked: blocked,
                         onTypingStateChange: (bool typing) {
                           if (mounted)
                             context
@@ -254,13 +257,13 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                         ),
                         AnimatedSwitcher(
                           duration: Duration(milliseconds: 300),
-                          child: blockedContacts.contains(other)
+                          child: blocked
                               ? InkWell(
                                   onTap: () => context
                                       .read(roomsProvider.notifier)
                                       .toggleBlock(
                                         contact: other,
-                                        block: !blockedContacts.contains(other),
+                                        block: !blocked,
                                       ),
                                   splashColor: Colors.transparent,
                                   highlightColor: Colors.transparent,
@@ -284,10 +287,87 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   ),
                 ),
               ),
+              Align(
+                alignment: Alignment.center,
+                child: AnimatedSwitcher(
+                  duration: Duration(milliseconds: 300),
+                  child: exists
+                      ? SizedBox.shrink()
+                      : _RoomDeletedDialoge(
+                          contactName: widget.room.contact.nickname,
+                        ),
+                ),
+              )
             ],
           ),
         );
       }),
     );
+  }
+}
+
+class _RoomDeletedDialoge extends StatelessWidget {
+  final String contactName;
+
+  const _RoomDeletedDialoge({required this.contactName});
+
+  @override
+  Widget build(BuildContext context) {
+    AppStyle style = AppTheming.of(context).style;
+    return Container(
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Colors.black.withOpacity(0.5),
+              style.accentColor.withOpacity(0.6)
+            ],
+            stops: [0.7, 1],
+            begin: Alignment.topRight,
+            end: Alignment.bottomLeft,
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'The room was deleted by $contactName',
+                style: style.bodyText,
+              ),
+              SizedBox(
+                height: 24,
+              ),
+              TextButton(
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                  child: Text(
+                    'GO BACK',
+                    style: style.bodyText.copyWith(
+                      color: style.borderColor,
+                    ),
+                  ),
+                ),
+                style: ButtonStyle(
+                  overlayColor: MaterialStateProperty.all(
+                      style.accentColor.withOpacity(0.1)),
+                  shape: MaterialStateProperty.all(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
+                      side: BorderSide(
+                        color: style.accentColor,
+                        width: 0.35,
+                      ),
+                    ),
+                  ),
+                ),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            ],
+          ),
+        ));
   }
 }

@@ -5,6 +5,7 @@ import 'package:anonymous_chat/mappers/chat_room_mapper.dart';
 import 'package:anonymous_chat/mappers/contact_mapper.dart';
 import 'package:anonymous_chat/models/chat_room.dart';
 import 'package:anonymous_chat/models/contact.dart';
+import 'package:anonymous_chat/providers/chat_provider.dart';
 import 'package:anonymous_chat/providers/starting_data_provider.dart';
 import 'package:anonymous_chat/syncer/rooms_syncer.dart';
 import 'package:anonymous_chat/utilities/enums.dart';
@@ -57,7 +58,11 @@ class RoomsNotifier extends ChangeNotifier {
       isFirstFetch = false;
       notifyListeners();
     });
-    _listenToChanges();
+
+    // Initialize the room's chat state to handle logic of receiving msgs.
+    allRooms.forEach((r) => read(chattingProvider(r)));
+
+    _listenToRoomsChanges();
   }
 
   set latestActiveChat(ChatRoom room) {
@@ -121,7 +126,7 @@ class RoomsNotifier extends ChangeNotifier {
     );
   }
 
-  void _listenToChanges() {
+  void _listenToRoomsChanges() {
     _roomChanges = _roomsMapper
         .roomsServerUpdates()
         .listen((List<Tuple2<ChatRoom, RoomsUpdateType>> event) {
@@ -129,6 +134,7 @@ class RoomsNotifier extends ChangeNotifier {
         switch (update.item2) {
           case RoomsUpdateType.ROOM_DELETED:
             allRooms.remove(update.item1);
+            read(roomExistanceState(update.item1.id).notifier).deleted = false;
             notifyListeners();
             retry(
               shouldRethrow: false,
@@ -161,11 +167,11 @@ class RoomsNotifier extends ChangeNotifier {
 
 final roomArhivingState =
     StateNotifierProvider.family<RoomArchiveState, bool, String>(
-  (ref, String id) => RoomArchiveState(
+  (ref, String roomId) => RoomArchiveState(
     ref
         .read(startingDataProvider)!
         .where((room) => room.isArchived)
-        .where((room) => room.id == id)
+        .where((room) => room.id == roomId)
         .isNotEmpty,
   ),
 );
@@ -173,4 +179,17 @@ final roomArhivingState =
 class RoomArchiveState extends StateNotifier<bool> {
   RoomArchiveState(bool state) : super(state);
   set archived(bool value) => state = value;
+}
+
+// This is to watch if the other contacts deleted the room
+// while this user is viewing it.
+// The state is only watched in the room screen.
+final roomExistanceState =
+    StateNotifierProvider.family<RoomExistanceState, bool, String>(
+  (ref, String roomId) => RoomExistanceState(),
+);
+
+class RoomExistanceState extends StateNotifier<bool> {
+  RoomExistanceState() : super(true);
+  set deleted(bool value) => state = value;
 }

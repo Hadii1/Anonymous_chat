@@ -288,12 +288,13 @@ class FirestoreService
         .collection('Messages')
         .snapshots()
         .skip(1)
-        .where((QuerySnapshot<Map<String, dynamic>> element) =>
-            element.docChanges.isNotEmpty)
         .map(
           (QuerySnapshot<Map<String, dynamic>> event) => event.docChanges
-              .where((element) => !element.doc.metadata.isFromCache)
-              .where((element) => element.type != DocumentChangeType.removed)
+              .where(
+                (element) =>
+                    !element.doc.metadata.isFromCache &&
+                    element.type != DocumentChangeType.removed,
+              )
               .map(
                 (DocumentChange<Map<String, dynamic>> e) {
                   return Tuple2(

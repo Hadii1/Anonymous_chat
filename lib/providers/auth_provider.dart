@@ -9,6 +9,7 @@ import 'package:anonymous_chat/interfaces/database_interface.dart';
 import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/providers/loading_provider.dart';
 import 'package:anonymous_chat/providers/starting_data_provider.dart';
+import 'package:anonymous_chat/providers/user_auth_events_provider.dart';
 import 'package:anonymous_chat/services.dart/authentication.dart';
 import 'package:anonymous_chat/syncer/rooms_syncer.dart';
 import 'package:anonymous_chat/utilities/enums.dart';
@@ -35,6 +36,7 @@ final authProvider = ChangeNotifierProvider.autoDispose(
     ref.read(loadingProvider.notifier),
     ref.read(navigationSignal.notifier),
     ref.read(startingDataProvider.notifier),
+    ref.read(userAuthEventsProvider.notifier),
   ),
 );
 
@@ -45,6 +47,7 @@ class PhoneVerificationNotifier extends ChangeNotifier {
   final ILocalPrefs prefs = ILocalPrefs.storage;
   final FirebaseAuthService _auth = (IAuth.auth as FirebaseAuthService);
   final StartingData _startingData;
+  final UserAuthNotifier _authNotifier;
 
   String number = '';
 
@@ -57,6 +60,7 @@ class PhoneVerificationNotifier extends ChangeNotifier {
     this._loadingNotifier,
     this._navigationSignal,
     this._startingData,
+    this._authNotifier,
   );
 
   void onSendCodePressed() {
@@ -131,19 +135,16 @@ class PhoneVerificationNotifier extends ChangeNotifier {
         // User is tottaly new or the user
         // deleted his account then registered again
         // so we just treat it as new one
-
-        await IDatabase.onlineDb.saveUserData(
-          user: LocalUser.newlyCreated(
-            id: credentail.user!.uid,
-            phoneNumber: number,
-          ),
+        LocalUser createdUser = LocalUser.newlyCreated(
+          id: credentail.user!.uid,
+          phoneNumber: number,
         );
+        await IDatabase.onlineDb.saveUserData(user: createdUser);
 
-        await prefs.setUser(
-          LocalUser(id: credentail.user!.uid, phoneNumber: number),
-        );
+        await prefs.setUser(createdUser);
 
         _navigationSignal.navigate = DestinationAfterAuth.NAME_GENERATOR_SCREEN;
+        _authNotifier.onLogin(createdUser);
         _startingData.room = [];
       } else {
         // Logging in
@@ -157,6 +158,7 @@ class PhoneVerificationNotifier extends ChangeNotifier {
         RoomsSyncer().onUserLogin(userRooms);
 
         _startingData.room = userRooms;
+        _authNotifier.onLogin(user);
 
         _navigationSignal.navigate = user.isNicknamed
             ? DestinationAfterAuth.HOME_SCREEN

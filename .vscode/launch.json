@@ -11,16 +11,10 @@
             "deviceId": "c54fb4edd74eda5ceca54a51e289ed801dd21e7e"
         },
         {
-            "name": "iPhone 12 simulator",
+            "name": "iPhone 12",
             "request": "launch",
             "type": "dart",
-            "deviceId": "3AE945F7-4060-494D-AD3D-E3A83A0506AD"
-        },
-        {
-            "name": "Khaled",
-            "request": "launch",
-            "type": "dart",
-            "deviceId": "ff02d5fa306270205f3da97e1e6d50efdd0631bc"
+            "deviceId": "419B240D-EE01-473A-8984-4DD29EE7C395"
         },
         {
             "name": "Pixel 3a",
@@ -33,8 +27,8 @@
         {
             "name": "All",
             "configurations": [
-                "iPhone",
-                "iPhone 12 simulator",
+                "Pixel 3a",
+                "iPhone 12",
             ]
         }
     ]

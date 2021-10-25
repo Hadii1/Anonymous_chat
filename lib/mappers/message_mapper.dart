@@ -39,16 +39,7 @@ class MessageMapper {
     return onlineDb
         .roomMessagesUpdates(roomId: roomId)
         .map((Tuple2<OnlineMessageEntity, DataChangeType> event) {
-      Message message = Message(
-        content: event.item1.content,
-        id: event.item1.id,
-        isRead: event.item1.isRead,
-        recipient: event.item1.recipient,
-        replyingOn: event.item1.recipient,
-        sender: event.item1.sender,
-        time: event.item1.time,
-      );
-
+      Message message = event.item1.toModel();
       MessageServeUpdateType? type;
       if (event.item2 == DataChangeType.ADDED && message.isReceived(userId))
         type = MessageServeUpdateType.MESSAGE_RECIEVED;
