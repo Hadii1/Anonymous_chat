@@ -10,6 +10,7 @@ import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/widgets/animated_widgets.dart';
 import 'package:anonymous_chat/widgets/chat_bubble.dart';
 import 'package:anonymous_chat/widgets/chat_message_field.dart';
+import 'package:anonymous_chat/widgets/custom_alert_dialoge.dart';
 import 'package:anonymous_chat/widgets/keyboard_hider.dart';
 import 'package:anonymous_chat/widgets/shaded_container.dart';
 import 'package:anonymous_chat/widgets/typing_indicator.dart';
@@ -57,8 +58,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         // This is to show a dialoge when the other contact deletes
         // the room while this user is viewing it.
         final bool exists = watch(roomExistanceState(widget.room.id));
-        final bool blocked =
+        final bool isContactBlocked =
             watch(roomsProvider).blockedContacts.contains(other);
+        final bool? isUserBlocked =
+            watch(userBlockedState(widget.room.contact.id));
 
         return SizedBox(
           height: MediaQuery.of(context).size.height,
@@ -156,7 +159,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                         },
                         replyMessage: chatNotifier.replyingOn,
                         onCancelReply: chatNotifier.onCancelReply,
-                        isContactBlocked: blocked,
+                        isContactBlocked: isContactBlocked,
+                        loading: isUserBlocked == null,
                         onTypingStateChange: (bool typing) {
                           if (mounted)
                             context
@@ -257,13 +261,13 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                         ),
                         AnimatedSwitcher(
                           duration: Duration(milliseconds: 300),
-                          child: blocked
+                          child: isContactBlocked
                               ? InkWell(
                                   onTap: () => context
                                       .read(roomsProvider.notifier)
                                       .toggleBlock(
                                         contact: other,
-                                        block: !blocked,
+                                        block: !isContactBlocked,
                                       ),
                                   splashColor: Colors.transparent,
                                   highlightColor: Colors.transparent,
@@ -291,10 +295,27 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 alignment: Alignment.center,
                 child: AnimatedSwitcher(
                   duration: Duration(milliseconds: 300),
+                  child: isUserBlocked == null || !isUserBlocked
+                      ? SizedBox.shrink()
+                      : CustomAlertDialoge(
+                          actionMsg: 'GO BACK',
+                          msg:
+                              'YOU WERE BLOCKED BY ${widget.room.contact.nickname}',
+                          onAction: () => Navigator.of(context).pop(),
+                        ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.center,
+                child: AnimatedSwitcher(
+                  duration: Duration(milliseconds: 300),
                   child: exists
                       ? SizedBox.shrink()
-                      : _RoomDeletedDialoge(
-                          contactName: widget.room.contact.nickname,
+                      : CustomAlertDialoge(
+                          actionMsg: 'GO BACK',
+                          msg:
+                              'THIS ROOM WAS DELETED BY ${widget.room.contact.nickname}',
+                          onAction: () => Navigator.of(context).pop(),
                         ),
                 ),
               )
@@ -303,71 +324,5 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         );
       }),
     );
-  }
-}
-
-class _RoomDeletedDialoge extends StatelessWidget {
-  final String contactName;
-
-  const _RoomDeletedDialoge({required this.contactName});
-
-  @override
-  Widget build(BuildContext context) {
-    AppStyle style = AppTheming.of(context).style;
-    return Container(
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Colors.black.withOpacity(0.5),
-              style.accentColor.withOpacity(0.6)
-            ],
-            stops: [0.7, 1],
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
-          ),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'The room was deleted by $contactName',
-                style: style.bodyText,
-              ),
-              SizedBox(
-                height: 24,
-              ),
-              TextButton(
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
-                  child: Text(
-                    'GO BACK',
-                    style: style.bodyText.copyWith(
-                      color: style.borderColor,
-                    ),
-                  ),
-                ),
-                style: ButtonStyle(
-                  overlayColor: MaterialStateProperty.all(
-                      style.accentColor.withOpacity(0.1)),
-                  shape: MaterialStateProperty.all(
-                    RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(4),
-                      side: BorderSide(
-                        color: style.accentColor,
-                        width: 0.35,
-                      ),
-                    ),
-                  ),
-                ),
-                onPressed: () => Navigator.of(context).pop(),
-              )
-            ],
-          ),
-        ));
   }
 }

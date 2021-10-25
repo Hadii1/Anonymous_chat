@@ -82,16 +82,6 @@ class ChatNotifier extends ChangeNotifier {
         read(roomsProvider).latestActiveChat = room;
 
         try {
-          await retry(
-            f: () => messagesMapper.writeMessage(
-              roomId: room.id,
-              message: message,
-              source: SetDataSource.ONLINE,
-            ),
-          );
-
-          successfullySent.add(message);
-
           if (allMessages.length == 1) {
             // Room is new. This will trigger the room changes listener in [roomsProvider]
             // and the room + msgs will be saved locally there so we don't do it here.
@@ -99,7 +89,16 @@ class ChatNotifier extends ChangeNotifier {
               f: () => roomsMapper.saveUserRoom(
                   room: room, userId: userId, source: SetDataSource.ONLINE),
             );
+            successfullySent.add(message);
           } else {
+            await retry(
+              f: () => messagesMapper.writeMessage(
+                roomId: room.id,
+                message: message,
+                source: SetDataSource.ONLINE,
+              ),
+            );
+            successfullySent.add(message);
             messagesMapper.writeMessage(
               roomId: room.id,
               message: message,
@@ -132,11 +131,9 @@ class ChatNotifier extends ChangeNotifier {
         switch (update.item2) {
           case MessageServeUpdateType.MESSAGE_READ:
             Message message = update.item1;
-
             assert(message.isSent(userId));
             assert(allMessages.contains(message));
             assert(message.isRead == true);
-
             int i = allMessages.indexWhere((m) => m.id == message.id);
             assert(i != -1);
             allMessages[i] = message;
@@ -145,7 +142,7 @@ class ChatNotifier extends ChangeNotifier {
 
           case MessageServeUpdateType.MESSAGE_RECIEVED:
             Message message = update.item1;
-
+            assert(message.isReceived(userId));
             if (_isChatPageOpened) {
               message = message.markAsRead();
               messagesMapper.markMessageAsRead(
@@ -159,8 +156,6 @@ class ChatNotifier extends ChangeNotifier {
               message: message,
               source: SetDataSource.LOCAL,
             );
-
-            assert(message.isReceived(userId));
 
             if (isArchived) {
               read(roomsProvider.notifier).editArchives(

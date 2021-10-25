@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:anonymous_chat/interfaces/database_interface.dart';
 import 'package:anonymous_chat/interfaces/prefs_storage_interface.dart';
 import 'package:anonymous_chat/mappers/chat_room_mapper.dart';
 import 'package:anonymous_chat/mappers/contact_mapper.dart';
@@ -7,6 +8,7 @@ import 'package:anonymous_chat/models/chat_room.dart';
 import 'package:anonymous_chat/models/contact.dart';
 import 'package:anonymous_chat/providers/chat_provider.dart';
 import 'package:anonymous_chat/providers/starting_data_provider.dart';
+import 'package:anonymous_chat/providers/user_auth_events_provider.dart';
 import 'package:anonymous_chat/syncer/rooms_syncer.dart';
 import 'package:anonymous_chat/utilities/enums.dart';
 import 'package:anonymous_chat/utilities/general_functions.dart';
@@ -192,4 +194,40 @@ final roomExistanceState =
 class RoomExistanceState extends StateNotifier<bool> {
   RoomExistanceState() : super(true);
   set deleted(bool value) => state = value;
+}
+
+// To watch if the contact is blocked by the other user
+final userBlockedState =
+    StateNotifierProvider.family<UserBlockedNotifier, bool?, String>(
+  (ref, String contactId) =>
+      UserBlockedNotifier(contactId, ref.watch(userAuthEventsProvider)!.id),
+);
+
+class UserBlockedNotifier extends StateNotifier<bool?> {
+  final String contactId;
+  final String userId;
+  late final StreamSubscription<bool> listener;
+  UserBlockedNotifier(this.contactId, this.userId) : super(null) {
+    IDatabase.onlineDb
+        .isUserBlocked(contactId, userId)
+        .then((bool value) => state = value);
+
+    _setListener();
+  }
+
+  void _setListener() {
+    listener = IDatabase.onlineDb
+        .blockedByContact(contactId, userId)
+        .listen((bool value) {
+      if (state != value) {
+        state = value;
+      }
+    });
+  }
+
+  @override
+  dispose() {
+    listener.cancel();
+    super.dispose();
+  }
 }

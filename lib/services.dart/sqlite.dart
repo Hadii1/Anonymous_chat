@@ -201,7 +201,7 @@ class SqlitePersistance
       'UPDATE $_messagesTable SET isRead = ? WHERE id = ?',
       [1, messageId],
     );
-    assert(count == 1);
+    // assert(count == 1);
   }
 
   @override
@@ -302,11 +302,6 @@ class SqlitePersistance
   }
 
   @override
-  Future<List<String>> getBlockingContacts({required String userId}) {
-    throw UnimplementedError();
-  }
-
-  @override
   Future<List<Contact>> getMatchingUsers(
       {required List<String> tagsIds, required String userId}) {
     throw UnimplementedError();
@@ -337,6 +332,16 @@ class SqlitePersistance
   @override
   Stream<List<Tuple2<Map<String, dynamic>, DataChangeType>>> userRoomsChanges(
       {required String userId}) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Stream<bool> blockedByContact(String contactId, String userId) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<bool> isUserBlocked(String contactId, String userId) {
     throw UnimplementedError();
   }
 }

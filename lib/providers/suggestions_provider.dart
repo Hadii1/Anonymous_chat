@@ -29,15 +29,16 @@ final suggestedContactsProvider =
     );
 
     for (Contact contact in contacts) {
-      suggestions.add(
-        Tuple2(
-          contact,
-          selectedTags
-              .where((UserTag t) => selectedTags.contains(t.tag.id))
-              .map((e) => e.tag)
-              .toList(),
-        ),
-      );
+      if (!suggestions.map((e) => e.item1).contains(contact))
+        suggestions.add(
+          Tuple2(
+            contact,
+            selectedTags
+                .where((UserTag t) => selectedTags.contains(t.tag.id))
+                .map((e) => e.tag)
+                .toList(),
+          ),
+        );
     }
 
     suggestions.removeWhere(

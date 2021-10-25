@@ -44,16 +44,6 @@ class BlockedContactsScreen extends StatelessWidget {
 
                     return AnimatedSwitcher(
                       duration: Duration(milliseconds: 250),
-                      // child: blockedUsers == null
-                      //     ? Column(
-                      //         mainAxisAlignment: MainAxisAlignment.center,
-                      //         children: [
-                      //           SpinKitThreeBounce(
-                      //             color: style.loadingBarColor,
-                      //             size: 25,
-                      //           ),
-                      //         ],
-                      //       )
                       child: blockedUsers.isEmpty
                           ? Column(
                               mainAxisAlignment: MainAxisAlignment.center,

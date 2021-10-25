@@ -446,16 +446,28 @@ class FirestoreService
   }
 
   @override
-  Future<List<String>> getBlockingContacts({required String userId}) async {
-    QuerySnapshot<Map<String, dynamic>> querySnapshot = await _db
-        .collectionGroup('Blocked Users')
-        .where('blockedUser', isEqualTo: userId)
+  Future<bool> isUserBlocked(String contactId, String userId) async {
+    DocumentSnapshot<Map<String, dynamic>> d = await _db
+        .collection('Users')
+        .doc(contactId)
+        .collection('Blocked Users')
+        .doc(userId)
         .get();
+    return d.exists;
+  }
 
-    return querySnapshot.docs
-        .map((QueryDocumentSnapshot<Map<String, dynamic>> e) =>
-            e.data()['blockingUser'] as String)
-        .toList();
+  @override
+  Stream<bool> blockedByContact(String contactId, String userId) {
+    return _db
+        .collection('Users')
+        .doc(contactId)
+        .collection('Blocked Users')
+        .snapshots()
+        .skip(1)
+        .where(
+            (event) => event.docChanges.map((e) => e.doc.id).contains(userId))
+        .map((QuerySnapshot<Map<String, dynamic>> event) =>
+            event.docChanges.first.type == DocumentChangeType.added);
   }
 
   @override

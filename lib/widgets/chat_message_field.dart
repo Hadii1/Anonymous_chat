@@ -20,6 +20,7 @@ import 'package:anonymous_chat/widgets/message_reply.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class MessageBox extends StatefulWidget {
   final Function(String) onSendPressed;
@@ -27,12 +28,14 @@ class MessageBox extends StatefulWidget {
   final Message? replyMessage;
   final Function() onCancelReply;
   final bool isContactBlocked;
+  final bool loading;
 
   const MessageBox({
     required this.onSendPressed,
     required this.onTypingStateChange,
     required this.isContactBlocked,
     required this.onCancelReply,
+    required this.loading,
     this.replyMessage,
   });
 
@@ -120,7 +123,8 @@ class _MessageBoxState extends State<MessageBox> {
   @override
   void didUpdateWidget(MessageBox oldWidget) {
     if (oldWidget.isContactBlocked != widget.isContactBlocked ||
-        oldWidget.replyMessage != widget.replyMessage) {
+        oldWidget.replyMessage != widget.replyMessage ||
+        oldWidget.loading != widget.loading) {
       if (mounted) setState(() {});
     }
     super.didUpdateWidget(oldWidget);
@@ -197,23 +201,26 @@ class _MessageBoxState extends State<MessageBox> {
                     children: [
                       AnimatedSwitcher(
                         duration: Duration(milliseconds: 250),
-                        child: _controller.text.isEmpty
-                            ? Icon(
-                                Icons.send,
-                                color: Colors.grey,
-                              )
-                            : InkWell(
-                                onTap: () {
-                                  setState(() {
-                                    widget.onSendPressed(_controller.text);
-                                    _controller.clear();
-                                  });
-                                },
-                                child: Icon(
-                                  Icons.send,
-                                  color: style.accentColor,
-                                ),
-                              ),
+                        child: widget.loading
+                            ? SpinKitDualRing(
+                                color: style.accentColor, size: 14)
+                            : _controller.text.isEmpty
+                                ? Icon(
+                                    Icons.send,
+                                    color: Colors.grey,
+                                  )
+                                : InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        widget.onSendPressed(_controller.text);
+                                        _controller.clear();
+                                      });
+                                    },
+                                    child: Icon(
+                                      Icons.send,
+                                      color: style.accentColor,
+                                    ),
+                                  ),
                       ),
                     ],
                   ),

@@ -19,8 +19,6 @@ abstract class IDatabase<R extends RoomEntity, M extends MessageEntity> {
 
   Future<List<String>> getBlockedContacts({required String userId});
 
-  Future<List<String>> getBlockingContacts({required String userId});
-
   Future<List<M>> getAllMessages({required String roomId});
 
   Stream<List<Tuple2<Map<String, dynamic>, DataChangeType>>> userRoomsChanges({
@@ -63,6 +61,10 @@ abstract class IDatabase<R extends RoomEntity, M extends MessageEntity> {
     required String userId,
     required String blockedContact,
   });
+
+  Future<bool> isUserBlocked(String contactId, String userId);
+  Stream<bool> blockedByContact(String contactId, String userId);
+
   Future<void> deleteAccount({required String userId});
 
   Future<List<Map<String, dynamic>>> getUserTags({required String userId});
