@@ -15,7 +15,6 @@
 import 'package:anonymous_chat/database_entities/message_entity.dart';
 import 'package:anonymous_chat/database_entities/room_entity.dart';
 import 'package:anonymous_chat/interfaces/database_interface.dart';
-import 'package:anonymous_chat/interfaces/prefs_storage_interface.dart';
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/utilities/enums.dart';
 import 'package:tuple/tuple.dart';
@@ -32,10 +31,8 @@ class MessageMapper {
   final IDatabase<OnlineRoomEntity, OnlineMessageEntity> onlineDb =
       IDatabase.onlineDb;
 
-  final String userId = ILocalPrefs.storage.user!.id;
-
   Stream<Tuple2<Message, MessageServeUpdateType>?> serverMessagesUpdates(
-      {required String roomId}) {
+      {required String roomId, required String userId}) {
     return onlineDb
         .roomMessagesUpdates(roomId: roomId)
         .map((Tuple2<OnlineMessageEntity, DataChangeType> event) {

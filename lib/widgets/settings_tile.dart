@@ -31,22 +31,25 @@ class SettingTile extends StatelessWidget {
   Widget build(BuildContext context) {
     AppStyle style = AppTheming.of(context).style;
     return InkWell(
-      splashColor: Colors.transparent,
-      highlightColor: Colors.transparent,
       onTap: onTap,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            title,
-            style: style.title3Style,
-          ),
-          Icon(
-            icon,
-            color: Colors.white.withOpacity(0.85),
-            size: 19,
-          )
-        ],
+      highlightColor: style.accentColor.withOpacity(0.2),
+      borderRadius: BorderRadius.circular(4),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              title,
+              style: style.title3Style,
+            ),
+            Icon(
+              icon,
+              color: Colors.white.withOpacity(0.85),
+              size: 19,
+            )
+          ],
+        ),
       ),
     );
   }

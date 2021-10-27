@@ -201,7 +201,7 @@ class SqlitePersistance
       'UPDATE $_messagesTable SET isRead = ? WHERE id = ?',
       [1, messageId],
     );
-    // assert(count == 1);
+    assert(count == 1);
   }
 
   @override

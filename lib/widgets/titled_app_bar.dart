@@ -29,6 +29,7 @@ class TitledAppBar extends PreferredSize {
       middle: title != null
           ? Text(
               title!,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 color: style.backgroundContrastColor,
                 fontSize: 24,
@@ -38,7 +39,8 @@ class TitledAppBar extends PreferredSize {
               ),
             )
           : Text(
-              'DISCLOSE',
+              'ANONIMA',
+              textAlign: TextAlign.center,
               style: TextStyle(
                 color: style.accentColor,
                 fontSize: 24,
@@ -63,6 +65,7 @@ class TitledAppBar extends PreferredSize {
             onTap: () => Navigator.of(context).pop(),
             child: leading ??
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
                       CupertinoIcons.back,

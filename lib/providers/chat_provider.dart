@@ -7,6 +7,7 @@ import 'package:anonymous_chat/mappers/message_mapper.dart';
 import 'package:anonymous_chat/models/chat_room.dart';
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/providers/errors_provider.dart';
+import 'package:anonymous_chat/providers/user_auth_events_provider.dart';
 import 'package:anonymous_chat/providers/user_rooms_provider.dart';
 import 'package:anonymous_chat/services.dart/shared_preferences.dart';
 import 'package:anonymous_chat/utilities/enums.dart';
@@ -18,6 +19,7 @@ import 'package:tuple/tuple.dart';
 
 final chattingProvider = ChangeNotifierProvider.family<ChatNotifier, ChatRoom>(
   (ref, room) {
+    ref.watch(userAuthEventsProvider);
     return ChatNotifier(
       ref.read,
       room,
@@ -122,8 +124,9 @@ class ChatNotifier extends ChangeNotifier {
       }
     });
 
-    serverMessagesUpdates =
-        messagesMapper.serverMessagesUpdates(roomId: room.id).listen(
+    serverMessagesUpdates = messagesMapper
+        .serverMessagesUpdates(roomId: room.id, userId: userId)
+        .listen(
       (Tuple2<Message, MessageServeUpdateType>? update) async {
         if (update == null) {
           return;

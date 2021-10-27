@@ -95,10 +95,28 @@ class LoginScreen extends StatelessWidget {
                                   child: AnimatedSwitcher(
                                     duration: Duration(milliseconds: 350),
                                     child: authNotifier.isCodeSent
-                                        ? _CodeInput(onSumbitted: (code) {
-                                            authNotifier.onCodeSubmitted(
-                                                code: code);
-                                          })
+                                        ? Column(
+                                            children: [
+                                              _CodeInput(onSumbitted: (code) {
+                                                authNotifier.onCodeSubmitted(
+                                                    code: code);
+                                              }),
+                                              SizedBox(height: 24),
+                                              InkWell(
+                                                splashColor: style.accentColor,
+                                                highlightColor:
+                                                    Colors.transparent,
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                                onTap: () => authNotifier
+                                                    .onEditNumberPressed(),
+                                                child: Text(
+                                                  'Edit number',
+                                                  style: style.smallTextStyle,
+                                                ),
+                                              )
+                                            ],
+                                          )
                                         : CustomTextField(
                                             hint: '+1 123 456 7890',
                                             onChanged: (v) =>
@@ -118,21 +136,26 @@ class LoginScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      CtaButton(
-                        onPressed: () {
-                          FocusScope.of(context).unfocus();
-                          authNotifier.onSendCodePressed();
-                        },
-                        text: 'VERIFY',
-                      )
-                    ],
-                  ),
+                AnimatedSwitcher(
+                  duration: Duration(milliseconds: 300),
+                  child: authNotifier.isCodeSent
+                      ? SizedBox.shrink()
+                      : Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 36),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              CtaButton(
+                                onPressed: () {
+                                  FocusScope.of(context).unfocus();
+                                  authNotifier.onSendCodePressed();
+                                },
+                                text: 'VERIFY',
+                              )
+                            ],
+                          ),
+                        ),
                 )
               ],
             );
@@ -142,7 +165,7 @@ class LoginScreen extends StatelessWidget {
     );
   }
 }
-// TODO: remove button when code sent
+
 class _CodeInput extends StatelessWidget {
   final Function(String) onSumbitted;
 

@@ -17,7 +17,6 @@ import 'dart:async';
 import 'package:anonymous_chat/database_entities/message_entity.dart';
 import 'package:anonymous_chat/database_entities/room_entity.dart';
 import 'package:anonymous_chat/interfaces/database_interface.dart';
-import 'package:anonymous_chat/interfaces/prefs_storage_interface.dart';
 import 'package:anonymous_chat/mappers/contact_mapper.dart';
 import 'package:anonymous_chat/mappers/message_mapper.dart';
 import 'package:anonymous_chat/models/chat_room.dart';
@@ -38,8 +37,6 @@ class ChatRoomsMapper {
       IDatabase.offlineDb;
   final IDatabase<OnlineRoomEntity, OnlineMessageEntity> onlineDb =
       IDatabase.onlineDb;
-
-  final String userId = ILocalPrefs.storage.user!.id;
 
   final MessageMapper messageMapper = MessageMapper();
   final ContactMapper contactMapper = ContactMapper();
@@ -171,7 +168,8 @@ class ChatRoomsMapper {
     }
   }
 
-  Stream<List<Tuple2<ChatRoom, RoomsUpdateType>>> roomsServerUpdates() async* {
+  Stream<List<Tuple2<ChatRoom, RoomsUpdateType>>> roomsServerUpdates(
+      String userId) async* {
     await for (List<Tuple2<Map<String, dynamic>, DataChangeType>> update
         in onlineDb.userRoomsChanges(userId: userId)) {
       List<Tuple2<ChatRoom, RoomsUpdateType>> temp = [];

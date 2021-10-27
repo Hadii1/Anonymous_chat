@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:anonymous_chat/interfaces/auth_interface.dart';
 import 'package:anonymous_chat/interfaces/database_interface.dart';
 import 'package:anonymous_chat/interfaces/prefs_storage_interface.dart';
+import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/providers/user_auth_events_provider.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/views/about_screen.dart';
@@ -108,7 +111,7 @@ class Settings extends StatelessWidget {
                     icon: LineariconsFree.warning,
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
                     child: Divider(
                       thickness: 0.15,
                       color: style.borderColor,
@@ -127,7 +130,7 @@ class Settings extends StatelessWidget {
                     icon: LineariconsFree.database_1,
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
                     child: Divider(
                       thickness: 0.15,
                       color: style.borderColor,
@@ -135,23 +138,11 @@ class Settings extends StatelessWidget {
                   ),
                   SettingTile(
                     title: 'Sign Out',
-                    onTap: () async {
-                      // TODO: error handle
-                      await IDatabase.offlineDb
-                          .deleteAccount(userId: ILocalPrefs.storage.user!.id);
-                      await IAuth.auth.signOut();
-                      context.read(userAuthEventsProvider.notifier).onLogout();
-                      Navigator.of(context).pushAndRemoveUntil(
-                        FadingRoute(
-                          builder: (_) => LoginScreen(),
-                        ),
-                        (route) => false,
-                      );
-                    },
+                    onTap: () => _onSignOutPressed(context),
                     icon: LineariconsFree.exit,
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
                     child: Divider(
                       thickness: 0.15,
                       color: style.borderColor,
@@ -159,20 +150,11 @@ class Settings extends StatelessWidget {
                   ),
                   SettingTile(
                     title: 'Delete Account',
-                    onTap: () async {
-                      // TODO: delete account
-
-                      Navigator.of(context).pushAndRemoveUntil(
-                        FadingRoute(
-                          builder: (_) => LoginScreen(),
-                        ),
-                        (route) => false,
-                      );
-                    },
+                    onTap: () => _onDeleteAccountPressed(context),
                     icon: LineariconsFree.trash,
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
                     child: Divider(
                       thickness: 0.15,
                       color: style.borderColor,
@@ -194,5 +176,46 @@ class Settings extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _onDeleteAccountPressed(BuildContext context) async {
+    try {
+      final userId = ILocalPrefs.storage.user!.id;
+
+      await IDatabase.onlineDb.deleteAccount(userId: userId);
+      await IAuth.auth.signOut();
+      await IDatabase.offlineDb.deleteAccount(userId: userId);
+      context.read(userAuthEventsProvider.notifier).onLogout();
+
+      Navigator.of(context).pushAndRemoveUntil(
+        FadingRoute(
+          builder: (_) => LoginScreen(),
+        ),
+        (route) => false,
+      );
+    } on Exception catch (e) {
+      context.read(errorsStateProvider.notifier).set(
+            e is SocketException
+                ? 'Bad internet connection. Try again please.'
+                : 'Something went wrong. Try again please.',
+          );
+    }
+  }
+
+  Future<void> _onSignOutPressed(BuildContext context) async {
+    try {
+      final userId = ILocalPrefs.storage.user!.id;
+
+      await IAuth.auth.signOut();
+      await IDatabase.offlineDb.deleteAccount(userId: userId);
+      context.read(userAuthEventsProvider.notifier).onLogout();
+      
+    } on Exception catch (e) {
+      context.read(errorsStateProvider.notifier).set(
+            e is SocketException
+                ? 'Bad internet connection. Try again please.'
+                : 'Something went wrong. Try again please.',
+          );
+    }
   }
 }

@@ -16,12 +16,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tuple/tuple.dart';
 
-final roomsProvider = ChangeNotifierProvider(
-  (ref) => RoomsNotifier(
+final roomsProvider = ChangeNotifierProvider((ref) {
+  ref.watch(userAuthEventsProvider);
+  return RoomsNotifier(
     ref.watch(startingDataProvider)!,
     ref.read,
-  ),
-);
+  );
+});
 
 class RoomsNotifier extends ChangeNotifier {
   late final StreamSubscription<List<Tuple2<ChatRoom, RoomsUpdateType>>>
@@ -130,7 +131,7 @@ class RoomsNotifier extends ChangeNotifier {
 
   void _listenToRoomsChanges() {
     _roomChanges = _roomsMapper
-        .roomsServerUpdates()
+        .roomsServerUpdates(_userId)
         .listen((List<Tuple2<ChatRoom, RoomsUpdateType>> event) {
       for (var update in event) {
         switch (update.item2) {

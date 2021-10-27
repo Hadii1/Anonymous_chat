@@ -13,14 +13,16 @@
 // limitations under the License.
 
 import 'package:anonymous_chat/utilities/theme_widget.dart';
+import 'package:anonymous_chat/views/privacy_policy.dart';
 import 'package:anonymous_chat/widgets/settings_tile.dart';
 import 'package:anonymous_chat/widgets/titled_app_bar.dart';
-
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttericon/linearicons_free_icons.dart';
+import 'package:in_app_review/in_app_review.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AboutScreen extends StatelessWidget {
-  // TODO: Launching Links
   @override
   Widget build(BuildContext context) {
     AppStyle style = AppTheming.of(context).style;
@@ -39,11 +41,13 @@ class AboutScreen extends StatelessWidget {
               children: <Widget>[
                 SettingTile(
                   title: 'Privacy Policy',
-                  onTap: () {},
+                  onTap: () => Navigator.of(context).push(
+                    CupertinoPageRoute(builder: (_) => PrivacyPolicyScreen()),
+                  ),
                   icon: LineariconsFree.link_1,
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  padding: const EdgeInsets.symmetric(vertical: 4.0),
                   child: Divider(
                     thickness: 0.15,
                     color: style.borderColor,
@@ -51,11 +55,11 @@ class AboutScreen extends StatelessWidget {
                 ),
                 SettingTile(
                   title: 'Rate us',
-                  onTap: () {},
+                  onTap: () => onRateUsPressed(),
                   icon: LineariconsFree.star_1,
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  padding: const EdgeInsets.symmetric(vertical: 4.0),
                   child: Divider(
                     thickness: 0.15,
                     color: style.borderColor,
@@ -63,7 +67,7 @@ class AboutScreen extends StatelessWidget {
                 ),
                 SettingTile(
                   title: 'Contact us',
-                  onTap: () {},
+                  onTap: () => onCatactUsPressed(),
                   icon: LineariconsFree.users,
                 )
               ],
@@ -72,5 +76,24 @@ class AboutScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void onRateUsPressed() async {
+    InAppReview reviewInstance = InAppReview.instance;
+    if (await reviewInstance.isAvailable()) {
+      reviewInstance.requestReview();
+    } else {
+      reviewInstance.openStoreListing(appStoreId: '1564649182');
+    }
+  }
+
+  onCatactUsPressed() async {
+    // mailto:<email address>?subject=<subject>&body=<body>, e.g. mailto:smith@example.org?subject=News&body=New%20plugin
+    bool b = await canLaunch(
+        'mailto:hadihammoud1@outlook.com?subject=Anonimabody=asd');
+    print(b);
+    if (b) {
+      launch('mailto:hadihammoud1@outlook.com?subject=Anonima&body=asd');
+    }
   }
 }

@@ -282,31 +282,32 @@ class FirestoreService
   Stream<Tuple2<OnlineMessageEntity, DataChangeType>> roomMessagesUpdates({
     required String roomId,
   }) {
-    return _db
-        .collection('Rooms')
-        .doc(roomId)
-        .collection('Messages')
-        .snapshots()
-        .skip(1)
-        .map(
-          (QuerySnapshot<Map<String, dynamic>> event) => event.docChanges
-              .where(
-                (element) =>
-                    !element.doc.metadata.isFromCache &&
-                    element.type != DocumentChangeType.removed,
-              )
-              .map(
-                (DocumentChange<Map<String, dynamic>> e) {
-                  return Tuple2(
-                      OnlineMessageEntity.fromMap(
-                        e.doc.data()!,
-                      ),
-                      e.type.changeType());
-                },
-              )
-              .toList()
-              .first,
-        );
+    return Stream.castFrom<Tuple2<OnlineMessageEntity, DataChangeType>?,
+            Tuple2<OnlineMessageEntity, DataChangeType>>(
+        _db
+            .collection('Rooms')
+            .doc(roomId)
+            .collection('Messages')
+            .snapshots()
+            .skip(1)
+            .map((QuerySnapshot<Map<String, dynamic>> event) {
+      List<Tuple2<OnlineMessageEntity, DataChangeType>> a = event.docChanges
+          .where(
+        (element) =>
+            !element.doc.metadata.isFromCache &&
+            element.type != DocumentChangeType.removed,
+      )
+          .map(
+        (DocumentChange<Map<String, dynamic>> e) {
+          return Tuple2(
+              OnlineMessageEntity.fromMap(
+                e.doc.data()!,
+              ),
+              e.type.changeType());
+        },
+      ).toList();
+      return a.isEmpty ? null : a.first;
+    }).where((event) => event != null));
   }
 
   @override
@@ -344,13 +345,12 @@ class FirestoreService
 
   @override
   Future<void> deleteAccount({required userId}) async {
-    //  Delete the user rooms
     QuerySnapshot d = await _db
         .collection('Rooms')
         .where('participiants', arrayContains: userId)
         .get();
-    for (QueryDocumentSnapshot a in d.docs) {
-      await a.reference.delete();
+    for (QueryDocumentSnapshot s in d.docs) {
+      await s.reference.delete();
     }
 
     QuerySnapshot<Map<String, dynamic>> k = await _db
@@ -358,20 +358,18 @@ class FirestoreService
         .doc(userId)
         .collection('Blocked Users')
         .get();
-    for (QueryDocumentSnapshot a in k.docs) {
-      await a.reference.delete();
+    for (QueryDocumentSnapshot s in k.docs) {
+      await s.reference.delete();
     }
 
-    //  Delete references where the user is blocked
-    QuerySnapshot s = await _db
-        .collectionGroup('Blocked Users')
-        .where('blocked by', isEqualTo: userId)
+    QuerySnapshot<Map<String, dynamic>> g = await _db
+        .collectionGroup('Tag Users')
+        .where('userId', isEqualTo: userId)
         .get();
-    for (QueryDocumentSnapshot a in s.docs) {
-      await a.reference.delete();
+    for (QueryDocumentSnapshot s in g.docs) {
+      await s.reference.delete();
     }
 
-    // Delete the user document
     await _db.collection('Users').doc(userId).delete();
   }
 
