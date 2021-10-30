@@ -97,8 +97,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
             splashColor: Colors.transparent,
             highlightColor: Colors.transparent,
             onTap: () {
-              // Navigator.push(
-              // context, MaterialPageRoute(builder: (_) => DatabaseList()));
               Navigator.of(context).push(
                 CupertinoPageRoute(
                   builder: (_) => Settings(),

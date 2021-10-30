@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:anonymous_chat/database_entities/message_entity.dart';
 import 'package:anonymous_chat/database_entities/room_entity.dart';
 import 'package:anonymous_chat/models/contact.dart';
 import 'package:anonymous_chat/models/local_user.dart';
+import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/tag.dart';
 import 'package:anonymous_chat/services.dart/firestore.dart';
 import 'package:anonymous_chat/services.dart/sqlite.dart';
@@ -11,15 +11,13 @@ import 'package:anonymous_chat/utilities/enums.dart';
 
 import 'package:tuple/tuple.dart';
 
-abstract class IDatabase<R extends RoomEntity, M extends MessageEntity> {
-  static IDatabase<OnlineRoomEntity, OnlineMessageEntity> get onlineDb =>
-      FirestoreService();
-  static IDatabase<LocalRoomEntity, LocalMessageEntity> get offlineDb =>
-      SqlitePersistance();
+abstract class IDatabase<R extends RoomEntity> {
+  static IDatabase<OnlineRoomEntity> get onlineDb => FirestoreService();
+  static IDatabase<LocalRoomEntity> get offlineDb => SqlitePersistance();
 
   Future<List<String>> getBlockedContacts({required String userId});
 
-  Future<List<M>> getAllMessages({required String roomId});
+  Future<List<Message>> getAllMessages({required String roomId});
 
   Stream<List<Tuple2<Map<String, dynamic>, DataChangeType>>> userRoomsChanges({
     required String userId,
@@ -30,7 +28,7 @@ abstract class IDatabase<R extends RoomEntity, M extends MessageEntity> {
 
   Future<void> saveNewRoomEntity({required R roomEntity});
 
-  Future<void> writeMessage({required String roomId, required M message});
+  Future<void> writeMessage({required String roomId, required Message message});
   Future<void> deleteMessage(String msgId);
 
   Future<void> markMessageAsRead(
@@ -47,6 +45,8 @@ abstract class IDatabase<R extends RoomEntity, M extends MessageEntity> {
 
   Future<void> saveUserData({required LocalUser user});
   Future<void> saveContactData({required Contact contact});
+  Future<void> saveUserToken(String userId, String token);
+  Future<void> saveUserNickname(String nickname, String userId);
 
   Future<void> archiveChat({required String userId, required String roomId});
   Future<void> unArchiveChat({required String userId, required String roomId});
@@ -75,7 +75,7 @@ abstract class IDatabase<R extends RoomEntity, M extends MessageEntity> {
 
   // Stream<List<Map<String, dynamic>?>> userTagsChanges({required String userId});
 
-  Stream<Tuple2<M, DataChangeType>> roomMessagesUpdates(
+  Stream<Tuple2<Message, DataChangeType>> roomMessagesUpdates(
       {required String roomId});
 
   Future<void> deactivateTag(

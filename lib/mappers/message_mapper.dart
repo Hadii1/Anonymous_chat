@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:anonymous_chat/database_entities/message_entity.dart';
 import 'package:anonymous_chat/database_entities/room_entity.dart';
 import 'package:anonymous_chat/interfaces/database_interface.dart';
 import 'package:anonymous_chat/models/message.dart';
@@ -26,20 +25,18 @@ class MessageMapper {
 
   MessageMapper._internal();
 
-  final IDatabase<LocalRoomEntity, LocalMessageEntity> offlineDb =
-      IDatabase.offlineDb;
-  final IDatabase<OnlineRoomEntity, OnlineMessageEntity> onlineDb =
-      IDatabase.onlineDb;
+  final IDatabase<LocalRoomEntity> offlineDb = IDatabase.offlineDb;
+  final IDatabase<OnlineRoomEntity> onlineDb = IDatabase.onlineDb;
 
   Stream<Tuple2<Message, MessageServeUpdateType>?> serverMessagesUpdates(
       {required String roomId, required String userId}) {
     return onlineDb
         .roomMessagesUpdates(roomId: roomId)
-        .map((Tuple2<OnlineMessageEntity, DataChangeType> event) {
-      Message message = event.item1.toModel();
+        .map((Tuple2<Message, DataChangeType> event) {
+      Message message = event.item1;
       MessageServeUpdateType? type;
       if (event.item2 == DataChangeType.ADDED && message.isReceived(userId))
-        type = MessageServeUpdateType.MESSAGE_RECIEVED;
+        type = MessageServeUpdateType.MESSAGE_RECEIVED;
       else if (event.item2 == DataChangeType.MODIFIED && message.isSent(userId))
         type = MessageServeUpdateType.MESSAGE_READ;
       // else if (event.item2 == DataChangeType. && message.isSent(userId))
@@ -52,15 +49,11 @@ class MessageMapper {
   Future<List<Message>> getRoomMessages(
       String roomId, GetDataSource source) async {
     if (source == GetDataSource.LOCAL) {
-      List<LocalMessageEntity> entities =
-          await offlineDb.getAllMessages(roomId: roomId);
-
-      return entities.map((e) => e.toModel()).toList();
+      List<Message> entities = await offlineDb.getAllMessages(roomId: roomId);
+      return entities;
     } else {
-      List<OnlineMessageEntity> entities =
-          await onlineDb.getAllMessages(roomId: roomId);
-
-      return entities.map((e) => e.toModel()).toList();
+      List<Message> entities = await onlineDb.getAllMessages(roomId: roomId);
+      return entities;
     }
   }
 
@@ -72,13 +65,13 @@ class MessageMapper {
     if (source == SetDataSource.BOTH || source == SetDataSource.LOCAL) {
       await offlineDb.writeMessage(
         roomId: roomId,
-        message: LocalMessageEntity.fromMessageModel(message, roomId),
+        message: message,
       );
     }
     if (source == SetDataSource.BOTH || source == SetDataSource.ONLINE) {
       await onlineDb.writeMessage(
         roomId: roomId,
-        message: OnlineMessageEntity.fromMessageModel(message, roomId),
+        message: message,
       );
     }
   }

@@ -1,23 +1,17 @@
 import 'dart:io';
 
-import 'package:anonymous_chat/interfaces/prefs_storage_interface.dart';
-import 'package:anonymous_chat/mappers/chat_room_mapper.dart';
-import 'package:anonymous_chat/models/chat_room.dart';
-import 'package:anonymous_chat/models/local_user.dart';
 import 'package:anonymous_chat/interfaces/auth_interface.dart';
 import 'package:anonymous_chat/interfaces/database_interface.dart';
+import 'package:anonymous_chat/interfaces/prefs_storage_interface.dart';
+import 'package:anonymous_chat/models/local_user.dart';
 import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/providers/loading_provider.dart';
-import 'package:anonymous_chat/providers/starting_data_provider.dart';
 import 'package:anonymous_chat/providers/user_auth_events_provider.dart';
 import 'package:anonymous_chat/services.dart/authentication.dart';
-import 'package:anonymous_chat/syncer/rooms_syncer.dart';
 import 'package:anonymous_chat/utilities/enums.dart';
-
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final navigationSignal = StateNotifierProvider.autoDispose<
     NavigationSignalNotifier, DestinationAfterAuth?>(
@@ -35,7 +29,6 @@ final authProvider = ChangeNotifierProvider.autoDispose(
     ref.read(errorsStateProvider.notifier),
     ref.read(loadingProvider.notifier),
     ref.read(navigationSignal.notifier),
-    ref.read(startingDataProvider.notifier),
     ref.read(userAuthEventsProvider.notifier),
   ),
 );
@@ -46,7 +39,7 @@ class PhoneVerificationNotifier extends ChangeNotifier {
   final NavigationSignalNotifier _navigationSignal;
   final ILocalPrefs prefs = ILocalPrefs.storage;
   final FirebaseAuthService _auth = (IAuth.auth as FirebaseAuthService);
-  final StartingData _startingData;
+
   final UserAuthNotifier _authNotifier;
 
   String number = '';
@@ -59,7 +52,6 @@ class PhoneVerificationNotifier extends ChangeNotifier {
     this._errorNotifier,
     this._loadingNotifier,
     this._navigationSignal,
-    this._startingData,
     this._authNotifier,
   );
 
@@ -128,10 +120,10 @@ class PhoneVerificationNotifier extends ChangeNotifier {
 
       bool isNewUser = credentail.additionalUserInfo!.isNewUser;
 
-      LocalUser? user =
+      LocalUser? onlineUser =
           await IDatabase.onlineDb.getUserData(id: credentail.user!.uid);
 
-      if (isNewUser || user == null) {
+      if (isNewUser || onlineUser == null) {
         // User is tottaly new or the user
         // deleted his account then registered again
         // so we just treat it as new one
@@ -139,28 +131,12 @@ class PhoneVerificationNotifier extends ChangeNotifier {
           id: credentail.user!.uid,
           phoneNumber: number,
         );
-        await IDatabase.onlineDb.saveUserData(user: createdUser);
-
-        await prefs.setUser(createdUser);
-
+        await _authNotifier.onLogin(createdUser, true);
         _navigationSignal.navigate = DestinationAfterAuth.NAME_GENERATOR_SCREEN;
-        _authNotifier.onLogin(createdUser);
-        _startingData.room = [];
       } else {
         // Logging in
-        await prefs.setUser(
-          user,
-        );
-
-        List<ChatRoom> userRooms = await ChatRoomsMapper()
-            .getUserRooms(userId: user.id, source: GetDataSource.ONLINE);
-
-        RoomsSyncer().onUserLogin(userRooms);
-
-        _startingData.room = userRooms;
-        _authNotifier.onLogin(user);
-
-        _navigationSignal.navigate = user.isNicknamed
+        await _authNotifier.onLogin(onlineUser, false);
+        _navigationSignal.navigate = onlineUser.isNicknamed
             ? DestinationAfterAuth.HOME_SCREEN
             : DestinationAfterAuth.NAME_GENERATOR_SCREEN;
       }

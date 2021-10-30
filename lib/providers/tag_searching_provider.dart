@@ -121,7 +121,8 @@ class TagSuggestionsNotifier extends ChangeNotifier {
 
       // get suggested tags data
       List<Map<String, dynamic>> algoliaData = (await retry(
-          f: () => searchService.getTagSuggestions(label: label)))!;
+        f: () => searchService.getTagSuggestions(label: label),
+      ))!;
 
       List<Map<String, dynamic>> data = (await retry(
           f: () => db.getTagsById(

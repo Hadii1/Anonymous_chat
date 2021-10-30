@@ -184,8 +184,7 @@ class Settings extends StatelessWidget {
 
       await IDatabase.onlineDb.deleteAccount(userId: userId);
       await IAuth.auth.signOut();
-      await IDatabase.offlineDb.deleteAccount(userId: userId);
-      context.read(userAuthEventsProvider.notifier).onLogout();
+      await context.read(userAuthEventsProvider.notifier).onLogout(userId);
 
       Navigator.of(context).pushAndRemoveUntil(
         FadingRoute(
@@ -207,9 +206,10 @@ class Settings extends StatelessWidget {
       final userId = ILocalPrefs.storage.user!.id;
 
       await IAuth.auth.signOut();
-      await IDatabase.offlineDb.deleteAccount(userId: userId);
-      context.read(userAuthEventsProvider.notifier).onLogout();
-      
+      await context.read(userAuthEventsProvider.notifier).onLogout(userId);
+
+      Navigator.of(context).pushAndRemoveUntil(
+          FadingRoute(builder: (_) => LoginScreen()), (route) => false);
     } on Exception catch (e) {
       context.read(errorsStateProvider.notifier).set(
             e is SocketException

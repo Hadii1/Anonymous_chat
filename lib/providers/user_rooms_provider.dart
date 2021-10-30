@@ -52,9 +52,9 @@ class RoomsNotifier extends ChangeNotifier {
         .getUserRooms(userId: _userId, source: GetDataSource.ONLINE)
         .then((List<ChatRoom> onlineRooms) async {
       bool modified = false;
-      if (allRooms.isNotEmpty) {
-        modified = await RoomsSyncer().syncRooms(onlineRooms, allRooms);
-      }
+
+      modified = await RoomsSyncer().syncRooms(onlineRooms, allRooms, _userId);
+
       if (modified) {
         allRooms = [...onlineRooms];
       }

@@ -14,7 +14,6 @@
 
 import 'dart:async';
 
-import 'package:anonymous_chat/database_entities/message_entity.dart';
 import 'package:anonymous_chat/database_entities/room_entity.dart';
 import 'package:anonymous_chat/interfaces/database_interface.dart';
 import 'package:anonymous_chat/mappers/contact_mapper.dart';
@@ -33,10 +32,8 @@ class ChatRoomsMapper {
 
   ChatRoomsMapper._internal();
 
-  final IDatabase<LocalRoomEntity, LocalMessageEntity> offlineDb =
-      IDatabase.offlineDb;
-  final IDatabase<OnlineRoomEntity, OnlineMessageEntity> onlineDb =
-      IDatabase.onlineDb;
+  final IDatabase<LocalRoomEntity> offlineDb = IDatabase.offlineDb;
+  final IDatabase<OnlineRoomEntity> onlineDb = IDatabase.onlineDb;
 
   final MessageMapper messageMapper = MessageMapper();
   final ContactMapper contactMapper = ContactMapper();
@@ -120,9 +117,7 @@ class ChatRoomsMapper {
 
       await onlineDb.saveNewRoomEntity(roomEntity: roomEntity);
 
-      for (OnlineMessageEntity message in room.messages.map(
-        (Message m) => OnlineMessageEntity.fromMessageModel(m, room.id),
-      )) {
+      for (Message message in room.messages) {
         await onlineDb.writeMessage(roomId: room.id, message: message);
       }
     }
@@ -137,10 +132,7 @@ class ChatRoomsMapper {
       await offlineDb.saveContactData(contact: room.contact);
 
       for (Message message in room.messages) {
-        await offlineDb.writeMessage(
-          roomId: room.id,
-          message: LocalMessageEntity.fromMessageModel(message, room.id),
-        );
+        await offlineDb.writeMessage(roomId: room.id, message: message);
       }
     }
   }

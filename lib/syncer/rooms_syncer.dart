@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:anonymous_chat/interfaces/prefs_storage_interface.dart';
 import 'package:anonymous_chat/mappers/chat_room_mapper.dart';
 import 'package:anonymous_chat/mappers/message_mapper.dart';
 import 'package:anonymous_chat/models/chat_room.dart';
@@ -27,17 +26,16 @@ class RoomsSyncer {
 
   final ChatRoomsMapper _roomsMapper = ChatRoomsMapper();
   final MessageMapper _messageMapper = MessageMapper();
-  final String userId = ILocalPrefs.storage.user!.id;
 
-  void onUserLogin(List<ChatRoom> rooms) async {
+  void onUserLogin(List<ChatRoom> rooms, String userId) async {
     for (var room in rooms) {
       await _roomsMapper.saveUserRoom(
           room: room, userId: userId, source: SetDataSource.LOCAL);
     }
   }
 
-  Future<bool> syncRooms(
-      List<ChatRoom> onlineRooms, List<ChatRoom> localRooms) async {
+  Future<bool> syncRooms(List<ChatRoom> onlineRooms, List<ChatRoom> localRooms,
+      String userId) async {
     bool didModify = false;
 
     List<RoomSyncingAction> actions =

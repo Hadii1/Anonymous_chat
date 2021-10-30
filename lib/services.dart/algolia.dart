@@ -1,6 +1,7 @@
 import 'package:algolia/algolia.dart';
 import 'package:anonymous_chat/interfaces/search_service_interface.dart';
 import 'package:anonymous_chat/models/tag.dart';
+// import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AlgoliaSearch implements ISearchService {
   static final AlgoliaSearch _instance = AlgoliaSearch._internal();
@@ -9,10 +10,13 @@ class AlgoliaSearch implements ISearchService {
 
   AlgoliaSearch._internal();
 
-  static late Algolia algolia;
+  static late final Algolia _algolia;
 
   static Future<void> init() async {
-    algolia = Algolia.init(
+    // String id = dotenv.env['ALGOLIA_APP_ID']!;
+    // String apiKey = dotenv.env['ALGOLIA_API_KEY']!;
+
+    _algolia = Algolia.init(
       applicationId: 'FCSC4ICBGI',
       apiKey: 'f067bed810fd56bd28212ae4ffb4846d',
     );
@@ -22,14 +26,14 @@ class AlgoliaSearch implements ISearchService {
   Future<List<Map<String, dynamic>>> getTagSuggestions(
       {required String label}) async {
     AlgoliaQuerySnapshot a =
-        await algolia.index('Tags').query(label).getObjects();
+        await _algolia.index('Tags').query(label).getObjects();
 
     return a.hits.map((AlgoliaObjectSnapshot e) => e.data).toList();
   }
 
   @override
   Future<void> addSearchableTag({required Tag tag}) async =>
-      await algolia.instance.index('Tags').addObject(
+      await _algolia.instance.index('Tags').addObject(
         {
           'label': tag.label,
           'id': tag.id,

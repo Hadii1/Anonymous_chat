@@ -22,50 +22,48 @@ import 'package:anonymous_chat/providers/starting_data_provider.dart';
 import 'package:anonymous_chat/providers/user_auth_events_provider.dart';
 import 'package:anonymous_chat/services.dart/algolia.dart';
 import 'package:anonymous_chat/services.dart/authentication.dart';
-import 'package:anonymous_chat/services.dart/sqlite.dart';
-import 'package:anonymous_chat/services.dart/shared_preferences.dart';
 import 'package:anonymous_chat/services.dart/push_notificaitons.dart';
+import 'package:anonymous_chat/services.dart/shared_preferences.dart';
+import 'package:anonymous_chat/services.dart/sqlite.dart';
 import 'package:anonymous_chat/utilities/enums.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Returns if the user is authenticated or not
 final appInitialzationProvider = FutureProvider.autoDispose<UserState>(
   (ref) async {
     await Firebase.initializeApp();
-    await SharedPrefs.init();
-    await AlgoliaSearch.init();
-    await NotificationsService.init();
-    await SqlitePersistance.init();
-    
     // await SqlitePersistance().deleteAccount(userId:  FirebaseAuthService().getUser()!.uid);
     // await FirebaseAuthService().signOut();
+    await SharedPrefs.init();
+    // await ILocalPrefs.storage.setUser(null);
+    await dotenv.load(fileName: '.env');
+    await NotificationsService.init(ILocalPrefs.storage.user?.id);
+    await SqlitePersistance.init();
+    await AlgoliaSearch.init();
 
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
     IDatabase onlineDb = IDatabase.onlineDb;
-    // IDatabase offlineDb = IDatabase.offlineDb;
-
     ILocalPrefs storage = ILocalPrefs.storage;
     IAuth auth = IAuth.auth as FirebaseAuthService;
 
     User? user = auth.getUser();
+    LocalUser? userData =
+        user == null ? null : (await onlineDb.getUserData(id: user.uid));
 
-    if (user == null) return UserState.NOT_AUTHENTICATTED;
+    if (user == null || userData == null) return UserState.NOT_AUTHENTICATTED;
 
-    LocalUser? localUser = (await onlineDb.getUserData(id: user.uid));
-
-    if (localUser == null) return UserState.NOT_AUTHENTICATTED;
-
-    if (localUser.isNicknamed) {
+    if (userData.isNicknamed) {
       // Update local user in case it's missing (due to uninstalling app)
-      if (storage.user == null || storage.user != localUser) {
-        storage.setUser(localUser);
+      if (storage.user == null || storage.user != userData) {
+        storage.setUser(userData);
       }
-      ref.read(userAuthEventsProvider.notifier).user = localUser;
+      ref.read(userAuthEventsProvider.notifier).user = userData;
 
       // Load the local chats here to directly display them in chats screen
       List<ChatRoom> rooms = await ChatRoomsMapper().getUserRooms(

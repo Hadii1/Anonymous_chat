@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:anonymous_chat/database_entities/message_entity.dart';
 import 'package:anonymous_chat/database_entities/room_entity.dart';
 import 'package:anonymous_chat/interfaces/database_interface.dart';
 import 'package:anonymous_chat/models/contact.dart';
 import 'package:anonymous_chat/models/local_user.dart';
+import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/models/tag.dart';
 import 'package:anonymous_chat/utilities/custom_exceptions.dart';
 import 'package:anonymous_chat/utilities/enums.dart';
@@ -12,8 +12,7 @@ import 'package:anonymous_chat/utilities/extentions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tuple/tuple.dart';
 
-class FirestoreService
-    implements IDatabase<OnlineRoomEntity, OnlineMessageEntity> {
+class FirestoreService implements IDatabase<OnlineRoomEntity> {
   static final FirestoreService _instance = FirestoreService._internal();
 
   factory FirestoreService() => _instance;
@@ -24,7 +23,7 @@ class FirestoreService
 
   @override
   Future<void> writeMessage(
-      {required String roomId, required OnlineMessageEntity message}) async {
+      {required String roomId, required Message message}) async {
     await _db
         .collection('Rooms')
         .doc(roomId)
@@ -195,15 +194,12 @@ class FirestoreService
     for (String id in contacts) {
       DocumentSnapshot<Map<String, dynamic>> documentSnapshot =
           await _db.collection('Users').doc(id).get();
+      if (documentSnapshot.data() == null) continue;
 
       bool isBlocked = blockedContacts.contains(id);
-
       Map<String, dynamic> map = {'isBlocked': isBlocked};
-
-      if (documentSnapshot.data() != null) {
-        map.addAll(documentSnapshot.data()!);
-        contactsData.add(map);
-      }
+      map.addAll(documentSnapshot.data()!);
+      contactsData.add(map);
     }
 
     return contactsData.map((e) => Contact.fromMap(e)).toList();
@@ -279,11 +275,11 @@ class FirestoreService
   }
 
   @override
-  Stream<Tuple2<OnlineMessageEntity, DataChangeType>> roomMessagesUpdates({
+  Stream<Tuple2<Message, DataChangeType>> roomMessagesUpdates({
     required String roomId,
   }) {
-    return Stream.castFrom<Tuple2<OnlineMessageEntity, DataChangeType>?,
-            Tuple2<OnlineMessageEntity, DataChangeType>>(
+    return Stream.castFrom<Tuple2<Message, DataChangeType>?,
+            Tuple2<Message, DataChangeType>>(
         _db
             .collection('Rooms')
             .doc(roomId)
@@ -291,7 +287,7 @@ class FirestoreService
             .snapshots()
             .skip(1)
             .map((QuerySnapshot<Map<String, dynamic>> event) {
-      List<Tuple2<OnlineMessageEntity, DataChangeType>> a = event.docChanges
+      List<Tuple2<Message, DataChangeType>> a = event.docChanges
           .where(
         (element) =>
             !element.doc.metadata.isFromCache &&
@@ -300,7 +296,7 @@ class FirestoreService
           .map(
         (DocumentChange<Map<String, dynamic>> e) {
           return Tuple2(
-              OnlineMessageEntity.fromMap(
+              Message.fromMap(
                 e.doc.data()!,
               ),
               e.type.changeType());
@@ -311,8 +307,7 @@ class FirestoreService
   }
 
   @override
-  Future<List<OnlineMessageEntity>> getAllMessages(
-      {required String roomId}) async {
+  Future<List<Message>> getAllMessages({required String roomId}) async {
     var a = await _db
         .collection('Rooms')
         .doc(roomId)
@@ -320,7 +315,7 @@ class FirestoreService
         .orderBy('time')
         .get();
 
-    return a.docs.map((e) => OnlineMessageEntity.fromMap(e.data())).toList();
+    return a.docs.map((e) => Message.fromMap(e.data())).toList();
   }
 
   @override
@@ -471,5 +466,21 @@ class FirestoreService
   @override
   Future<void> deleteMessage(String msgId) {
     throw UnimplementedError();
+  }
+
+  @override
+  Future<void> saveUserToken(String userId, String token) async {
+    await _db.collection('Users').doc(userId).set(
+        {
+          'tokens': FieldValue.arrayUnion([token]),
+        },
+        SetOptions(
+          mergeFields: ['tokens'],
+        ));
+  }
+
+  @override
+  Future<void> saveUserNickname(String nickname, String userId) async {
+    await _db.collection('Users').doc(userId).update({'nickname': nickname});
   }
 }

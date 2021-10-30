@@ -49,9 +49,7 @@ class _NameScreenState extends State<NameScreen> {
 
     try {
       await retry(f: () async {
-        await db.saveUserData(
-          user: user.copyWith(nickname: name),
-        );
+        await db.saveUserNickname(name, user.id);
         await prefs.setUser(user.copyWith(nickname: name));
       });
       return true;

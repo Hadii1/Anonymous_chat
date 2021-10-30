@@ -65,10 +65,4 @@ class FirebaseAuthService
 
   @override
   String? getId() => _authInstance.currentUser?.uid;
-
-  // @override
-  // Future<UserCredential> linkUserWithCredential(
-  //     AuthCredential credential) async {
-  //   return await _authInstance.currentUser!.linkWithCredential(credential);
-  // }
 }

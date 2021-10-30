@@ -29,13 +29,13 @@ void main() {
           messages: RxList.from(
             [
               Message(
-                sender: 'contactId',
-                recipient: 'recipientId',
-                content: 'Hello',
-                time: DateTime(2020, 1, 1, 1).millisecondsSinceEpoch,
-                id: 'messageId',
-                isRead: false,
-              ),
+                  sender: 'contactId',
+                  recipient: 'recipientId',
+                  content: 'Hello',
+                  time: DateTime(2020, 1, 1, 1).millisecondsSinceEpoch,
+                  id: 'messageId',
+                  isRead: false,
+                  roomId: ''),
             ],
           ),
           id: '123456789',
@@ -49,6 +49,7 @@ void main() {
             [
               Message(
                 sender: 'contactId',
+                roomId: '',
                 recipient: 'recipientId',
                 content: 'Hello',
                 time: DateTime(2020, 1, 1, 1).millisecondsSinceEpoch,
@@ -58,6 +59,7 @@ void main() {
               Message(
                 sender: 'contactId',
                 recipient: 'recipientId',
+                roomId: '',
                 content: 'Kifak',
                 time: DateTime(2020, 1, 1, 2).millisecondsSinceEpoch,
                 id: 'messageId1',
@@ -78,6 +80,7 @@ void main() {
                 content: 'Lorem ipsum',
                 time: DateTime(2020, 1, 1, 1).millisecondsSinceEpoch,
                 id: 'messageId',
+                roomId: '',
                 isRead: false,
               ),
             ],

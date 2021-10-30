@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:anonymous_chat/database_entities/message_entity.dart';
-import 'package:anonymous_chat/database_entities/room_entity.dart';
-import 'package:anonymous_chat/models/contact.dart';
-import 'package:anonymous_chat/models/local_user.dart';
-import 'package:anonymous_chat/interfaces/database_interface.dart';
-import 'package:anonymous_chat/utilities/enums.dart';
-import 'package:anonymous_chat/models/tag.dart';
-
 import 'dart:async';
 
+
+import 'package:anonymous_chat/database_entities/room_entity.dart';
+import 'package:anonymous_chat/interfaces/database_interface.dart';
+import 'package:anonymous_chat/models/contact.dart';
+import 'package:anonymous_chat/models/local_user.dart';
+import 'package:anonymous_chat/models/message.dart';
+import 'package:anonymous_chat/models/tag.dart';
+import 'package:anonymous_chat/utilities/enums.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:tuple/tuple.dart';
@@ -31,7 +31,7 @@ const String _contactsTable = 'ContactsTable';
 const String _roomsTable = 'RoomsTable';
 
 class SqlitePersistance
-    implements IDatabase<LocalRoomEntity, LocalMessageEntity> {
+    implements IDatabase<LocalRoomEntity> {
   static final SqlitePersistance _instance = SqlitePersistance._internal();
 
   factory SqlitePersistance() => _instance;
@@ -180,7 +180,7 @@ class SqlitePersistance
 
   @override
   Future<void> writeMessage(
-      {required String roomId, required LocalMessageEntity message}) async {
+      {required String roomId, required Message message}) async {
     int isRead = message.isRead ? 1 : 0;
     await db.rawInsert(
       'INSERT INTO $_messagesTable VALUES("${message.id}","$roomId","${message.sender}","${message.recipient}","${message.content}","${message.replyingOn}",${message.time},$isRead)',
@@ -205,13 +205,13 @@ class SqlitePersistance
   }
 
   @override
-  Future<List<LocalMessageEntity>> getAllMessages(
+  Future<List<Message>> getAllMessages(
       {required String roomId}) async {
     List<Map<String, Object?>> data = await db.rawQuery(
       'SELECT * FROM $_messagesTable WHERE roomId = ? ORDER BY time ASC',
       [roomId],
     );
-    return data.map((e) => LocalMessageEntity.fromMap(e)).toList();
+    return data.map((e) => Message.fromMap(e)).toList();
   }
 
   @override
@@ -318,7 +318,7 @@ class SqlitePersistance
   }
 
   @override
-  Stream<Tuple2<LocalMessageEntity, DataChangeType>> roomMessagesUpdates(
+  Stream<Tuple2<Message, DataChangeType>> roomMessagesUpdates(
       {required String roomId}) {
     throw UnimplementedError();
   }
@@ -342,6 +342,16 @@ class SqlitePersistance
 
   @override
   Future<bool> isUserBlocked(String contactId, String userId) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> saveUserToken(String userId, String token) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> saveUserNickname(String nickname, String userId) {
     throw UnimplementedError();
   }
 }

@@ -29,7 +29,7 @@ enum DataChangeType {
 
 enum MessageServeUpdateType {
   MESSAGE_READ,
-  MESSAGE_RECIEVED,
+  MESSAGE_RECEIVED,
 }
 
 enum GetDataSource {

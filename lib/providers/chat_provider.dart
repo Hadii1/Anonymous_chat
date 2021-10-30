@@ -9,7 +9,6 @@ import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/providers/user_auth_events_provider.dart';
 import 'package:anonymous_chat/providers/user_rooms_provider.dart';
-import 'package:anonymous_chat/services.dart/shared_preferences.dart';
 import 'package:anonymous_chat/utilities/enums.dart';
 import 'package:anonymous_chat/utilities/general_functions.dart';
 import 'package:flutter/foundation.dart';
@@ -143,7 +142,7 @@ class ChatNotifier extends ChangeNotifier {
             notifyListeners();
             break;
 
-          case MessageServeUpdateType.MESSAGE_RECIEVED:
+          case MessageServeUpdateType.MESSAGE_RECEIVED:
             Message message = update.item1;
             assert(message.isReceived(userId));
             if (_isChatPageOpened) {
@@ -216,6 +215,7 @@ class ChatNotifier extends ChangeNotifier {
       time: DateTime.now().millisecondsSinceEpoch,
       replyingOn: replyingOn?.id,
       id: generateUid(),
+      roomId: room.id,
     );
 
     allMessages.add(message);
@@ -226,11 +226,6 @@ class ChatNotifier extends ChangeNotifier {
 
   bool isLatestMessage(Message message) =>
       allMessages
-          .where(
-            (Message m) => message.isReceived(userId)
-                ? m.recipient == SharedPrefs().user!.id
-                : m.recipient != SharedPrefs().user!.id,
-          )
           .last
           .id ==
       message.id;

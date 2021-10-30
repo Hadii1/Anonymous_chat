@@ -1,5 +1,6 @@
 class Message {
   final String id;
+  final String roomId;
   final String sender;
   final String recipient;
   final String content;
@@ -12,6 +13,7 @@ class Message {
 
   Message({
     required this.sender,
+    required this.roomId,
     required this.recipient,
     required this.content,
     required this.time,
@@ -27,10 +29,12 @@ class Message {
     required time,
     required id,
     required replyingOn,
+    required roomId,
   }) =>
       Message(
         isRead: false,
         content: content,
+        roomId: roomId,
         id: id,
         recipient: recipient,
         sender: sender,
@@ -65,12 +69,43 @@ class Message {
   Message markAsRead() {
     return Message(
       id: this.id,
+      roomId: this.roomId,
       sender: this.sender,
       recipient: this.recipient,
       content: this.content,
       replyingOn: this.replyingOn,
       time: this.time,
       isRead: true,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'roomId': roomId,
+      'sender': sender,
+      'recipient': recipient,
+      'content': content,
+      'replyingOn': replyingOn,
+      'time': time,
+      'isRead': isRead,
+    };
+  }
+
+  factory Message.fromMap(Map<String, dynamic> map) {
+    return Message(
+      id: map['id'],
+      roomId: map['roomId'],
+      sender: map['sender'],
+      recipient: map['recipient'],
+      content: map['content'],
+      replyingOn: map['replyingOn'] != null ? map['replyingOn'] : null,
+      time: map['time'],
+      isRead: (map['isRead'] is bool)
+          ? map['isRead']
+          : map['isRead'] == 0
+              ? false
+              : true,
     );
   }
 }
