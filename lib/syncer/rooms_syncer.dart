@@ -90,6 +90,9 @@ List<RoomSyncingAction> getSyncingActions(
     } else {
       ChatRoom localRoom = localList[index];
 
+      List<Message> pendingWrites = [];
+      List<Message> pendingDeletes = [];
+
       // We only check the messages that weren't checked before.
       // We keep track of the last sync time in the prefrences strorge.
       List<Message> uncheckedLocalMsgs =
@@ -97,12 +100,28 @@ List<RoomSyncingAction> getSyncingActions(
       List<Message> uncheckedOnlineMsgs =
           List.from(onlineRoom.messages.where((m) => m.time > lastSyncDate));
 
-      // Check if msgs are in sync
-      if (uncheckedLocalMsgs.length != uncheckedOnlineMsgs.length ||
+      // Check if msgs are in syn
+      //
+      if (uncheckedLocalMsgs.isEmpty && uncheckedOnlineMsgs.isEmpty) {
+        // No unsynced messages yet
+        result.add(RoomSyncingAction.synced(onlineRoom));
+      } else if (uncheckedLocalMsgs.isEmpty && uncheckedOnlineMsgs.isNotEmpty) {
+        // There's new messages that are missings locally.
+        for (Message m in uncheckedOnlineMsgs) {
+          pendingWrites.add(m);
+        }
+        result
+            .add(RoomSyncingAction.unsyncedMsgs(onlineRoom, pendingWrites, []));
+      } else if (uncheckedLocalMsgs.isNotEmpty && uncheckedOnlineMsgs.isEmpty) {
+        // There's added messages that are shouldn't be present locally.
+        for (Message m in uncheckedLocalMsgs) {
+          pendingDeletes.add(m);
+        }
+        result.add(
+          RoomSyncingAction.unsyncedMsgs(onlineRoom, [], pendingDeletes),
+        );
+      } else if (uncheckedLocalMsgs.length != uncheckedOnlineMsgs.length ||
           uncheckedLocalMsgs.last != uncheckedOnlineMsgs.last) {
-        List<Message> pendingWrites = [];
-        List<Message> pendingDeletes = [];
-
         // Start from the last message in the room and go backwards
         // Checking if each message exists or not.
         for (int i = uncheckedOnlineMsgs.length - 1; i >= 0; i--) {
