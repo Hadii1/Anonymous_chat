@@ -73,7 +73,9 @@ class ChatNotifier extends ChangeNotifier {
     localMessagesChanges = allMessages.onChange
         .listen((ListChangeNotification<Message> change) async {
       // When a message is sent locally:
-      if (change.element != null && change.element!.isSent(userId)) {
+      if (change.element != null &&
+          change.op == ListChangeOp.add &&
+          change.element!.isSent(userId)) {
         Message message = change.element!;
         if (replyingOn != null) {
           replyingOn = null;
@@ -85,7 +87,7 @@ class ChatNotifier extends ChangeNotifier {
         try {
           if (allMessages.length == 1) {
             // Room is new. This will trigger the room changes listener in [roomsProvider]
-            // and the room + msgs will be saved locally there so we don't do it here.
+            // and the room + msgs will be saved LOCALLY there so we don't do it here.
             await retry(
               f: () => roomsMapper.saveUserRoom(
                   room: room, userId: userId, source: SetDataSource.ONLINE),
@@ -175,18 +177,23 @@ class ChatNotifier extends ChangeNotifier {
     );
   }
 
-  // Mark all messages as read
+  // Mark all received messages as read
   void onChatOpened() {
     _isChatPageOpened = true;
     if (allMessages.isNotEmpty) {
-      List<Message> unreadMessages = room.messages
-          .where((m) => m.isReceived(userId) && !m.isRead)
-          .toList();
+      List<int> msgsToUpdate = [];
+      for (int i = 0; i < allMessages.length; i++) {
+        Message message = allMessages[i];
+        if (message.isReceived(userId) && !message.isRead) {
+          messagesMapper.markMessageAsRead(
+              messageId: message.id, roomId: room.id);
 
-      for (Message message in unreadMessages) {
-        Message m = message.markAsRead();
-        allMessages[allMessages.indexWhere((m) => m.id == message.id)] = m;
-        messagesMapper.markMessageAsRead(messageId: m.id, roomId: room.id);
+          msgsToUpdate.add(i);
+        }
+      }
+      for (int i in msgsToUpdate) {
+        Message message = allMessages[i].markAsRead();
+        allMessages[i] = message;
       }
 
       notifyListeners();
@@ -224,9 +231,5 @@ class ChatNotifier extends ChangeNotifier {
 
   bool isSuccessful(Message message) => successfullySent.contains(message);
 
-  bool isLatestMessage(Message message) =>
-      allMessages
-          .last
-          .id ==
-      message.id;
+  bool isLatestMessage(Message message) => allMessages.last.id == message.id;
 }

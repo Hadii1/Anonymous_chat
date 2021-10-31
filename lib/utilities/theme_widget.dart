@@ -126,7 +126,7 @@ class AppStyle {
     bodyText: TextStyle(
       color: Colors.white,
       fontFamily: 'SourceSansPro',
-      fontSize: 14,
+      fontSize: 15,
     ),
     dimmedColorText: Colors.white.withOpacity(0.6),
     chatHeaderLetter: TextStyle(

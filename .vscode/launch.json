@@ -27,14 +27,20 @@
             "request": "launch",
             "type": "dart",
             "deviceId": "emulator-5556"
-        }
+        },
+        {
+            "name": "Huawei",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "QYJ7N17401000634"
+        },
     ],
     "compounds": [
         {
             "name": "All",
             "configurations": [
                 "Pixel 4 XL",
-                "Pixel 3a"
+                "Huawei"
             ]
         }
     ]
