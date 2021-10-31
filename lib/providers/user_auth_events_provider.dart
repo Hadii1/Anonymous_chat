@@ -52,9 +52,10 @@ class UserAuthNotifier extends StateNotifier<LocalUser?> {
     state = user;
   }
 
-  Future<void> onLogout(String id) async{
-    state = null;
+  Future<void> onLogout(String id) async {
     await ILocalPrefs.storage.setUser(null);
+    await ILocalPrefs.storage.setSyncingDate(0);
     await IDatabase.offlineDb.deleteAccount(userId: id);
+    state = null;
   }
 }

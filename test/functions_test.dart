@@ -91,7 +91,7 @@ void main() {
       ];
 
       List<RoomSyncingAction> actions =
-          getSyncingActions(localList, onlineList);
+          getSyncingActions(localList, onlineList, 0);
 
       expect(actions.length, 2);
       expect(actions.first.type, ActionType.MESSAGES_OUT_OF_SYNC);

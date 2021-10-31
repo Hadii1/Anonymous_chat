@@ -25,6 +25,6 @@ abstract class ILocalPrefs {
   ThemeState get preferedTheme;
   set preferedTheme(ThemeState theme);
 
-  int? get lastStorageClearingDate;
-  set clearStorageDate(int millisSinceEpoch);
+  int get lastSyncingDate;
+  Future<void> setSyncingDate(int millisSinceEpoch);
 }

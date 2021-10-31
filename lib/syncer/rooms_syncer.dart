@@ -34,12 +34,14 @@ class RoomsSyncer {
     }
   }
 
-  Future<bool> syncRooms(List<ChatRoom> onlineRooms, List<ChatRoom> localRooms,
-      String userId) async {
-    bool didModify = false;
-
-    List<RoomSyncingAction> actions =
-        getSyncingActions(localRooms, onlineRooms);
+  Future<void> syncRooms(
+      List<ChatRoom> onlineRooms, List<ChatRoom> localRooms, String userId,
+      {required int lastSyncDate}) async {
+    List<RoomSyncingAction> actions = getSyncingActions(
+      localRooms,
+      onlineRooms,
+      lastSyncDate,
+    );
 
     for (RoomSyncingAction action in actions) {
       switch (action.type) {
@@ -47,7 +49,6 @@ class RoomsSyncer {
           break;
 
         case ActionType.MESSAGES_OUT_OF_SYNC:
-          didModify = true;
           for (Message m in action.messagesToWrite) {
             await _messageMapper.writeMessage(
               roomId: action.room.id,
@@ -62,7 +63,6 @@ class RoomsSyncer {
           break;
 
         case ActionType.ROOM_MISSING:
-          didModify = true;
           await _roomsMapper.saveUserRoom(
             room: action.room,
             userId: userId,
@@ -71,48 +71,60 @@ class RoomsSyncer {
           break;
       }
     }
-
-    return didModify;
   }
 }
 
 @visibleForTesting
 List<RoomSyncingAction> getSyncingActions(
-    List<ChatRoom> localList, List<ChatRoom> onlineList) {
+  List<ChatRoom> localList,
+  List<ChatRoom> onlineList,
+  int lastSyncDate,
+) {
   List<RoomSyncingAction> result = [];
 
   onlineList.forEach((ChatRoom onlineRoom) {
     int index = localList.indexOf(onlineRoom);
     if (index == -1) {
+      // Room doesn't exist in the local database
       result.add(RoomSyncingAction.missing(onlineRoom));
     } else {
       ChatRoom localRoom = localList[index];
 
+      // We only check the messages that weren't checked before.
+      // We keep track of the last sync time in the prefrences strorge.
+      List<Message> uncheckedLocalMsgs =
+          List.from(localRoom.messages.where((m) => m.time > lastSyncDate));
+      List<Message> uncheckedOnlineMsgs =
+          List.from(onlineRoom.messages.where((m) => m.time > lastSyncDate));
+
       // Check if msgs are in sync
-      if (localRoom.messages.length != onlineRoom.messages.length ||
-          localRoom.messages.last != onlineRoom.messages.last) {
+      if (uncheckedLocalMsgs.length != uncheckedOnlineMsgs.length ||
+          uncheckedLocalMsgs.last != uncheckedOnlineMsgs.last) {
         List<Message> pendingWrites = [];
         List<Message> pendingDeletes = [];
 
-        for (int i = onlineRoom.messages.length - 1; i >= 0; i--) {
-          if (!localRoom.messages.contains(onlineRoom.messages[i]))
-            pendingWrites.add(onlineRoom.messages[i]);
+        // Start from the last message in the room and go backwards
+        // Checking if each message exists or not.
+        for (int i = uncheckedOnlineMsgs.length - 1; i >= 0; i--) {
+          if (!uncheckedLocalMsgs.contains(uncheckedOnlineMsgs[i]))
+            pendingWrites.add(uncheckedOnlineMsgs[i]);
         }
 
-        for (int i = 0; i < localRoom.messages.length; i++) {
-          if (!onlineRoom.messages.contains(localRoom.messages[i]))
-            pendingDeletes.add(localRoom.messages[i]);
-
-          // // Check for duplicates too
-          // bool isDuplicated = localRoom.messages
-          //         .where((m) => m == localRoom.messages[i])
-          //         .length >
-          //     1;
+        // Checking for any excess msgs found locally and not
+        // not found in the online database.
+        // This is theoretically impossible as we only
+        // save the sent message locally after it was successfuly
+        // sent to the server but nevertheless we're just acting defensively.
+        for (int i = 0; i < uncheckedLocalMsgs.length; i++) {
+          if (!uncheckedOnlineMsgs.contains(uncheckedLocalMsgs[i]))
+            pendingDeletes.add(uncheckedLocalMsgs[i]);
         }
 
         if (pendingWrites.isNotEmpty || pendingDeletes.isNotEmpty)
-          result.add(RoomSyncingAction.unsyncedMsgs(
-              onlineRoom, [...pendingWrites], [...pendingDeletes]));
+          result.add(
+            RoomSyncingAction.unsyncedMsgs(
+                onlineRoom, [...pendingWrites], [...pendingDeletes]),
+          );
         else
           result.add(RoomSyncingAction.synced(onlineRoom));
 

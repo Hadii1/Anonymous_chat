@@ -43,9 +43,9 @@ class SharedPrefs implements ILocalPrefs {
       );
 
   @override
-  set clearStorageDate(int millisSinceEpoch) =>
-      prefs.setInt('clearStorageDate', millisSinceEpoch);
+  Future<void> setSyncingDate(int millisSinceEpoch) async =>
+      await prefs.setInt('lastSyncingDate', millisSinceEpoch);
 
   @override
-  int? get lastStorageClearingDate => prefs.getInt('clearStorageData');
+  int get lastSyncingDate => prefs.getInt('lastSyncingDate') ?? 0;
 }

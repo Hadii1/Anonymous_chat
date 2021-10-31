@@ -51,13 +51,21 @@ class RoomsNotifier extends ChangeNotifier {
     _roomsMapper
         .getUserRooms(userId: _userId, source: GetDataSource.ONLINE)
         .then((List<ChatRoom> onlineRooms) async {
-      bool modified = false;
+      // We assing the surely up to date rooms from the online databse
+      // and silently sync the local database.
+      RoomsSyncer()
+          .syncRooms(
+            onlineRooms,
+            allRooms,
+            _userId,
+            lastSyncDate: ILocalPrefs.storage.lastSyncingDate,
+          )
+          .then((value) => ILocalPrefs.storage
+              .setSyncingDate(DateTime.now().millisecondsSinceEpoch));
 
-      modified = await RoomsSyncer().syncRooms(onlineRooms, allRooms, _userId);
+      allRooms.clear();
+      allRooms = [...onlineRooms];
 
-      if (modified) {
-        allRooms = [...onlineRooms];
-      }
       isFirstFetch = false;
       notifyListeners();
     });
@@ -186,7 +194,7 @@ class RoomArchiveState extends StateNotifier<bool> {
 
 // This is to watch if the other contacts deleted the room
 // while this user is viewing it.
-// The state is only watched in the room screen.
+// The state is only watched in the corresponding room screen.
 final roomExistanceState =
     StateNotifierProvider.family<RoomExistanceState, bool, String>(
   (ref, String roomId) => RoomExistanceState(),
@@ -197,7 +205,8 @@ class RoomExistanceState extends StateNotifier<bool> {
   set deleted(bool value) => state = value;
 }
 
-// To watch if the contact is blocked by the other user
+// To watch if the contact is blocked by the other user.
+// The state is only watched in the corresponding room screen.
 final userBlockedState =
     StateNotifierProvider.family<UserBlockedNotifier, bool?, String>(
   (ref, String contactId) =>
