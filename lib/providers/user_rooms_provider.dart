@@ -6,6 +6,7 @@ import 'package:anonymous_chat/mappers/chat_room_mapper.dart';
 import 'package:anonymous_chat/mappers/contact_mapper.dart';
 import 'package:anonymous_chat/models/chat_room.dart';
 import 'package:anonymous_chat/models/contact.dart';
+import 'package:anonymous_chat/providers/blocked_contacts_provider.dart';
 import 'package:anonymous_chat/providers/chat_provider.dart';
 import 'package:anonymous_chat/providers/starting_data_provider.dart';
 import 'package:anonymous_chat/providers/user_auth_events_provider.dart';
@@ -98,27 +99,45 @@ class RoomsNotifier extends ChangeNotifier {
   }
 
   void toggleBlock({ChatRoom? room, Contact? contact, required bool block}) {
-    assert((room == null && contact == null) == false);
-    int index;
-    if (contact == null) {
-      index = allRooms.indexOf(room!);
-    } else {
-      index = allRooms.indexWhere((r) => r.contact.id == contact.id);
-    }
-    assert(index != -1);
-    ChatRoom selectedRoom = allRooms[index];
+    assert((room != null) ^ (contact != null));
 
-    allRooms[index] =
-        block ? selectedRoom.blockContact() : selectedRoom.unBlockContact();
-    notifyListeners();
+    Contact blockedContact = contact ?? room!.contact;
+
+    int index;
+    if (room != null) {
+      index = allRooms.indexOf(room);
+    } else {
+      index = allRooms.indexWhere((r) => r.contact.id == contact!.id);
+    }
+    if (index != -1) {
+      ChatRoom selectedRoom = allRooms[index];
+      allRooms[index] =
+          block ? selectedRoom.blockContact() : selectedRoom.unBlockContact();
+      retry(
+        shouldRethrow: false,
+        f: () => ContactMapper().toggleContactBlock(
+          contact: blockedContact,
+          block: block,
+          userId: _userId,
+          source: SetDataSource.LOCAL,
+        ),
+      );
+    }
+
     retry(
       shouldRethrow: false,
       f: () => ContactMapper().toggleContactBlock(
-        contact: selectedRoom.contact,
+        contact: blockedContact,
         block: block,
         userId: _userId,
+        source: SetDataSource.ONLINE,
       ),
     );
+
+    read(blockedContactsProvider.notifier)
+        .toggleBlock(block: block, contact: blockedContact);
+
+    notifyListeners();
   }
 
   void editArchives({required ChatRoom room, required bool archive}) {

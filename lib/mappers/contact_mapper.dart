@@ -30,15 +30,25 @@ class ContactMapper {
     required Contact contact,
     required bool block,
     required String userId,
+    required SetDataSource source,
   }) async {
-    if (block) {
-      await _onlineDb.blockContact(userId: userId, blockedContact: contact.id);
-      await _offlineDb.blockContact(userId: userId, blockedContact: contact.id);
-    } else {
-      await _onlineDb.unblockContact(
-          userId: userId, blockedContact: contact.id);
-      await _offlineDb.unblockContact(
-          userId: userId, blockedContact: contact.id);
+    if (source == SetDataSource.BOTH || source == SetDataSource.LOCAL) {
+      if (block) {
+        await _offlineDb.blockContact(
+            userId: userId, blockedContact: contact.id);
+      } else {
+        await _offlineDb.unblockContact(
+            userId: userId, blockedContact: contact.id);
+      }
+    }
+    if (source == SetDataSource.BOTH || source == SetDataSource.ONLINE) {
+      if (block) {
+        await _onlineDb.blockContact(
+            userId: userId, blockedContact: contact.id);
+      } else {
+        await _onlineDb.unblockContact(
+            userId: userId, blockedContact: contact.id);
+      }
     }
   }
 

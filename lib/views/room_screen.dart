@@ -3,6 +3,7 @@ import 'package:anonymous_chat/models/chat_room.dart';
 import 'package:anonymous_chat/models/contact.dart';
 import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/providers/activity_status_provider.dart';
+import 'package:anonymous_chat/providers/blocked_contacts_provider.dart';
 import 'package:anonymous_chat/providers/chat_provider.dart';
 import 'package:anonymous_chat/providers/user_auth_events_provider.dart';
 import 'package:anonymous_chat/providers/user_rooms_provider.dart';
@@ -59,7 +60,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         // the room while this user is viewing it.
         final bool exists = watch(roomExistanceState(widget.room.id));
         final bool isContactBlocked =
-            watch(roomsProvider).blockedContacts.contains(other);
+            watch(blockedContactsProvider).contains(other);
         final bool? isUserBlocked =
             watch(userBlockedState(widget.room.contact.id));
 

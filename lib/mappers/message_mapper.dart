@@ -80,6 +80,19 @@ class MessageMapper {
     await offlineDb.deleteMessage(id);
   }
 
+  Future<Message?> getMessage({
+    required String messageId,
+    required String roomId,
+    required SetDataSource source,
+  }) async {
+    if (source == SetDataSource.BOTH || source == SetDataSource.LOCAL) {
+      return await offlineDb.getMessage(roomId: roomId, messageId: messageId);
+    }
+    if (source == SetDataSource.BOTH || source == SetDataSource.ONLINE) {
+      return await onlineDb.getMessage(roomId: roomId, messageId: messageId);
+    }
+  }
+
   Future<void> markMessageAsRead({
     required String messageId,
     required String roomId,

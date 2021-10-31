@@ -156,7 +156,8 @@ class _CustomSizeTransitionState extends State<CustomSizeTransition>
     );
     _animation = CurvedAnimation(
       parent: _animationController,
-      curve: Curves.linear,
+      curve: Curves.easeIn,
+      reverseCurve: Curves.easeOut,
     );
 
     _animationController.forward();

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import 'package:anonymous_chat/models/contact.dart';
+import 'package:anonymous_chat/providers/blocked_contacts_provider.dart';
 import 'package:anonymous_chat/providers/user_rooms_provider.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/widgets/animated_widgets.dart';
@@ -39,8 +40,7 @@ class BlockedContactsScreen extends StatelessWidget {
               Expanded(
                 child: Consumer(
                   builder: (context, watch, _) {
-                    List<Contact> blockedUsers =
-                        watch(roomsProvider).blockedContacts;
+                    List<Contact> blockedUsers = watch(blockedContactsProvider);
 
                     return AnimatedSwitcher(
                       duration: Duration(milliseconds: 250),

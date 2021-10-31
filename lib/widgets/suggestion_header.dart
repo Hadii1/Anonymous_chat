@@ -1,22 +1,17 @@
 import 'package:anonymous_chat/models/chat_room.dart';
 import 'package:anonymous_chat/models/contact.dart';
-import 'package:anonymous_chat/models/tag.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/views/room_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tuple/tuple.dart';
 
 class SuggestedContact extends StatelessWidget {
-  final Tuple2<Contact, List<Tag>> data;
+  final Contact contact;
 
   const SuggestedContact({
-    required this.data,
+    required this.contact,
   });
-
-  Contact get suggestedUser => data.item1;
-  List<Tag> get commonTags => data.item2;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +27,7 @@ class SuggestedContact extends StatelessWidget {
               CupertinoPageRoute(
                 builder: (c) {
                   return ChatRoomScreen(
-                    room: ChatRoom.startNew(suggestedUser),
+                    room: ChatRoom.startNew(contact),
                   );
                 },
               ),
@@ -54,7 +49,7 @@ class SuggestedContact extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text(
-                    suggestedUser.nickname.substring(0, 1).toUpperCase(),
+                    contact.nickname.substring(0, 1).toUpperCase(),
                     style: style.chatHeaderLetter,
                     textAlign: TextAlign.center,
                   ),
@@ -63,43 +58,43 @@ class SuggestedContact extends StatelessWidget {
               SizedBox(
                 width: 12,
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    suggestedUser.nickname,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white.withOpacity(0.9),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  // SizedBox(
-                  //   height: 4,
-                  // ),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: List.generate(
-                        commonTags.length,
-                        (index) => Padding(
-                          padding: const EdgeInsets.only(
-                            right: 4.0,
-                            bottom: 2,
-                            top: 2,
-                          ),
-                          child: Text(
-                            commonTags[index].label,
-                            style: style.bodyText.copyWith(
-                              color: AppStyle.secondaryTextColor,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              )
+              Text(
+                contact.nickname,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.white.withOpacity(0.9),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              // Column(
+              //   crossAxisAlignment: CrossAxisAlignment.start,
+              //   children: [
+              // SizedBox(
+              //   height: 4,
+              // ),
+              // SingleChildScrollView(
+              //   scrollDirection: Axis.horizontal,
+              //   child: Row(
+              //     children: List.generate(
+              //       commonTags.length,
+              //       (index) => Padding(
+              //         padding: const EdgeInsets.only(
+              //           right: 4.0,
+              //           bottom: 2,
+              //           top: 2,
+              //         ),
+              //         child: Text(
+              //           commonTags[index].label,
+              //           style: style.bodyText.copyWith(
+              //             color: AppStyle.secondaryTextColor,
+              //           ),
+              //         ),
+              //       ),
+              //     ),
+              //   ),
+              // ),
+              //   ],
+              // )
             ],
           ),
         );

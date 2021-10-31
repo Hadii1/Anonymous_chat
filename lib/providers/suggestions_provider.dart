@@ -5,10 +5,8 @@ import 'package:anonymous_chat/models/tag.dart';
 import 'package:anonymous_chat/providers/tags_provider.dart';
 import 'package:anonymous_chat/providers/user_rooms_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tuple/tuple.dart';
 
-final suggestedContactsProvider =
-    FutureProvider.autoDispose<List<Tuple2<Contact, List<Tag>>>?>(
+final suggestedContactsProvider = FutureProvider.autoDispose<List<Contact>?>(
   (ref) async {
     List<Contact> userContacts = ref.watch(roomsProvider).contacts;
 
@@ -21,7 +19,7 @@ final suggestedContactsProvider =
       return [];
     }
 
-    List<Tuple2<Contact, List<Tag>>> suggestions = [];
+    List<Contact> suggestions = [];
 
     List<Contact> contacts = await IDatabase.onlineDb.getMatchingUsers(
       tagsIds: selectedTags.map((e) => e.tag.id).toList(),
@@ -29,22 +27,14 @@ final suggestedContactsProvider =
     );
 
     for (Contact contact in contacts) {
-      if (!suggestions.map((e) => e.item1).contains(contact))
+      if (!suggestions.map((c) => c).contains(contact))
         suggestions.add(
-          Tuple2(
-            contact,
-            selectedTags
-                .where((UserTag t) => selectedTags.contains(t.tag.id))
-                .map((e) => e.tag)
-                .toList(),
-          ),
+          contact,
         );
     }
 
-    suggestions.removeWhere(
-      (Tuple2<Contact, List<Tag>> t) =>
-          t.item1.id == userId || userContacts.contains(t.item1),
-    );
+    suggestions.removeWhere((Contact c) =>
+        c.id == userId || userContacts.contains(c) || c.isBlocked);
 
     return suggestions;
   },

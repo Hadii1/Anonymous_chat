@@ -14,15 +14,12 @@ import 'package:anonymous_chat/widgets/loading_widget.dart';
 import 'package:anonymous_chat/widgets/search_field.dart';
 import 'package:anonymous_chat/widgets/suggestion_header.dart';
 import 'package:anonymous_chat/widgets/tags_row.dart';
-
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:fluttericon/linecons_icons.dart';
-import 'package:tuple/tuple.dart';
-
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 
 class TagsScreen extends StatelessWidget {
   @override
@@ -407,7 +404,7 @@ class __SuggestedContactsState extends State<_SuggestedContacts>
               allTags.where((UserTag userTag) => userTag.isActive).toList();
 
           return watch(suggestedContactsProvider).when(
-            data: (List<Tuple2<Contact, List<Tag>>>? data) {
+            data: (List<Contact>? data) {
               return Fader(
                 duration: Duration(milliseconds: 300),
                 child: Column(
@@ -447,7 +444,7 @@ class __SuggestedContactsState extends State<_SuggestedContacts>
                           : List.generate(
                               data.length,
                               (index) => SuggestedContact(
-                                data: data[index],
+                                contact: data[index],
                               ),
                             ),
                 ),

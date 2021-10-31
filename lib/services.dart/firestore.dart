@@ -464,6 +464,19 @@ class FirestoreService implements IDatabase<OnlineRoomEntity> {
   }
 
   @override
+  Future<Message?> getMessage(
+      {required String messageId, required String roomId}) async {
+    DocumentSnapshot<Map<String, dynamic>> d = await _db
+        .collection('Rooms')
+        .doc(roomId)
+        .collection('Messages')
+        .doc(messageId)
+        .get();
+    if (d.data() == null) return null;
+    return Message.fromMap(d.data()!);
+  }
+
+  @override
   Future<void> deleteMessage(String msgId) {
     throw UnimplementedError();
   }

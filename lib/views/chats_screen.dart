@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:anonymous_chat/models/chat_room.dart';
+import 'package:anonymous_chat/models/message.dart';
 import 'package:anonymous_chat/providers/user_rooms_provider.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/views/room_screen.dart';
@@ -44,14 +46,15 @@ class BackgroundNotificationsNotifier extends StateNotifier<ChatRoom?> {
     FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
   }
 
-  void _handleMessage(RemoteMessage message) {
-    if (message.data['type'] == 'chat') {
-      String roomId = message.data['roomId'];
-      ChatRoom room = read(roomsProvider)
-          .allRooms
-          .firstWhere((ChatRoom r) => r.id == roomId);
-      state = room;
-    }
+  void _handleMessage(RemoteMessage remoteMessage) {
+    Map<String, dynamic> messageData =
+        jsonDecode(remoteMessage.data['message']);
+    print(messageData);
+    Message message = Message.fromMap(messageData);
+    ChatRoom room = read(roomsProvider)
+        .allRooms
+        .firstWhere((ChatRoom r) => r.id == message.roomId);
+    state = room;
   }
 }
 
@@ -77,42 +80,50 @@ class ChatsScreen extends StatelessWidget {
         children: [
           Consumer(builder: (context, watch, _) {
             bool isLoading = watch(roomsProvider).isFirstFetch;
+            watch(backgroundNotificationsState);
             return CustomSizeTransition(
-              duration: Duration(milliseconds: 500),
+              duration: Duration(milliseconds: 350),
               hide: !isLoading,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 8.0, bottom: 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
-                      child: Platform.isIOS
-                          ? Theme(
-                              data: ThemeData(
-                                cupertinoOverrideTheme: CupertinoThemeData(
-                                  brightness: Brightness.dark,
-                                ),
-                              ),
-                              child: CupertinoActivityIndicator(radius: 8),
-                            )
-                          : SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor:
-                                    AlwaysStoppedAnimation(style.accentColor),
-                              ),
+              child: AnimatedSwitcher(
+                duration: Duration(milliseconds: 350),
+                child: !isLoading
+                    ? SizedBox.shrink()
+                    : Padding(
+                        padding: const EdgeInsets.only(top: 8.0, bottom: 4),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: Platform.isIOS
+                                  ? Theme(
+                                      data: ThemeData(
+                                        cupertinoOverrideTheme:
+                                            CupertinoThemeData(
+                                          brightness: Brightness.dark,
+                                        ),
+                                      ),
+                                      child:
+                                          CupertinoActivityIndicator(radius: 8),
+                                    )
+                                  : SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation(
+                                            style.accentColor),
+                                      ),
+                                    ),
                             ),
-                    ),
-                    Text(
-                      'Updating',
-                      textAlign: TextAlign.center,
-                      style: style.bodyText,
-                    ),
-                  ],
-                ),
+                            Text(
+                              'Updating',
+                              textAlign: TextAlign.center,
+                              style: style.bodyText,
+                            ),
+                          ],
+                        ),
+                      ),
               ),
             );
           }),

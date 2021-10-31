@@ -14,7 +14,6 @@
 
 import 'dart:async';
 
-
 import 'package:anonymous_chat/database_entities/room_entity.dart';
 import 'package:anonymous_chat/interfaces/database_interface.dart';
 import 'package:anonymous_chat/models/contact.dart';
@@ -30,8 +29,7 @@ const String _messagesTable = 'MessagesTable';
 const String _contactsTable = 'ContactsTable';
 const String _roomsTable = 'RoomsTable';
 
-class SqlitePersistance
-    implements IDatabase<LocalRoomEntity> {
+class SqlitePersistance implements IDatabase<LocalRoomEntity> {
   static final SqlitePersistance _instance = SqlitePersistance._internal();
 
   factory SqlitePersistance() => _instance;
@@ -188,6 +186,15 @@ class SqlitePersistance
   }
 
   @override
+  Future<Message?> getMessage(
+      {required String messageId, required String roomId}) async {
+    List<Map<String, Object?>> data = await db
+        .rawQuery('SELECT * FROM $_messagesTable WHERE id = ?', [messageId]);
+    if (data.isEmpty) return null;
+    return Message.fromMap(data.first);
+  }
+
+  @override
   Future<void> deleteMessage(String id) async {
     int count =
         await db.rawDelete('DELETE FROM $_messagesTable WHERE id = ?', [id]);
@@ -205,8 +212,7 @@ class SqlitePersistance
   }
 
   @override
-  Future<List<Message>> getAllMessages(
-      {required String roomId}) async {
+  Future<List<Message>> getAllMessages({required String roomId}) async {
     List<Map<String, Object?>> data = await db.rawQuery(
       'SELECT * FROM $_messagesTable WHERE roomId = ? ORDER BY time ASC',
       [roomId],
