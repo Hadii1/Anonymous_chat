@@ -80,7 +80,7 @@ class ChatsScreen extends StatelessWidget {
         children: [
           Consumer(builder: (context, watch, _) {
             bool isLoading = watch(roomsProvider).isFirstFetch;
-            watch(backgroundNotificationsState);
+            // watch(backgroundNotificationsState);
             return CustomSizeTransition(
               duration: Duration(milliseconds: 350),
               hide: !isLoading,
@@ -130,106 +130,104 @@ class ChatsScreen extends StatelessWidget {
           Expanded(
             child: Consumer(
               builder: (context, watch, _) {
+                List<ChatRoom> chatRooms =
+                    List.from(watch(roomsProvider).unarhcivedRooms);
                 return AnimatedSwitcher(
                   duration: Duration(milliseconds: 350),
-                  child: () {
-                    List<ChatRoom> chatRooms =
-                        watch(roomsProvider).unarhcivedRooms;
-
-                    return chatRooms.isEmpty
-                        ? Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Iconic.chat,
-                                color: style.accentColor,
-                                size: 50,
+                  child: chatRooms.isEmpty
+                      ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Iconic.chat,
+                              color: style.accentColor,
+                              size: 50,
+                            ),
+                            SizedBox(height: 24),
+                            Text(
+                              'No chats yet.\n Select your interests in the \ntags screen to match up with contacts.',
+                              style: TextStyle(
+                                color: Colors.white,
+                                height: 1.4,
                               ),
-                              SizedBox(height: 24),
-                              Text(
-                                'No chats yet.\n Select your interests in the \ntags screen to match up with contacts.',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  height: 1.4,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          )
-                        : CustomSlide(
-                            duration: Duration(milliseconds: 300),
-                            startOffset: Offset(0, 0.4),
-                            child: Fader(
-                              duration: Duration(milliseconds: 250),
-                              child: ImplicitlyAnimatedList<ChatRoom>(
-                                areItemsTheSame: (a, b) => a.id == b.id,
-                                items: chatRooms,
-                                insertDuration: Duration(milliseconds: 200),
-                                removeDuration: Duration(milliseconds: 200),
-                                removeItemBuilder: (context, animation, room) {
-                                  return SizeFadeTransition(
-                                    animation: animation,
-                                    child: Padding(
-                                      padding: EdgeInsets.only(top: 1),
-                                      child: Column(
-                                        children: [
-                                          ChatHeader(
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        )
+                      : CustomSlide(
+                          duration: Duration(milliseconds: 300),
+                          startOffset: Offset(0, 0.4),
+                          child: Fader(
+                            duration: Duration(milliseconds: 250),
+                            child: ImplicitlyAnimatedList<ChatRoom>(
+                              areItemsTheSame: (a, b) => a.id == b.id,
+                              items: chatRooms,
+                              insertDuration: Duration(milliseconds: 200),
+                              removeDuration: Duration(milliseconds: 200),
+                              removeItemBuilder: (context, animation, room) {
+                                return SizeFadeTransition(
+                                  animation: animation,
+                                  child: Padding(
+                                    padding: EdgeInsets.only(top: 1),
+                                    child: Column(
+                                      children: [
+                                        ChatHeader(
+                                          room: room,
+                                        ),
+                                        Divider(
+                                          thickness: 0.15,
+                                          color: style.borderColor,
+                                          indent: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.15,
+                                          endIndent: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.15,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                              itemBuilder: (context, animation, room, index) {
+                                print(room.messages.last.isRead);
+                                return SizeFadeTransition(
+                                  animation: animation,
+                                  child: Padding(
+                                    padding: EdgeInsets.only(
+                                        top: index == 0 ? 8.0 : 8),
+                                    child: Column(
+                                      children: [
+                                        Padding(
+                                          padding: EdgeInsets.only(
+                                            left: 24,
+                                          ),
+                                          child: ChatHeader(
                                             room: room,
                                           ),
-                                          Divider(
-                                            thickness: 0.15,
-                                            color: style.borderColor,
-                                            indent: MediaQuery.of(context)
-                                                    .size
-                                                    .width *
-                                                0.15,
-                                            endIndent: MediaQuery.of(context)
-                                                    .size
-                                                    .width *
-                                                0.15,
-                                          ),
-                                        ],
-                                      ),
+                                        ),
+                                        Divider(
+                                          thickness: 0.15,
+                                          color: style.borderColor,
+                                          indent: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.15,
+                                          endIndent: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.15,
+                                        ),
+                                      ],
                                     ),
-                                  );
-                                },
-                                itemBuilder: (context, animation, room, index) {
-                                  return SizeFadeTransition(
-                                    animation: animation,
-                                    child: Padding(
-                                      padding: EdgeInsets.only(
-                                          top: index == 0 ? 8.0 : 8),
-                                      child: Column(
-                                        children: [
-                                          Padding(
-                                            padding: EdgeInsets.only(
-                                              left: 24,
-                                            ),
-                                            child: ChatHeader(
-                                              room: room,
-                                            ),
-                                          ),
-                                          Divider(
-                                            thickness: 0.15,
-                                            color: style.borderColor,
-                                            indent: MediaQuery.of(context)
-                                                    .size
-                                                    .width *
-                                                0.15,
-                                            endIndent: MediaQuery.of(context)
-                                                    .size
-                                                    .width *
-                                                0.15,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
+                                  ),
+                                );
+                              },
                             ),
-                          );
-                  }(),
+                          ),
+                        ),
                 );
               },
             ),

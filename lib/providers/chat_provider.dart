@@ -137,9 +137,9 @@ class ChatNotifier extends ChangeNotifier {
             Message message = update.item1;
             assert(message.isSent(userId));
             assert(allMessages.contains(message));
+            assert(successfullySent.contains(message));
             assert(message.isRead == true);
             int i = allMessages.indexWhere((m) => m.id == message.id);
-            assert(i != -1);
             allMessages[i] = message;
             notifyListeners();
             break;
@@ -149,7 +149,7 @@ class ChatNotifier extends ChangeNotifier {
             assert(message.isReceived(userId));
             if (_isChatPageOpened) {
               message = message.markAsRead();
-              messagesMapper.markMessageAsRead(
+              messagesMapper.editReadStatus(
                 messageId: message.id,
                 roomId: room.id,
                 source: SetDataSource.ONLINE,
@@ -185,8 +185,7 @@ class ChatNotifier extends ChangeNotifier {
       for (int i = 0; i < allMessages.length; i++) {
         Message message = allMessages[i];
         if (message.isReceived(userId) && !message.isRead) {
-          messagesMapper.markMessageAsRead(
-              messageId: message.id, roomId: room.id);
+          messagesMapper.editReadStatus(messageId: message.id, roomId: room.id);
 
           msgsToUpdate.add(i);
         }

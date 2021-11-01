@@ -61,7 +61,7 @@ class RoomsNotifier extends ChangeNotifier {
             _userId,
             lastSyncDate: ILocalPrefs.storage.lastSyncingDate,
           )
-          .then((value) => ILocalPrefs.storage
+          .then((_) => ILocalPrefs.storage
               .setSyncingDate(DateTime.now().millisecondsSinceEpoch));
 
       allRooms.clear();

@@ -39,7 +39,7 @@ class TitledAppBar extends PreferredSize {
               ),
             )
           : Text(
-              'ANONIMA',
+              'PRIME',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: style.accentColor,

@@ -33,6 +33,13 @@ class ChatRoomScreen extends StatefulWidget {
 class _ChatRoomScreenState extends State<ChatRoomScreen> {
   Contact get other => widget.room.contact;
 
+  // @override
+  // void didUpdateWidget(covariant ChatRoomScreen oldWidget) {
+  //   // if (widget.room.isDifferent(oldWidget.room) && mounted) setState(() {});
+
+  //   super.didUpdateWidget(oldWidget);
+  // }
+
   @override
   void initState() {
     super.initState();

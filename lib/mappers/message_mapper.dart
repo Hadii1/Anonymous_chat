@@ -93,9 +93,10 @@ class MessageMapper {
     }
   }
 
-  Future<void> markMessageAsRead({
+  Future<void> editReadStatus({
     required String messageId,
     required String roomId,
+    bool isRead = true,
     SetDataSource source = SetDataSource.BOTH,
   }) async {
     if (source == SetDataSource.BOTH || source == SetDataSource.LOCAL) {

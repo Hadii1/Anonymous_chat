@@ -29,11 +29,15 @@ abstract class IDatabase<R extends RoomEntity> {
   Future<void> saveNewRoomEntity({required R roomEntity});
 
   Future<void> writeMessage({required String roomId, required Message message});
-  Future<Message?> getMessage({required String messageId, required String roomId});
+  Future<Message?> getMessage(
+      {required String messageId, required String roomId});
   Future<void> deleteMessage(String msgId);
 
-  Future<void> markMessageAsRead(
-      {required String roomId, required String messageId});
+  Future<void> markMessageAsRead({
+    required String roomId,
+    required String messageId,
+    bool isRead = true,
+  });
 
   Future<List<R>> getUserRoomsEntities({
     required String userId,

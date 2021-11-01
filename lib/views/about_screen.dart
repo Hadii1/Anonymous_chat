@@ -83,17 +83,17 @@ class AboutScreen extends StatelessWidget {
     if (await reviewInstance.isAvailable()) {
       reviewInstance.requestReview();
     } else {
-      reviewInstance.openStoreListing(appStoreId: '1564649182');
+      reviewInstance.openStoreListing();
     }
   }
 
   onCatactUsPressed() async {
     // mailto:<email address>?subject=<subject>&body=<body>, e.g. mailto:smith@example.org?subject=News&body=New%20plugin
     bool b = await canLaunch(
-        'mailto:hadihammoud1@outlook.com?subject=Anonimabody=asd');
+        'mailto:hadihammoud1@outlook.com?');
     print(b);
     if (b) {
-      launch('mailto:hadihammoud1@outlook.com?subject=Anonima&body=asd');
+      launch('mailto:hadihammoud1@outlook.com?');
     }
   }
 }

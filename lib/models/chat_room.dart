@@ -29,9 +29,32 @@ class ChatRoom {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-
     return other is ChatRoom && other.id == id;
+    // if (other is ChatRoom && this.messages.length != other.messages.length)
+    //   return false;
+
+    // for (int i = 0; i < this.messages.length; i++) {
+    //   if (other is ChatRoom &&
+    //       this.messages[i].isRead != other.messages[i].isRead) {
+    //     return false;
+    //   }
+    // }
   }
+
+  // bool isDifferent(ChatRoom oldRoom) {
+  //   if (oldRoom.id != this.id) {
+  //     return true;
+  //   } else if (oldRoom.messages.length != this.messages.length) {
+  //     return true;
+  //   } else {
+  //     for (int i = 0; i < this.messages.length; i++) {
+  //       if (this.messages[i].isRead != oldRoom.messages[i].isRead) {
+  //         return true;
+  //       }
+  //     }
+  //   }
+  //   return false;
+  // }
 
   @override
   int get hashCode {

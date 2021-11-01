@@ -48,7 +48,7 @@ class RoomsSyncer {
         case ActionType.NONE:
           break;
 
-        case ActionType.MESSAGES_OUT_OF_SYNC:
+        case ActionType.SYNC_MSGS:
           for (Message m in action.messagesToWrite) {
             await _messageMapper.writeMessage(
               roomId: action.room.id,
@@ -60,9 +60,17 @@ class RoomsSyncer {
           for (Message m in action.messagesToDelete) {
             await _messageMapper.deleteMessage(m.id);
           }
+
+          for (Message m in action.messagesToUpdate) {
+            await _messageMapper.editReadStatus(
+              messageId: m.id,
+              roomId: action.room.id,
+              isRead: m.isRead,
+            );
+          }
           break;
 
-        case ActionType.ROOM_MISSING:
+        case ActionType.ADD_ROOM:
           await _roomsMapper.saveUserRoom(
             room: action.room,
             userId: userId,
@@ -83,7 +91,7 @@ List<RoomSyncingAction> getSyncingActions(
   List<RoomSyncingAction> result = [];
 
   onlineList.forEach((ChatRoom onlineRoom) {
-    int index = localList.indexOf(onlineRoom);
+    int index = localList.map((e) => e.id).toList().indexOf(onlineRoom.id);
     if (index == -1) {
       // Room doesn't exist in the local database
       result.add(RoomSyncingAction.missing(onlineRoom));
@@ -92,6 +100,7 @@ List<RoomSyncingAction> getSyncingActions(
 
       List<Message> pendingWrites = [];
       List<Message> pendingDeletes = [];
+      List<Message> pendingUpdates = [];
 
       // We only check the messages that weren't checked before.
       // We keep track of the last sync time in the prefrences strorge.
@@ -110,23 +119,30 @@ List<RoomSyncingAction> getSyncingActions(
         for (Message m in uncheckedOnlineMsgs) {
           pendingWrites.add(m);
         }
-        result
-            .add(RoomSyncingAction.unsyncedMsgs(onlineRoom, pendingWrites, []));
+        result.add(
+            RoomSyncingAction.unsyncedMsgs(onlineRoom, pendingWrites, [], []));
       } else if (uncheckedLocalMsgs.isNotEmpty && uncheckedOnlineMsgs.isEmpty) {
         // There's added messages that are shouldn't be present locally.
         for (Message m in uncheckedLocalMsgs) {
           pendingDeletes.add(m);
         }
         result.add(
-          RoomSyncingAction.unsyncedMsgs(onlineRoom, [], pendingDeletes),
+          RoomSyncingAction.unsyncedMsgs(onlineRoom, [], pendingDeletes, []),
         );
       } else if (uncheckedLocalMsgs.length != uncheckedOnlineMsgs.length ||
           uncheckedLocalMsgs.last != uncheckedOnlineMsgs.last) {
         // Start from the last message in the room and go backwards
         // Checking if each message exists or not.
         for (int i = uncheckedOnlineMsgs.length - 1; i >= 0; i--) {
-          if (!uncheckedLocalMsgs.contains(uncheckedOnlineMsgs[i]))
+          int index = uncheckedLocalMsgs.indexOf(uncheckedOnlineMsgs[i]);
+          if (index == -1) {
             pendingWrites.add(uncheckedOnlineMsgs[i]);
+          } else {
+            // Go through messages to check if [isRead] status is synced
+            if (uncheckedOnlineMsgs[i].isRead !=
+                uncheckedLocalMsgs[index].isRead)
+              pendingUpdates.add(uncheckedOnlineMsgs[i]);
+          }
         }
 
         // Checking for any excess msgs found locally and not
@@ -139,17 +155,25 @@ List<RoomSyncingAction> getSyncingActions(
             pendingDeletes.add(uncheckedLocalMsgs[i]);
         }
 
-        if (pendingWrites.isNotEmpty || pendingDeletes.isNotEmpty)
-          result.add(
-            RoomSyncingAction.unsyncedMsgs(
-                onlineRoom, [...pendingWrites], [...pendingDeletes]),
-          );
+        result.add(RoomSyncingAction.unsyncedMsgs(
+            onlineRoom, pendingWrites, pendingDeletes, pendingUpdates));
+      } else {
+        // Messages are in sync accroding to their numbers,
+        // check the [isRead] status
+        for (int i = 0; i < onlineRoom.messages.length; i++) {
+          if (localRoom.messages[i].isRead != onlineRoom.messages[i].isRead) {
+            pendingUpdates.add(onlineRoom.messages[i]);
+          }
+        }
+        if (pendingUpdates.isNotEmpty)
+          result.add(RoomSyncingAction.unsyncedMsgs(
+              onlineRoom, [], [], pendingUpdates));
         else
           result.add(RoomSyncingAction.synced(onlineRoom));
-
-        pendingWrites.clear();
-        pendingDeletes.clear();
       }
+
+      pendingWrites.clear();
+      pendingDeletes.clear();
     }
   });
 
@@ -158,56 +182,64 @@ List<RoomSyncingAction> getSyncingActions(
 
 enum ActionType {
   NONE,
-  MESSAGES_OUT_OF_SYNC,
-  ROOM_MISSING,
+  SYNC_MSGS,
+  ADD_ROOM,
 }
 
 @visibleForTesting
 class RoomSyncingAction {
   final List<Message> messagesToWrite;
   final List<Message> messagesToDelete;
+  final List<Message> messagesToUpdate;
   final bool isRoomMissing;
   final bool inSync;
   final ActionType type;
   final ChatRoom room;
 
-  RoomSyncingAction._internal(
-    this.messagesToWrite,
-    this.messagesToDelete,
-    this.isRoomMissing,
-    this.inSync,
-    this.room,
-    this.type,
-  );
+  RoomSyncingAction._internal({
+    required this.messagesToWrite,
+    required this.messagesToDelete,
+    required this.messagesToUpdate,
+    required this.isRoomMissing,
+    required this.inSync,
+    required this.room,
+    required this.type,
+  });
 
   factory RoomSyncingAction.synced(ChatRoom room) =>
       RoomSyncingAction._internal(
-        [],
-        [],
-        false,
-        true,
-        room,
-        ActionType.NONE,
+        messagesToWrite: [],
+        messagesToDelete: [],
+        messagesToUpdate: [],
+        isRoomMissing: false,
+        inSync: true,
+        room: room,
+        type: ActionType.NONE,
       );
 
-  factory RoomSyncingAction.unsyncedMsgs(ChatRoom room,
-          List<Message> msgsToWrite, List<Message> msgsToDelete) =>
+  factory RoomSyncingAction.unsyncedMsgs(
+          ChatRoom room,
+          List<Message> msgsToWrite,
+          List<Message> msgsToDelete,
+          List<Message> msgsToUpdate) =>
       RoomSyncingAction._internal(
-        msgsToWrite,
-        msgsToDelete,
-        false,
-        false,
-        room,
-        ActionType.MESSAGES_OUT_OF_SYNC,
+        messagesToWrite: msgsToWrite,
+        messagesToDelete: msgsToDelete,
+        messagesToUpdate: msgsToUpdate,
+        isRoomMissing: false,
+        inSync: false,
+        room: room,
+        type: ActionType.SYNC_MSGS,
       );
 
   factory RoomSyncingAction.missing(ChatRoom room) =>
       RoomSyncingAction._internal(
-        room.messages,
-        [],
-        true,
-        false,
-        room,
-        ActionType.ROOM_MISSING,
+        messagesToWrite: room.messages,
+        messagesToDelete: [],
+        messagesToUpdate: [],
+        isRoomMissing: true,
+        inSync: false,
+        room: room,
+        type: ActionType.ADD_ROOM,
       );
 }

@@ -326,15 +326,18 @@ class FirestoreService implements IDatabase<OnlineRoomEntity> {
   }
 
   @override
-  Future<void> markMessageAsRead(
-      {required String roomId, required String messageId}) async {
+  Future<void> markMessageAsRead({
+    required String roomId,
+    required String messageId,
+    bool isRead = true,
+  }) async {
     await _db
         .collection('Rooms')
         .doc(roomId)
         .collection('Messages')
         .doc(messageId)
         .update(
-      {'isRead': true},
+      {'isRead': isRead},
     );
   }
 

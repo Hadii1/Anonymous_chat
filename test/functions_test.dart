@@ -95,11 +95,11 @@ void main() {
             getSyncingActions(localList, onlineList, 0);
 
         expect(actions.length, 2);
-        expect(actions.first.type, ActionType.MESSAGES_OUT_OF_SYNC);
+        expect(actions.first.type, ActionType.SYNC_MSGS);
         expect(actions.first.messagesToWrite.length, 1);
         expect(actions.first.messagesToWrite.first.content, 'Kifak');
 
-        expect(actions[1].type, ActionType.ROOM_MISSING);
+        expect(actions[1].type, ActionType.ADD_ROOM);
         expect(actions[1].messagesToWrite, actions[1].room.messages);
       },
     );
@@ -114,7 +114,7 @@ void main() {
         reason:
             'We passed now to be the last sync date and all msgs are before now so no msgs checks are supposed to be made',
       );
-      expect(actions1[1].type, ActionType.ROOM_MISSING);
+      expect(actions1[1].type, ActionType.ADD_ROOM);
     });
   });
 }

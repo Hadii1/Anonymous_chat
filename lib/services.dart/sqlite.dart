@@ -203,10 +203,12 @@ class SqlitePersistance implements IDatabase<LocalRoomEntity> {
 
   @override
   Future<void> markMessageAsRead(
-      {required String roomId, required String messageId}) async {
+      {required String roomId,
+      required String messageId,
+      bool isRead = true}) async {
     int count = await db.rawUpdate(
       'UPDATE $_messagesTable SET isRead = ? WHERE id = ?',
-      [1, messageId],
+      [isRead ? 1 : 0, messageId],
     );
     assert(count == 1);
   }

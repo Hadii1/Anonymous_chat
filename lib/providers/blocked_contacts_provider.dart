@@ -31,6 +31,7 @@ final blockedContactsProvider =
 
 class BlockedContactsNotifier extends StateNotifier<List<Contact>> {
   String userId = ILocalPrefs.storage.user!.id;
+  bool loading = true;
   ContactMapper contactMapper = ContactMapper();
   BlockedContactsNotifier(List<Contact> localBlockedContacts)
       : super(localBlockedContacts) {
@@ -47,7 +48,7 @@ class BlockedContactsNotifier extends StateNotifier<List<Contact>> {
           await contactMapper.getContactData(userId: userId, contactId: id);
       blockedContacts.add(contact);
     }
-
+    loading = false;
     state = [...blockedContacts];
   }
 

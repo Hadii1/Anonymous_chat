@@ -84,7 +84,7 @@ class LoginScreen extends StatelessWidget {
                                       : TitleText(
                                           title: 'LOGIN',
                                           subtitle:
-                                              'Please enter your mobile number to receive a verification code to start using Anonima',
+                                              'Please enter your mobile number to receive a verification code to start using Prime',
                                         ),
                                 ),
                                 Padding(
