@@ -100,7 +100,7 @@ List<RoomSyncingAction> getSyncingActions(
       List<Message> uncheckedOnlineMsgs =
           List.from(onlineRoom.messages.where((m) => m.time > lastSyncDate));
 
-      // Check if msgs are in syn
+      // Check if msgs are in sync
       //
       if (uncheckedLocalMsgs.isEmpty && uncheckedOnlineMsgs.isEmpty) {
         // No unsynced messages yet
