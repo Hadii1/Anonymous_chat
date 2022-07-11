@@ -39,9 +39,9 @@ class ArchivedContactsList extends StatelessWidget {
               ),
               Expanded(
                 child: Consumer(
-                  builder: (context, watch, _) {
+                  builder: (context, ref, _) {
                     List<ChatRoom> archivedRooms =
-                        watch(roomsProvider).archivedRooms;
+                        ref.watch(roomsProvider).archivedRooms;
                     return AnimatedSwitcher(
                       duration: Duration(milliseconds: 250),
                       child: archivedRooms.isEmpty

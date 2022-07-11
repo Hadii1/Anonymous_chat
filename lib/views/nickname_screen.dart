@@ -66,7 +66,7 @@ class _NameScreenState extends State<NameScreen> {
       backgroundColor: style.backgroundColor,
       body: AppBarPadding(
         child: Consumer(
-          builder: (context, watch, _) {
+          builder: (context, ref, _) {
             return Column(
               children: [
                 TitledAppBar(),
@@ -92,20 +92,21 @@ class _NameScreenState extends State<NameScreen> {
                         onPressed: () async {
                           if (currentName == null) return;
 
-                          watch(loadingProvider.notifier).loading = true;
+                          ref.watch(loadingProvider.notifier).loading = true;
 
                           bool success = await saveCurrentInfo(
-                            watch(userAuthEventsProvider)!,
+                            ref.watch(userAuthEventsProvider)!,
                             currentName!,
                           );
 
                           if (success) {
-                            watch(loadingProvider.notifier).loading = false;
+                            ref.watch(loadingProvider.notifier).loading = false;
                             Navigator.of(context).push(
                               CupertinoPageRoute(builder: (_) => Home()),
                             );
                           } else {
-                            watch(errorsStateProvider.notifier)
+                            ref
+                                .watch(errorsStateProvider.notifier)
                                 .set('Something went wrong. Try again please');
                           }
                         },
@@ -137,7 +138,7 @@ class NameGenerator extends StatefulWidget {
 class _NameGeneratorState extends State<NameGenerator> {
   @override
   void initState() {
-    WidgetsBinding.instance!.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       rewindName();
     });
     super.initState();

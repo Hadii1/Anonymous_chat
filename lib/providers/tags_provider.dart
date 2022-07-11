@@ -23,7 +23,7 @@ final userTagsFuture = FutureProvider.autoDispose<List<UserTag>>((ref) async {
 final userTagsProvider =
     StateNotifierProvider.autoDispose<UserTagsState, List<UserTag>>((ref) {
   ref.maintainState = true;
-  return UserTagsState(ref.watch(userTagsFuture).data!.value);
+  return UserTagsState(ref.watch(userTagsFuture).asData!.value);
 });
 
 class UserTagsState extends StateNotifier<List<UserTag>> {

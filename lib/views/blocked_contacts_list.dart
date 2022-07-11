@@ -34,9 +34,10 @@ class BlockedContactsScreen extends StatelessWidget {
     return Scaffold(
         backgroundColor: Colors.black,
         body: SafeArea(
-          child: Consumer(builder: (context, watch, _) {
-            List<Contact> blockedUsers = watch(blockedContactsProvider);
-            bool isLoading = watch(blockedContactsProvider.notifier).loading;
+          child: Consumer(builder: (context, ref, _) {
+            List<Contact> blockedUsers = ref.watch(blockedContactsProvider);
+            bool isLoading =
+                ref.watch(blockedContactsProvider.notifier).loading;
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -161,7 +162,7 @@ class BlockedContactsScreen extends StatelessWidget {
                                           child: _BlockedUserHeader(
                                             contact: user,
                                             onRemove: (Contact contact) {
-                                              context
+                                              ref
                                                   .read(roomsProvider.notifier)
                                                   .toggleBlock(
                                                     contact: contact,

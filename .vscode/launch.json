@@ -17,13 +17,13 @@
             "deviceId": "419B240D-EE01-473A-8984-4DD29EE7C395"
         },
         {
-            "name": "Pixel 4 XL",
+            "name": "Pixel 3a",
             "request": "launch",
             "type": "dart",
             "deviceId": "emulator-5554"
         },
         {
-            "name": "Pixel 3a",
+            "name": "Pixel 4",
             "request": "launch",
             "type": "dart",
             "deviceId": "emulator-5556"
@@ -39,8 +39,8 @@
         {
             "name": "All",
             "configurations": [
-                "Pixel 4 XL",
-                "Huawei"
+                "iPhone 12",
+                "Pixel 3a"
             ]
         }
     ]

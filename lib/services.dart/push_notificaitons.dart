@@ -29,30 +29,21 @@ class NotificationsService {
   static Future<void> init(String? userId) async {
     NotificationSettings settings = await _fcm.getNotificationSettings();
 
-    if (Platform.isIOS &&
-        settings.authorizationStatus == AuthorizationStatus.notDetermined)
+    if (userId != null &&
+        Platform.isIOS &&
+        settings.authorizationStatus != AuthorizationStatus.authorized)
       settings = await _fcm.requestPermission();
 
-    if (settings.authorizationStatus != AuthorizationStatus.denied)
-      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        print('Got a message whilst in the foreground!');
-        print('Message data: ${message.data}');
-
-        if (message.notification != null) {
-          print(
-              'Message also contained a notification: ${message.notification}');
-        }
-      });
-
-    // P.s: The background message handler which is triggered when a notifcation
-    // is received while terminated is added in [main] since it's required to be
-    // a top level function not a class method as per firebase docs.
-    // see: https://firebase.flutter.dev/docs/messaging/usage/#receiving-messages
-
     // Update the user's token for receiving notificaitons at each app session.
-
     if (userId != null) initMessagingTokens(userId);
   }
+
+  // P.s: The background message handler which is triggered when a notifcation
+  // is received while terminated is added in [main] since it's required to be
+  // a top level function not a class method as per firebase docs.
+  // see: https://firebase.flutter.dev/docs/messaging/usage/#receiving-messages
+  Stream<RemoteMessage> get foregroundNotificationsEvents =>
+      FirebaseMessaging.onMessage;
 
   static Future<void> initMessagingTokens(String userId) async {
     String? token = await _fcm.getToken();

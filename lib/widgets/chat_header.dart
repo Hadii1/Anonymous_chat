@@ -6,7 +6,6 @@ import 'package:anonymous_chat/utilities/extentions.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/views/room_screen.dart';
 import 'package:anonymous_chat/widgets/custom_route.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -25,11 +24,11 @@ class ChatHeader extends StatelessWidget {
 
     Message lastMessage = room.messages.last;
 
-    return Consumer(builder: (context, watch, _) {
-      final String? userId = watch(userAuthEventsProvider)?.id;
+    return Consumer(builder: (context, ref, _) {
+      final String? userId = ref.watch(userAuthEventsProvider)?.id;
       bool blocked =
-          watch(roomsProvider).blockedContacts.contains(room.contact);
-      bool archived = watch(roomsProvider).archivedRooms.contains(room);
+          ref.watch(roomsProvider).blockedContacts.contains(room.contact);
+      bool archived = ref.watch(roomsProvider).archivedRooms.contains(room);
 
       return InkWell(
         splashColor: Colors.transparent,
@@ -45,14 +44,14 @@ class ChatHeader extends StatelessWidget {
             ),
           );
         },
+        // actionPane: SlidableDrawerActionPane(),
+        // actionExtentRatio: 0.2,
+        // fastThreshold: 1800,
         child: Slidable(
-          actionPane: SlidableDrawerActionPane(),
-          actionExtentRatio: 0.2,
-          fastThreshold: 1800,
-          actions: [
-            SlideAction(
+          startActionPane: ActionPane(motion: SizedBox.shrink(), children: [
+            InkWell(
               onTap: () =>
-                  context.read(roomsProvider.notifier).deleteChat(room: room),
+                  ref.read(roomsProvider.notifier).deleteChat(room: room),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -70,8 +69,8 @@ class ChatHeader extends StatelessWidget {
                 ],
               ),
             ),
-            SlideAction(
-              onTap: () => context
+            InkWell(
+              onTap: () => ref
                   .read(roomsProvider.notifier)
                   .toggleBlock(contact: room.contact, block: !blocked),
               child: AnimatedSwitcher(
@@ -113,8 +112,8 @@ class ChatHeader extends StatelessWidget {
                       ),
               ),
             ),
-            SlideAction(
-              onTap: () => context.read(roomsProvider.notifier).editArchives(
+            InkWell(
+              onTap: () => ref.read(roomsProvider.notifier).editArchives(
                     room: room,
                     archive: !archived,
                   ),
@@ -134,8 +133,8 @@ class ChatHeader extends StatelessWidget {
                   ),
                 ],
               ),
-            )
-          ],
+            ),
+          ]),
           child: Row(
             children: [
               AnimatedContainer(

@@ -22,7 +22,6 @@ final chattingProvider = ChangeNotifierProvider.family<ChatNotifier, ChatRoom>(
     return ChatNotifier(
       ref.read,
       room,
-      ref.watch(roomArhivingState(room.id)),
     );
   },
 );
@@ -31,7 +30,6 @@ class ChatNotifier extends ChangeNotifier {
   ChatNotifier(
     this.read,
     this.room,
-    this.isArchived,
   ) {
     initializeRoom();
   }
@@ -45,13 +43,10 @@ class ChatNotifier extends ChangeNotifier {
 
   late StreamSubscription<Tuple2<Message, MessageServeUpdateType>?>
       serverMessagesUpdates;
-  late StreamSubscription<ListChangeNotification<Message>?>
-      localMessagesChanges;
+  late StreamSubscription<ListChange<Message>?> localMessagesChanges;
 
   late RxList<Message> allMessages;
   late List<Message> successfullySent;
-
-  final bool isArchived;
 
   Message? replyingOn;
 
@@ -70,11 +65,11 @@ class ChatNotifier extends ChangeNotifier {
 
     allMessages = room.messages;
 
-    localMessagesChanges = allMessages.onChange
-        .listen((ListChangeNotification<Message> change) async {
+    localMessagesChanges =
+        allMessages.onChange.listen((ListChange<Message> change) async {
       // When a message is sent locally:
       if (change.element != null &&
-          change.op == ListChangeOp.add &&
+          change.op == ListOp.add &&
           change.element!.isSent(userId)) {
         Message message = change.element!;
         if (replyingOn != null) {
@@ -110,13 +105,6 @@ class ChatNotifier extends ChangeNotifier {
           }
 
           notifyListeners();
-
-          if (isArchived) {
-            read(roomsProvider.notifier).editArchives(
-              room: room,
-              archive: false,
-            );
-          }
         } on Exception catch (e, _) {
           read(errorsStateProvider.notifier).set(
             e is SocketException ? 'Bad internet connection.' : 'Unknown error',
@@ -160,13 +148,6 @@ class ChatNotifier extends ChangeNotifier {
               message: message,
               source: SetDataSource.LOCAL,
             );
-
-            if (isArchived) {
-              read(roomsProvider.notifier).editArchives(
-                room: room,
-                archive: false,
-              );
-            }
 
             allMessages.add(message);
             read(roomsProvider.notifier).latestActiveChat = room;

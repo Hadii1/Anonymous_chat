@@ -1,10 +1,8 @@
 import 'package:anonymous_chat/providers/errors_provider.dart';
 import 'package:anonymous_chat/utilities/theme_widget.dart';
 import 'package:anonymous_chat/widgets/animated_widgets.dart';
-
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class NotificationWidget extends StatelessWidget {
   @override
@@ -13,9 +11,9 @@ class NotificationWidget extends StatelessWidget {
     return MediaQuery(
       data: MediaQueryData(),
       child: Consumer(
-        builder: (_, watch, __) {
-          String errorMsg = watch(errorsStateProvider).item1;
-          double opacity = watch(errorsStateProvider).item2 ? 1.0 : 0.0;
+        builder: (_, ref, __) {
+          String errorMsg = ref.watch(errorsStateProvider).item1;
+          double opacity = ref.watch(errorsStateProvider).item2 ? 1.0 : 0.0;
 
           return Align(
             alignment: Alignment.topCenter,

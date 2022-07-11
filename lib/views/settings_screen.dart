@@ -20,9 +20,9 @@ import 'package:fluttericon/linearicons_free_icons.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-class Settings extends StatelessWidget {
+class Settings extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     AppStyle style = AppTheming.of(context).style;
     return Scaffold(
       backgroundColor: style.backgroundColor,
@@ -138,7 +138,7 @@ class Settings extends StatelessWidget {
                   ),
                   SettingTile(
                     title: 'Sign Out',
-                    onTap: () => _onSignOutPressed(context),
+                    onTap: () => _onSignOutPressed(context, ref),
                     icon: LineariconsFree.exit,
                   ),
                   Padding(
@@ -150,7 +150,7 @@ class Settings extends StatelessWidget {
                   ),
                   SettingTile(
                     title: 'Delete Account',
-                    onTap: () => _onDeleteAccountPressed(context),
+                    onTap: () => _onDeleteAccountPressed(context, ref),
                     icon: LineariconsFree.trash,
                   ),
                   Padding(
@@ -178,13 +178,13 @@ class Settings extends StatelessWidget {
     );
   }
 
-  void _onDeleteAccountPressed(BuildContext context) async {
+  void _onDeleteAccountPressed(BuildContext context, WidgetRef ref) async {
     try {
       final userId = ILocalPrefs.storage.user!.id;
 
       await IDatabase.onlineDb.deleteAccount(userId: userId);
       await IAuth.auth.signOut();
-      await context.read(userAuthEventsProvider.notifier).onLogout(userId);
+      await ref.read(userAuthEventsProvider.notifier).onLogout(userId);
 
       Navigator.of(context).pushAndRemoveUntil(
         FadingRoute(
@@ -193,7 +193,7 @@ class Settings extends StatelessWidget {
         (route) => false,
       );
     } on Exception catch (e) {
-      context.read(errorsStateProvider.notifier).set(
+      ref.read(errorsStateProvider.notifier).set(
             e is SocketException
                 ? 'Bad internet connection. Try again please.'
                 : 'Something went wrong. Try again please.',
@@ -201,17 +201,17 @@ class Settings extends StatelessWidget {
     }
   }
 
-  Future<void> _onSignOutPressed(BuildContext context) async {
+  Future<void> _onSignOutPressed(BuildContext context, WidgetRef ref) async {
     try {
       final userId = ILocalPrefs.storage.user!.id;
 
       await IAuth.auth.signOut();
-      await context.read(userAuthEventsProvider.notifier).onLogout(userId);
+      await ref.read(userAuthEventsProvider.notifier).onLogout(userId);
 
       Navigator.of(context).pushAndRemoveUntil(
           FadingRoute(builder: (_) => LoginScreen()), (route) => false);
     } on Exception catch (e) {
-      context.read(errorsStateProvider.notifier).set(
+      ref.read(errorsStateProvider.notifier).set(
             e is SocketException
                 ? 'Bad internet connection. Try again please.'
                 : 'Something went wrong. Try again please.',

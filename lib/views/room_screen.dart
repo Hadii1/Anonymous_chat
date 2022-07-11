@@ -15,22 +15,23 @@ import 'package:anonymous_chat/widgets/custom_alert_dialoge.dart';
 import 'package:anonymous_chat/widgets/keyboard_hider.dart';
 import 'package:anonymous_chat/widgets/shaded_container.dart';
 import 'package:anonymous_chat/widgets/typing_indicator.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ChatRoomScreen extends StatefulWidget {
+class ChatRoomScreen extends ConsumerStatefulWidget {
   final ChatRoom room;
+  final Function()? onBackPressed;
 
   const ChatRoomScreen({
     required this.room,
+    this.onBackPressed,
   });
 
   @override
   _ChatRoomScreenState createState() => _ChatRoomScreenState();
 }
 
-class _ChatRoomScreenState extends State<ChatRoomScreen> {
+class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
   Contact get other => widget.room.contact;
 
   // @override
@@ -44,14 +45,14 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-      context.read(chattingProvider(widget.room)).onChatOpened();
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      ref.read(chattingProvider(widget.room)).onChatOpened();
     });
   }
 
   @override
   void deactivate() {
-    context.read(chattingProvider(widget.room)).onChatClosed();
+    ref.read(chattingProvider(widget.room)).onChatClosed();
     super.deactivate();
   }
 
@@ -61,15 +62,17 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     return Scaffold(
       backgroundColor: style.backgroundColor,
       body: Consumer(builder: (context, watch, _) {
-        final chatNotifier = watch(chattingProvider(widget.room));
-        final String userId = watch(userAuthEventsProvider)!.id;
+        final chatNotifier = ref.watch(chattingProvider(widget.room));
+        final String userId = ref.watch(userAuthEventsProvider)!.id;
         // This is to show a dialoge when the other contact deletes
         // the room while this user is viewing it.
-        final bool exists = watch(roomExistanceState(widget.room.id));
+        final bool exists = ref.watch(roomExistanceState(widget.room.id));
         final bool isContactBlocked =
-            watch(blockedContactsProvider).contains(other);
+            ref.watch(blockedContactsProvider).contains(other);
         final bool? isUserBlocked =
-            watch(userBlockedState(widget.room.contact.id));
+            ref.watch(userBlockedState(widget.room.contact.id));
+        ActivityStatus status =
+            ref.watch(contactActivityStateProvider(other.id));
 
         return SizedBox(
           height: MediaQuery.of(context).size.height,
@@ -146,15 +149,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                     ),
                     Padding(
                       padding: const EdgeInsets.only(left: 2, top: 2),
-                      child: Consumer(
-                        builder: (context, watch, _) {
-                          ActivityStatus status =
-                              watch(contactActivityStateProvider(other.id));
-                          return TypingIndicator(
-                            showIndicator:
-                                status.state == ActivityStatus.TYPING,
-                          );
-                        },
+                      child: TypingIndicator(
+                        showIndicator: status.state == ActivityStatus.TYPING,
                       ),
                     ),
                     CustomSlide(
@@ -171,9 +167,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                         loading: isUserBlocked == null,
                         onTypingStateChange: (bool typing) {
                           if (mounted)
-                            context
-                                .read(userActivityStateProvider.notifier)
-                                .set(
+                            ref.read(userActivityStateProvider.notifier).set(
                                   activityStatus: typing
                                       ? ActivityStatus.chatting(
                                           otherId: other.id)
@@ -204,7 +198,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                             InkWell(
                               highlightColor: Colors.transparent,
                               splashColor: Colors.transparent,
-                              onTap: () => Navigator.of(context).pop(),
+                              onTap: () => widget.onBackPressed != null
+                                  ? widget.onBackPressed!()
+                                  : Navigator.of(context).pop(),
                               child: Icon(
                                 Icons.arrow_back_ios,
                                 size: 21,
@@ -231,32 +227,25 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.only(left: 4.0),
-                                  child: Consumer(
-                                    builder: (context, watch, _) {
-                                      ActivityStatus status = watch(
-                                          contactActivityStateProvider(
-                                              other.id));
-                                      switch (status.state) {
-                                        case ActivityStatus.LOADING:
-                                          return SizedBox.shrink();
-
-                                        default:
-                                          return AnimatedContainer(
-                                            duration:
-                                                Duration(milliseconds: 300),
-                                            width: 8,
-                                            height: 8,
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              color: status.state ==
-                                                      ActivityStatus.OFFLINE
-                                                  ? style.iconColors
-                                                  : style.accentColor,
-                                            ),
-                                          );
-                                      }
-                                    },
-                                  ),
+                                  child: () {
+                                    switch (status.state) {
+                                      case ActivityStatus.LOADING:
+                                        return SizedBox.shrink();
+                                      default:
+                                        return AnimatedContainer(
+                                          duration: Duration(milliseconds: 300),
+                                          width: 8,
+                                          height: 8,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: status.state ==
+                                                    ActivityStatus.OFFLINE
+                                                ? style.iconColors
+                                                : style.accentColor,
+                                          ),
+                                        );
+                                    }
+                                  }(),
                                 )
                               ],
                             ),
@@ -271,7 +260,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                           duration: Duration(milliseconds: 300),
                           child: isContactBlocked
                               ? InkWell(
-                                  onTap: () => context
+                                  onTap: () => ref
                                       .read(roomsProvider.notifier)
                                       .toggleBlock(
                                         contact: other,

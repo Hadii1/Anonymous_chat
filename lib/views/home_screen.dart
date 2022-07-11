@@ -11,19 +11,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqlite_viewer/sqlite_viewer.dart';
 
-class Home extends StatefulWidget {
+class Home extends ConsumerStatefulWidget {
   const Home();
 
   @override
   _HomeState createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> with WidgetsBindingObserver {
+class _HomeState extends ConsumerState<Home> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance!.addObserver(this);
-    context
+    // if(context.read()){}
+    WidgetsBinding.instance.addObserver(this);
+    ref
         .read(userActivityStateProvider.notifier)
         .set(activityStatus: ActivityStatus.online());
   }
@@ -33,13 +34,13 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     print(state);
     switch (state) {
       case AppLifecycleState.resumed:
-        context
+        ref
             .read(userActivityStateProvider.notifier)
             .set(activityStatus: ActivityStatus.online());
         break;
 
       case AppLifecycleState.paused:
-        context.read(userActivityStateProvider.notifier).set(
+        ref.read(userActivityStateProvider.notifier).set(
               activityStatus: ActivityStatus.offline(
                 lastSeen: DateTime.now().millisecondsSinceEpoch,
               ),
@@ -55,13 +56,13 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   void dispose() {
     super.dispose();
-    WidgetsBinding.instance!.removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
   }
 
   @override
   void deactivate() {
     if (mounted)
-      context.read(userActivityStateProvider.notifier).set(
+      ref.read(userActivityStateProvider.notifier).set(
             activityStatus: ActivityStatus.offline(
               lastSeen: DateTime.now().millisecondsSinceEpoch,
             ),

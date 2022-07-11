@@ -16,150 +16,143 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final style = AppTheming.of(context).style;
+    ref.listen<DestinationAfterAuth?>(navigationSignal, (_, dest) {
+      if (dest == null) return;
 
-    return ProviderListener<DestinationAfterAuth?>(
-      provider: navigationSignal,
-      onChange: (_, DestinationAfterAuth? dest) {
-        if (dest == null) return;
+      Widget w;
 
-        Widget w;
+      if (dest == DestinationAfterAuth.HOME_SCREEN)
+        w = Home();
+      else
+        w = NameScreen();
 
-        if (dest == DestinationAfterAuth.HOME_SCREEN)
-          w = Home();
-        else
-          w = NameScreen();
+      Navigator.of(context).pushAndRemoveUntil(
+        CupertinoPageRoute(
+          builder: (_) => w,
+        ),
+        (route) => false,
+      );
+    });
 
-        Navigator.of(context).pushAndRemoveUntil(
-          CupertinoPageRoute(
-            builder: (_) => w,
-          ),
-          (route) => false,
-        );
-      },
-      child: Scaffold(
-        backgroundColor: style.backgroundColor,
-        body: KeyboardHider(
-          child: Consumer(builder: (context, watch, _) {
-            final authNotifier = watch(authProvider.notifier);
-            watch(authProvider);
-            return Stack(
+    final authNotifier = ref.watch(authProvider.notifier);
+    return Scaffold(
+      backgroundColor: style.backgroundColor,
+      body: KeyboardHider(
+        child: Stack(
+          children: [
+            Column(
               children: [
-                Column(
-                  children: [
-                    TitledAppBar(
-                      leading: SizedBox.shrink(),
-                    ),
-                    AnimationLimiter(
-                      child: Consumer(
-                        builder: (context, watch, child) {
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: AnimationConfiguration.toStaggeredList(
-                              childAnimationBuilder: (c) {
-                                return SlideAnimation(
-                                  child: FadeInAnimation(
-                                    child: c,
-                                    duration: Duration(milliseconds: 250),
-                                  ),
-                                  duration: Duration(milliseconds: 320),
-                                  verticalOffset: 200,
-                                );
-                              },
-                              children: <Widget>[
-                                SizedBox(height: 48),
-                                AnimatedSwitcher(
-                                  duration: Duration(milliseconds: 350),
-                                  child: authNotifier.isCodeSent
-                                      ? Container(
-                                          child: TitleText(
-                                            title: 'LOGIN',
-                                            subtitle:
-                                                'An SMS containing 6 digit code was sent to ${authNotifier.number}.',
-                                          ),
-                                        )
-                                      : TitleText(
-                                          title: 'LOGIN',
-                                          subtitle:
-                                              'Please enter your mobile number to receive a verification code to start using Prime',
-                                        ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 36,
-                                    horizontal: 48,
-                                  ),
-                                  child: AnimatedSwitcher(
-                                    duration: Duration(milliseconds: 350),
-                                    child: authNotifier.isCodeSent
-                                        ? Column(
-                                            children: [
-                                              _CodeInput(onSumbitted: (code) {
-                                                authNotifier.onCodeSubmitted(
-                                                    code: code);
-                                              }),
-                                              SizedBox(height: 24),
-                                              InkWell(
-                                                splashColor: style.accentColor,
-                                                highlightColor:
-                                                    Colors.transparent,
-                                                borderRadius:
-                                                    BorderRadius.circular(4),
-                                                onTap: () => authNotifier
-                                                    .onEditNumberPressed(),
-                                                child: Text(
-                                                  'Edit number',
-                                                  style: style.smallTextStyle,
-                                                ),
-                                              )
-                                            ],
-                                          )
-                                        : CustomTextField(
-                                            hint: '+1 123 456 7890',
-                                            onChanged: (v) =>
-                                                authNotifier.number = v.trim(),
-                                            dimHint: true,
-                                            onSubmitted: (v) => authNotifier
-                                                .onSendCodePressed(),
-                                            borderColor: style.borderColor,
-                                          ),
-                                  ),
-                                ),
-                              ],
+                TitledAppBar(
+                  leading: SizedBox.shrink(),
+                ),
+                AnimationLimiter(
+                  child: Consumer(
+                    builder: (context, watch, child) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: AnimationConfiguration.toStaggeredList(
+                          childAnimationBuilder: (c) {
+                            return SlideAnimation(
+                              child: FadeInAnimation(
+                                child: c,
+                                duration: Duration(milliseconds: 250),
+                              ),
+                              duration: Duration(milliseconds: 320),
+                              verticalOffset: 200,
+                            );
+                          },
+                          children: <Widget>[
+                            SizedBox(height: 48),
+                            AnimatedSwitcher(
+                              duration: Duration(milliseconds: 350),
+                              child: authNotifier.isCodeSent
+                                  ? Container(
+                                      child: TitleText(
+                                        title: 'LOGIN',
+                                        subtitle:
+                                            'An SMS containing 6 digit code was sent to ${authNotifier.number}.',
+                                      ),
+                                    )
+                                  : TitleText(
+                                      title: 'LOGIN',
+                                      subtitle:
+                                          'Please enter your mobile number to receive a verification code to start using Prime',
+                                    ),
                             ),
-                          );
-                        },
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 36,
+                                horizontal: 48,
+                              ),
+                              child: AnimatedSwitcher(
+                                duration: Duration(milliseconds: 350),
+                                child: authNotifier.isCodeSent
+                                    ? Column(
+                                        children: [
+                                          _CodeInput(onSumbitted: (code) {
+                                            authNotifier.onCodeSubmitted(
+                                                code: code);
+                                          }),
+                                          SizedBox(height: 24),
+                                          InkWell(
+                                            splashColor: style.accentColor,
+                                            highlightColor: Colors.transparent,
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                            onTap: () => authNotifier
+                                                .onEditNumberPressed(),
+                                            child: Text(
+                                              'Edit number',
+                                              style: style.smallTextStyle,
+                                            ),
+                                          )
+                                        ],
+                                      )
+                                    : CustomTextField(
+                                        hint: '+1 123 456 7890',
+                                        onChanged: (v) =>
+                                            authNotifier.number = v.trim(),
+                                        dimHint: true,
+                                        onSubmitted: (v) =>
+                                            authNotifier.onSendCodePressed(),
+                                        borderColor: style.borderColor,
+                                      ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+            AnimatedSwitcher(
+              duration: Duration(milliseconds: 300),
+              child: authNotifier.isCodeSent
+                  ? SizedBox.shrink()
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 36),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          CtaButton(
+                            onPressed: () {
+                              FocusScope.of(context).unfocus();
+                              authNotifier.onSendCodePressed();
+                            },
+                            text: 'VERIFY',
+                          )
+                        ],
                       ),
                     ),
-                  ],
-                ),
-                AnimatedSwitcher(
-                  duration: Duration(milliseconds: 300),
-                  child: authNotifier.isCodeSent
-                      ? SizedBox.shrink()
-                      : Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 36),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              CtaButton(
-                                onPressed: () {
-                                  FocusScope.of(context).unfocus();
-                                  authNotifier.onSendCodePressed();
-                                },
-                                text: 'VERIFY',
-                              )
-                            ],
-                          ),
-                        ),
-                )
-              ],
-            );
-          }),
+            )
+          ],
         ),
       ),
     );

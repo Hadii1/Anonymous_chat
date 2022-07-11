@@ -15,7 +15,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage rm) async {
   // This is when the user receives a msgs whilst the app is terminated.
   // we  sync any the received msgs to the local databse of the device here.
-  print("Handling a background message: ${rm.messageId}");
+  print('saving msg from terminated state');
 
   await SqlitePersistance.init();
   await SharedPrefs.init();
@@ -33,14 +33,19 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage rm) async {
   if (isNewRoom) {
     localDatabse.saveNewRoomEntity(
       roomEntity: LocalRoomEntity(
-          id: message.roomId, contact: message.sender, isArchived: false),
+        id: message.roomId,
+        contact: message.sender,
+        isArchived: false,
+      ),
     );
 
     localDatabse.writeMessage(roomId: message.roomId, message: message);
   } else {
     // Only save if the msg is not saved
     Message? s = await localDatabse.getMessage(
-        messageId: message.id, roomId: message.roomId);
+      messageId: message.id,
+      roomId: message.roomId,
+    );
     if (s == null)
       localDatabse.writeMessage(roomId: message.roomId, message: message);
   }

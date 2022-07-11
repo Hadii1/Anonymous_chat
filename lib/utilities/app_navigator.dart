@@ -6,6 +6,7 @@ import 'package:flutter/cupertino.dart';
 
 class AppNavigator extends StatelessWidget {
   final UserState userState;
+
   const AppNavigator({
     required this.userState,
   });

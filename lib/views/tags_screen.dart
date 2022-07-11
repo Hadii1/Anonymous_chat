@@ -14,7 +14,6 @@ import 'package:anonymous_chat/widgets/loading_widget.dart';
 import 'package:anonymous_chat/widgets/search_field.dart';
 import 'package:anonymous_chat/widgets/suggestion_header.dart';
 import 'package:anonymous_chat/widgets/tags_row.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -31,9 +30,9 @@ class TagsScreen extends StatelessWidget {
       resizeToAvoidBottomInset: true,
       body: KeyboardHider(
         child: Consumer(
-          builder: (context, watch, child) {
-            AsyncValue<List<UserTag>> tagsData = watch(userTagsFuture);
-            final tagsNotifier = watch(suggestedTagsProvider);
+          builder: (context, ref, child) {
+            AsyncValue<List<UserTag>> tagsData = ref.watch(userTagsFuture);
+            final tagsNotifier = ref.watch(suggestedTagsProvider);
 
             return AnimatedSwitcher(
               duration: Duration(milliseconds: 300),
@@ -45,7 +44,7 @@ class TagsScreen extends StatelessWidget {
 
                 if (tagsData is AsyncError) {
                   Future.delayed(Duration(seconds: 2)).then(
-                    (value) => context.refresh(userTagsProvider),
+                    (value) => ref.refresh(userTagsProvider),
                   );
 
                   return LoadingWidget(
@@ -96,9 +95,9 @@ class _TagsSearchResponseState extends State<_TagsSearchResponse>
   Widget build(BuildContext context) {
     AppStyle style = AppTheming.of(context).style;
     return Consumer(
-      builder: (context, watch, child) {
-        final List<UserTag> userTags = watch(userTagsProvider)!;
-        final tagsNotifier = watch(suggestedTagsProvider);
+      builder: (context, ref, child) {
+        final List<UserTag> userTags = ref.watch(userTagsProvider)!;
+        final tagsNotifier = ref.watch(suggestedTagsProvider);
         return AnimatedSize(
           duration: Duration(milliseconds: 260),
           child: AnimatedSwitcher(
@@ -147,7 +146,7 @@ class _TagsSearchResponseState extends State<_TagsSearchResponse>
                         padding: const EdgeInsets.only(top: 16.0),
                         child: _SuggestedTagsList(
                           tags: tagsNotifier.suggestedTags,
-                          onSelected: (Tag tag) => context
+                          onSelected: (Tag tag) => ref
                               .read(suggestedTagsProvider)
                               .onExistingTagPressed(
                                 tag: tag,
@@ -398,91 +397,91 @@ class __SuggestedContactsState extends State<_SuggestedContacts>
     return Padding(
       padding: const EdgeInsets.only(left: 24.0, right: 24),
       child: Consumer(
-        builder: (context, watch, child) {
-          final List<UserTag> allTags = watch(userTagsProvider)!;
+        builder: (context, ref, child) {
+          final List<UserTag> allTags = ref.watch(userTagsProvider)!;
           final List<UserTag> activeTags =
               allTags.where((UserTag userTag) => userTag.isActive).toList();
 
-          return watch(suggestedContactsProvider).when(
-            data: (List<Contact>? data) {
-              return Fader(
-                duration: Duration(milliseconds: 300),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: data == null
-                      ? [
-                          SpinKitThreeBounce(
-                            size: 25,
-                            duration: Duration(milliseconds: 800),
-                            color: style.loadingBarColor,
-                          )
-                        ]
-                      : data.isEmpty
+          return ref.watch(suggestedContactsProvider).when(
+                data: (List<Contact>? data) {
+                  return Fader(
+                    duration: Duration(milliseconds: 300),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: data == null
                           ? [
-                              SizedBox(
-                                height: 50,
-                              ),
-                              Icon(
-                                Linecons.search,
-                                color: style.accentColor,
-                                size: 50,
-                              ),
-                              SizedBox(height: 24),
-                              Text(
-                                allTags.isEmpty
-                                    ? 'Search and activate \nnew tags to match up with\nother contacts.'
-                                    : activeTags.isEmpty
-                                        ? 'No current active tags.'
-                                        : 'No contacts are sharing\nyour active tags.\nTry changing or adding\nnew tags.',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  height: 1.4,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
+                              SpinKitThreeBounce(
+                                size: 25,
+                                duration: Duration(milliseconds: 800),
+                                color: style.loadingBarColor,
+                              )
                             ]
-                          : List.generate(
-                              data.length,
-                              (index) => SuggestedContact(
-                                contact: data[index],
-                              ),
-                            ),
+                          : data.isEmpty
+                              ? [
+                                  SizedBox(
+                                    height: 50,
+                                  ),
+                                  Icon(
+                                    Linecons.search,
+                                    color: style.accentColor,
+                                    size: 50,
+                                  ),
+                                  SizedBox(height: 24),
+                                  Text(
+                                    allTags.isEmpty
+                                        ? 'Search and activate \nnew tags to match up with\nother contacts.'
+                                        : activeTags.isEmpty
+                                            ? 'No current active tags.'
+                                            : 'No contacts are sharing\nyour active tags.\nTry changing or adding\nnew tags.',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      height: 1.4,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ]
+                              : List.generate(
+                                  data.length,
+                                  (index) => SuggestedContact(
+                                    contact: data[index],
+                                  ),
+                                ),
+                    ),
+                  );
+                },
+                loading: () => Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 100.0),
+                      child: SpinKitThreeBounce(
+                        size: 25,
+                        duration: Duration(milliseconds: 800),
+                        color: style.accentColor,
+                      ),
+                    ),
+                  ],
                 ),
-              );
-            },
-            loading: () => Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 100.0),
-                  child: SpinKitThreeBounce(
-                    size: 25,
-                    duration: Duration(milliseconds: 800),
-                    color: style.accentColor,
-                  ),
-                ),
-              ],
-            ),
-            error: (e, s) {
-              context.read(errorsStateProvider.notifier).set(
-                  e is SocketException
-                      ? 'Bad internet connection'
-                      : 'An Error occured');
+                error: (e, s) {
+                  ref.read(errorsStateProvider.notifier).set(
+                      e is SocketException
+                          ? 'Bad internet connection'
+                          : 'An Error occured');
 
-              Future.delayed(Duration(seconds: 2))
-                  .then((_) => context.refresh(suggestedContactsProvider));
+                  Future.delayed(Duration(seconds: 2))
+                      .then((_) => ref.refresh(suggestedContactsProvider));
 
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 48.0),
-                  child: SpinKitThreeBounce(
-                    size: 25,
-                    color: style.backgroundContrastColor,
-                  ),
-                ),
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 48.0),
+                      child: SpinKitThreeBounce(
+                        size: 25,
+                        color: style.backgroundContrastColor,
+                      ),
+                    ),
+                  );
+                },
               );
-            },
-          );
         },
       ),
     );

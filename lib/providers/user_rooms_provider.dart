@@ -145,7 +145,6 @@ class RoomsNotifier extends ChangeNotifier {
     assert(index != -1);
     allRooms[index] = archive ? room.archive() : room.unArchive();
     notifyListeners();
-    read(roomArhivingState(room.id).notifier).archived = archive;
     retry(
       shouldRethrow: false,
       f: () => ChatRoomsMapper().editArchives(
@@ -195,21 +194,21 @@ class RoomsNotifier extends ChangeNotifier {
   }
 }
 
-final roomArhivingState =
-    StateNotifierProvider.family<RoomArchiveState, bool, String>(
-  (ref, String roomId) => RoomArchiveState(
-    ref
-        .read(startingDataProvider)!
-        .where((room) => room.isArchived)
-        .where((room) => room.id == roomId)
-        .isNotEmpty,
-  ),
-);
+// final roomArhivingState =
+//     StateNotifierProvider.family<RoomArchiveState, bool, String>(
+//   (ref, String roomId) => RoomArchiveState(
+//     ref
+//         .read(startingDataProvider)!
+//         .where((room) => room.isArchived)
+//         .where((room) => room.id == roomId)
+//         .isNotEmpty,
+//   ),
+// );
 
-class RoomArchiveState extends StateNotifier<bool> {
-  RoomArchiveState(bool state) : super(state);
-  set archived(bool value) => state = value;
-}
+// class RoomArchiveState extends StateNotifier<bool> {
+//   RoomArchiveState(bool state) : super(state);
+//   set archived(bool value) => state = value;
+// }
 
 // This is to watch if the other contacts deleted the room
 // while this user is viewing it.
